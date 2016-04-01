@@ -973,14 +973,15 @@ void pqProxyWidget::createPropertyWidgets(const QStringList &properties)
   vtkNew<vtkSMOrderedPropertyIterator> propertyIter;
   propertyIter->SetProxy(smproxy);
 
+  bool isCompoundProxy = smproxy->IsA("vtkSMCompoundSourceProxy");
   for (propertyIter->Begin(); !propertyIter->IsAtEnd(); propertyIter->Next())
     {
     vtkSMProperty *smProperty = propertyIter->GetProperty();
 
     QString propertyKeyName = propertyIter->GetKey();
     propertyKeyName.replace(" ", "");
-    const char *xmlLabel = smProperty->GetXMLLabel()? smProperty->GetXMLLabel():
-      propertyIter->GetKey();
+    const char *xmlLabel = (smProperty->GetXMLLabel() && !isCompoundProxy) ?
+          smProperty->GetXMLLabel(): propertyIter->GetKey();
     QString xmlDocumentation = pqProxyWidget::documentationText(smProperty);
 
     bool ignorePanelVisibility = false;
