@@ -1256,6 +1256,15 @@
         <Documentation>This property specifies the file name for the VTK
         multi-block reader.</Documentation>
       </StringVectorProperty>
+      <IntVectorProperty command="SetEnableStreaming"
+                         default_values="0"
+                         name="EnableStreaming"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>If the value of this property is 1, only the first block
+          will be read by default. This option is to be used with the
+          Streaming Particle representation</Documentation>
+      </IntVectorProperty>
       <!-- End MultiBlockDataReader -->
     </SourceProxy>
     <SourceProxy class="vtkXMLHierarchicalBoxDataReader"
@@ -3492,6 +3501,9 @@
         <Proxy name="Reader"
                proxygroup="internal_sources"
                proxyname="XMLMultiBlockDataReaderCore"></Proxy>
+        <ExposedProperties>
+          <Property name="EnableStreaming" />
+        </ExposedProperties>
       </SubProxy>
       <StringVectorProperty command="GetCurrentFileName"
                             information_only="1"
