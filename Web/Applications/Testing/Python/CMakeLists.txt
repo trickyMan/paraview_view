@@ -28,7 +28,7 @@ add_test(NAME pvweb-nobrowser.DataProber-StartTest
   COMMAND $<TARGET_FILE:pvpython>
   ${pv_pymodule_build_dir}/paraview/web/pv_web_data_prober.py
   --data-dir ${PARAVIEW_DATA_ROOT}
-  --port 8077
+  --port 9739
   --timeout 1)
 set_tests_properties(pvweb-nobrowser.DataProber-StartTest PROPERTIES LABELS "PARAVIEW")
 
@@ -36,7 +36,7 @@ set_tests_properties(pvweb-nobrowser.DataProber-StartTest PROPERTIES LABELS "PAR
 add_test(NAME pvweb-nobrowser.Visualizer-StartTest
   COMMAND $<TARGET_FILE:pvpython>
   ${pv_pymodule_build_dir}/paraview/web/pv_web_visualizer.py
-  --port 8078
+  --port 9740
   --timeout 1)
 set_tests_properties(pvweb-nobrowser.Visualizer-StartTest PROPERTIES LABELS "PARAVIEW")
 
@@ -44,7 +44,7 @@ set_tests_properties(pvweb-nobrowser.Visualizer-StartTest PROPERTIES LABELS "PAR
 add_test(NAME pvweb-nobrowser.FileViewer-StartTest
   COMMAND $<TARGET_FILE:pvpython>
   ${pv_pymodule_build_dir}/paraview/web/pv_web_file_loader.py
-  --port 8079
+  --port 9741
   --timeout 1)
 set_tests_properties(pvweb-nobrowser.FileViewer-StartTest PROPERTIES LABELS "PARAVIEW")
 
@@ -82,6 +82,9 @@ set_tests_properties(pvweb-nobrowser.FileViewer-StartTest PROPERTIES LABELS "PAR
 set(TESTAPP_WEB_TESTS_WITH_CHROME
   ${pv_pymodule_build_dir}/paraview/web/test/test_pv_web_testapp_all.py
   )
+
+# Make sure any tests that pop up a browser are run in serial
+set (TestApp-all_FORCE_SERIAL TRUE)
 
 add_pvweb_tests("pvweb"
   APP          TestApp

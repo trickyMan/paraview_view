@@ -43,11 +43,12 @@ vtk_module(vtkPVVTKExtensionsRendering
     vtkIOXML
     vtkPVVTKExtensionsCore
     vtkRenderingAnnotation
-    vtkRenderingFreeType${VTK_RENDERING_BACKEND}
+    vtkRenderingFreeType
     vtkRendering${VTK_RENDERING_BACKEND}
     vtkRenderingParallel
     vtkIOExport
     ${__dependencies}
+    vtkRenderingVolumeAMR
   PRIVATE_DEPENDS
     vtkzlib
   COMPILE_DEPENDS

@@ -11,8 +11,6 @@
     <file>Icons/pqAutoApply32.png</file>
     <file>Icons/pqBack16.png</file>
     <file>Icons/pqBagChart16.png</file>
-    <file>Icons/pqBlockInheritColor16.png</file>
-    <file>Icons/pqBlockInheritOpacity16.png</file>
     <file>Icons/pqBottomCenter32.png</file>
     <file>Icons/pqBottomLeftCorner32.png</file>
     <file>Icons/pqBottomRightCorner32.png</file>
@@ -125,6 +123,7 @@
     <file>Icons/pqOpen32.png</file>
     <file>Icons/pqOptions16.png</file>
     <file>Icons/pqPaste22.png</file>
+    <file>Icons/pqPalette32.png</file>
     <file>Icons/pqPickCenter24.png</file>
     <file>Icons/pqPipelineList22.png</file>
     <file>Icons/pqPlotCellOverTime24.png</file>
@@ -208,6 +207,8 @@
     <file>Icons/pqStreamTracer24.png</file>
     <file>Icons/pqStructuredGrid16.png</file>
     <file>Icons/pqSurfaceSelectionCell24.png</file>
+    <file>Icons/pqSurfaceSelectionCellInteractive.png</file>
+    <file>Icons/pqSurfaceSelectionPointInteractive.png</file>
     <file>Icons/pqSurfaceSelectionPoint24.png</file>
     <file>Icons/pqThreshold24.png</file>
     <file>Icons/pqTopCenter32.png</file>

@@ -14,13 +14,14 @@
 =========================================================================*/
 #include "vtkPVClientServerSynchronizedRenderers.h"
 
-#include "vtkObjectFactory.h"
-#include "vtkSquirtCompressor.h"
-#include "vtkZlibImageCompressor.h"
 #include "vtkMultiProcessController.h"
+#include "vtkObjectFactory.h"
+#include "vtkOpenGLRenderer.h"
+#include "vtkSquirtCompressor.h"
 #include "vtkUnsignedCharArray.h"
+#include "vtkZlibImageCompressor.h"
 
-#include <vtksys/ios/sstream>
+#include <sstream>
 #include <assert.h>
 
 vtkStandardNewMacro(vtkPVClientServerSynchronizedRenderers);
@@ -160,7 +161,7 @@ void vtkPVClientServerSynchronizedRenderers::ConfigureCompressor(const char *str
       {
       comp=vtkZlibImageCompressor::New();
       }
-    else if (className=="NULL")
+    else if (className=="NULL" || className.empty())
       {
       this->SetCompressor(0);
       return;
@@ -179,6 +180,28 @@ void vtkPVClientServerSynchronizedRenderers::ConfigureCompressor(const char *str
   if (!ok)
     {
     vtkWarningMacro("Could not configure the compressor, invalid stream. " << stream << ".");
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkPVClientServerSynchronizedRenderers::PushImageToScreen()
+{
+  // This trick allows us to not clear the color buffer before pasting back
+  // the image from the server. This makes it possible to preserve any
+  // annotations rendered esp. vtkGridAxes3DActor which renders in multiple
+  // layers.
+  // This is not the most elegant solution. We should rethink if
+  // vtkSynchronizedRenderers::PushImageToScreen() should clear the screen by
+  // default -- I can argue not.
+  int layer = this->Renderer->GetLayer();
+  if (layer == 0)
+    {
+    this->Renderer->SetLayer(1);
+    }
+  this->Superclass::PushImageToScreen();
+  if (layer == 0)
+    {
+    this->Renderer->SetLayer(0);
     }
 }
 

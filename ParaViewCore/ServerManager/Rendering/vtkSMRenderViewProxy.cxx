@@ -34,15 +34,14 @@
 #include "vtkPVCompositeDataInformation.h"
 #include "vtkPVDataInformation.h"
 #include "vtkPVDisplayInformation.h"
-#include "vtkPVGenericRenderWindowInteractor.h"
 #include "vtkPVLastSelectionInformation.h"
 #include "vtkPVOptions.h"
 #include "vtkPVRenderView.h"
-#include "vtkPVRenderViewProxy.h"
 #include "vtkPVServerInformation.h"
 #include "vtkPVXMLElement.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
 #include "vtkSelection.h"
 #include "vtkSelectionNode.h"
 #include "vtkSmartPointer.h"
@@ -60,6 +59,7 @@
 #include "vtkSMSessionProxyManager.h"
 #include "vtkSMTrace.h"
 #include "vtkSMUncheckedPropertyHelper.h"
+#include "vtkSMViewProxyInteractorHelper.h"
 #include "vtkTransform.h"
 #include "vtkWeakPointer.h"
 #include "vtkWindowToImageFilter.h"
@@ -86,47 +86,26 @@ namespace
     return true;
     }
 #endif
-
-  class vtkRenderHelper : public vtkPVRenderViewProxy
-  {
-public:
-  static vtkRenderHelper* New();
-  vtkTypeMacro(vtkRenderHelper, vtkPVRenderViewProxy);
-
-  virtual void EventuallyRender()
-    {
-    this->Proxy->StillRender();
-    }
-  virtual vtkRenderWindow* GetRenderWindow() { return NULL; }
-  virtual void Render()
-    {
-    this->Proxy->InteractiveRender();
-    }
-  // Description:
-  // Returns true if the most recent render indeed employed low-res rendering.
-  virtual bool LastRenderWasInteractive()
-    {
-    return this->Proxy->LastRenderWasInteractive();
-    }
-
-  vtkWeakPointer<vtkSMRenderViewProxy> Proxy;
-  };
-  vtkStandardNewMacro(vtkRenderHelper);
 };
 
 vtkStandardNewMacro(vtkSMRenderViewProxy);
 //----------------------------------------------------------------------------
-vtkSMRenderViewProxy::vtkSMRenderViewProxy()
+vtkSMRenderViewProxy::vtkSMRenderViewProxy()  :
+  InteractorHelper()
 {
   this->IsSelectionCached = false;
   this->NewMasterObserverId = 0;
   this->DeliveryManager = NULL;
   this->NeedsUpdateLOD = true;
+  this->InteractorHelper->SetViewProxy(this);
 }
 
 //----------------------------------------------------------------------------
 vtkSMRenderViewProxy::~vtkSMRenderViewProxy()
 {
+  this->InteractorHelper->SetViewProxy(NULL);
+  this->InteractorHelper->CleanupInteractor();
+
   if( this->NewMasterObserverId != 0 &&
       this->Session && this->Session->GetCollaborationManager())
     {
@@ -355,12 +334,31 @@ vtkCamera* vtkSMRenderViewProxy::GetActiveCamera()
 }
 
 //----------------------------------------------------------------------------
-vtkPVGenericRenderWindowInteractor* vtkSMRenderViewProxy::GetInteractor()
+void vtkSMRenderViewProxy::SetupInteractor(vtkRenderWindowInteractor* iren)
+{
+  if (this->GetLocalProcessSupportsInteraction())
+    {
+    this->CreateVTKObjects();
+    vtkPVRenderView* rv = vtkPVRenderView::SafeDownCast(this->GetClientSideObject());
+
+    // Remember, these calls end up changing ivars on iren.
+    rv->SetupInteractor(iren);
+    this->InteractorHelper->SetupInteractor(rv->GetInteractor());
+    }
+}
+
+//----------------------------------------------------------------------------
+vtkRenderWindowInteractor* vtkSMRenderViewProxy::GetInteractor()
 {
   this->CreateVTKObjects();
-  vtkPVRenderView* rv = vtkPVRenderView::SafeDownCast(
-    this->GetClientSideObject());
+  vtkPVRenderView* rv = vtkPVRenderView::SafeDownCast(this->GetClientSideObject());
   return rv? rv->GetInteractor() : NULL;
+}
+
+//----------------------------------------------------------------------------
+vtkSMViewProxyInteractorHelper* vtkSMRenderViewProxy::GetInteractorHelper()
+{
+  return this->InteractorHelper.GetPointer();
 }
 
 //----------------------------------------------------------------------------
@@ -401,14 +399,6 @@ void vtkSMRenderViewProxy::CreateVTKObjects()
                                               ->GetSubProxy( "ActiveCamera" )
                                               ->GetClientSideObject() );
   rv->SetActiveCamera( camera );
-
-  if (rv->GetInteractor())
-    {
-    vtkRenderHelper* helper = vtkRenderHelper::New();
-    helper->Proxy = this;
-    rv->GetInteractor()->SetPVRenderView(helper);
-    helper->Delete();
-    }
 
   vtkEventForwarderCommand* forwarder = vtkEventForwarderCommand::New();
   forwarder->SetTarget(this);
@@ -754,7 +744,7 @@ vtkSMRepresentationProxy* vtkSMRenderViewProxy::PickBlock(int x,
 
 //----------------------------------------------------------------------------
 bool vtkSMRenderViewProxy::ConvertDisplayToPointOnSurface(
-    const int display_position[2], double world_position[3])
+    const int display_position[2], double world_position[3], bool snapOnMeshPoint)
 {
   int region[4] = {display_position[0], display_position[1],
     display_position[0], display_position[1] };
@@ -762,7 +752,15 @@ bool vtkSMRenderViewProxy::ConvertDisplayToPointOnSurface(
   vtkSMSessionProxyManager* spxm = this->GetSessionProxyManager();
   vtkNew<vtkCollection> representations;
   vtkNew<vtkCollection> sources;
-  this->SelectSurfaceCells(region, representations.GetPointer(), sources.GetPointer(), false);
+  
+  if (snapOnMeshPoint)
+    {
+    this->SelectSurfacePoints(region, representations.GetPointer(), sources.GetPointer(), false);
+    }
+  else
+    {
+    this->SelectSurfaceCells(region, representations.GetPointer(), sources.GetPointer(), false);
+    }
 
   if (representations->GetNumberOfItems() > 0 && sources->GetNumberOfItems() > 0)
     {
@@ -805,6 +803,7 @@ bool vtkSMRenderViewProxy::ConvertDisplayToPointOnSurface(
     vtkSMPropertyHelper(pickingHelper, "Selection").Set( selection );
     vtkSMPropertyHelper(pickingHelper, "PointA").Set(nearLinePoint, 3);
     vtkSMPropertyHelper(pickingHelper, "PointB").Set(farLinePoint, 3);
+    vtkSMPropertyHelper(pickingHelper, "SnapOnMeshPoint").Set(snapOnMeshPoint);
     pickingHelper->UpdateVTKObjects();
     pickingHelper->UpdateProperty("Update",1);
     vtkSMPropertyHelper(pickingHelper, "Intersection").UpdateValueFromServer();
@@ -1359,7 +1358,13 @@ void vtkSMRenderViewProxy::NewMasterCallback(vtkObject*, unsigned long, void*)
 //----------------------------------------------------------------------------
 void vtkSMRenderViewProxy::ClearSelectionCache(bool force/*=false*/)
 {
-  if(this->IsSelectionCached || force)
+  // We check if we're currently selecting. If that's the case, any non-forced
+  // modifications (i.e. those coming through because of proxy-modifications)
+  // are considered a part of the making/showing selection and hence we
+  // don't clear the selection cache. While this doesn't help us preserve the
+  // cache between separate surface selection invocations, it does help us with
+  // reusing the case when in interactive selection mode.
+  if ((this->IsSelectionCached && !this->IsInSelectionMode()) || force)
     {
     this->IsSelectionCached = false;
     vtkClientServerStream stream;
@@ -1368,5 +1373,19 @@ void vtkSMRenderViewProxy::ClearSelectionCache(bool force/*=false*/)
             << "InvalidateCachedSelection"
             << vtkClientServerStream::End;
     this->ExecuteStream(stream);
+    }
+}
+
+//----------------------------------------------------------------------------
+bool vtkSMRenderViewProxy::IsInSelectionMode()
+{
+  switch (vtkSMPropertyHelper(this, "InteractionMode", /*quiet*/true).GetAsInt())
+    {
+  case vtkPVRenderView::INTERACTION_MODE_SELECTION:
+  case vtkPVRenderView::INTERACTION_MODE_POLYGON:
+    return true;
+
+  default:
+    return false;
     }
 }

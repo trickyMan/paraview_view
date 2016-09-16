@@ -44,7 +44,7 @@
 #include <set>
 #include <string>
 #include <vector>
-#include <vtksys/ios/sstream>
+#include <sstream>
 #include <vtksys/RegularExpression.hxx>
 
 //---------------------------------------------------------------------------
@@ -465,6 +465,18 @@ void vtkSMProxy::MarkAllPropertiesAsModified()
 //---------------------------------------------------------------------------
 void vtkSMProxy::ResetPropertiesToXMLDefaults()
 {
+  this->ResetPropertiesToDefault(vtkSMProxy::ONLY_XML);
+}
+
+//---------------------------------------------------------------------------
+void vtkSMProxy::ResetPropertiesToDomainDefaults()
+{
+  this->ResetPropertiesToDefault(vtkSMProxy::ONLY_DOMAIN);
+}
+
+//---------------------------------------------------------------------------
+void vtkSMProxy::ResetPropertiesToDefault(ResetPropertiesMode mode)
+{
   vtkSmartPointer<vtkSMPropertyIterator> iter;
   iter.TakeReference(this->NewPropertyIterator());
 
@@ -480,7 +492,24 @@ void vtkSMProxy::ResetPropertiesToXMLDefaults()
         // Don't reset properties that request overriding of the default mechanism.
         continue;
         }
-      iter->GetProperty()->ResetToXMLDefaults();
+      switch(mode)
+        {
+        case vtkSMProxy::ONLY_XML:
+          {
+          iter->GetProperty()->ResetToXMLDefaults();
+          break;
+          }
+        case vtkSMProxy::ONLY_DOMAIN:
+          {
+          iter->GetProperty()->ResetToDomainDefaults();
+          break;
+          }
+        default:
+          {
+          iter->GetProperty()->ResetToDefault();
+          break;
+          }
+        }
       }
     }
   this->UpdateVTKObjects();
@@ -1347,7 +1376,7 @@ vtkSMProperty* vtkSMProxy::NewProperty(const char* name,
   vtkSIProxyDefinitionManager::PatchXMLProperty(propElement);
 
   vtkObject* object = 0;
-  vtksys_ios::ostringstream cname;
+  std::ostringstream cname;
   cname << "vtkSM" << propElement->GetName() << ends;
   object = vtkPVInstantiator::CreateInstance(cname.str().c_str());
 
@@ -1665,6 +1694,16 @@ vtkSMProperty* vtkSMProxy::SetupExposedProperty(vtkPVXMLElement* propertyElement
       return 0;
       }
     prop->SetXMLName(propertyName.c_str());
+
+    // Since we are not processing ExposedProperties elements on the SIProxy
+    // side, the SIProxy doesn't have the information about updated defaults for
+    // the properties. Hence, we need to push those values in the next
+    // UpdateVTKObjects(). To ensure that, we have to mark this Property
+    // modified.
+    int old_val = subproxy->DoNotModifyProperty;
+    subproxy->DoNotModifyProperty = 0;
+    prop->Modified();
+    subproxy->DoNotModifyProperty = old_val;
     }
   this->ExposeSubProxyProperty(subproxy_name, name, exposed_name, override);
 
@@ -2001,7 +2040,7 @@ vtkPVXMLElement* vtkSMProxy::SaveXMLState(vtkPVXMLElement* root,
       }
     if (!iter->GetProperty()->GetIsInternal())
       {
-      vtksys_ios::ostringstream propID;
+      std::ostringstream propID;
       propID << this->GetGlobalID() << "." << iter->GetKey() << ends;
       iter->GetProperty()->SaveState( proxyXml,
                                       iter->GetKey(),

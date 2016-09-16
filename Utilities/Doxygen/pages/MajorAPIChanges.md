@@ -4,6 +4,69 @@ Major API Changes             {#MajorAPIChanges}
 This page documents major API/design changes between different versions since we
 started tracking these (starting after version 4.2).
 
+Changes in 4.4
+--------------
+
+###Refactored pqView widget creation mechanisms###
+
+pqView now adds a pure virtual method pqView::createWidget(). Subclasses should
+override that method to create the QWidget in which the view is *rendered*. In
+the past the subclasses implemented their own mechanisms to create the widget
+and return it when `getWidget()` was called the first time.
+
+`pqView::getWidget()` is now deprecated. Users should use pqView::widget()
+instead. This method internally calls the pqView::createWidget() when
+appropriate.
+
+###Removed vtkPVGenericRenderWindowInteractor, vtkPVRenderViewProxy###
+
+ParaView was subclassing vtkRenderWindowInteractor to create
+`vtkPVGenericRenderWindowInteractor` to handle interaction. That piece of code
+was potentially derived from an older implementation of
+vtkRenderWindowInteractor and hence did what it did. Current implementation of
+vtkRenderWindowInteractor lets the vtkInteractionStyle (and subclasses) do all
+the heavy lifting. ParaView did that to some extent (since it has a
+vtkPVInteractorStyle), but will was relying on
+`vtkPVGenericRenderWindowInteractor`, `vtkPVRenderViewProxy` to propagate
+interaction/still renders and other things. This has been refactored. ParaView
+no longer uses a special vtkRenderWindowInteractor. All logic is handled by
+observers on the standard vtkRenderWindowInteractor.
+
+This change was done to make it easier to enable interactivity in `pvpython`.
+
+See also: vtkSMRenderViewProxy::SetupInteractor(). Subclasses of pqView now pass
+the interactor created by QVTKWidget to this method to initialize it.
+
+See also: vtkSMViewProxyInteractorHelper.
+
+###Refactored Color Preset Management (and UI)###
+
+The color preset management has been completely refactored for this release.
+This makes presets accessible to Python clients.
+`vtkSMTransferFunctionPresets` is the class that manages the presets in the
+*ServerManager* layer.
+
+On the UI side, `pqColorPresetModel`, `pqColorPresetManager`, and
+`pqColorMapModel` no longer exist. They have been replaced by `pqPresetDialog`.
+Since the UI is completely redesigned, tests in custom applications
+that used the color preset dialog will need to be updated as well.
+
+The preset themselves are now serialized as JSON in the same form as the
+settings JSON. ColorMaps in legacy XML format are still loadable from the UI. At
+the same time, a tool `vtkLegacyColorMapXMLToJSON` is available to convert such
+XMLs to JSON.
+
+###Changes to `pqViewFrame`###
+
+Commit [afaf6a510](https://gitlab.kitware.com/paraview/paraview/commit/afaf6a510ecb872c49461cd850022817741e1558)
+changes the internal widgets created in `pqViewFrame` to add a new `QFrame` named
+**CentralWidgetFrame** around the rendering viewport. While this shouldn't break any
+code, this will certainly break tests since the widgets have changed. The change to the testing
+XML is fairly simple. Just add the **CentralWidgetFrame** to the widget hierarchy at the appropriate
+location. See the original
+[merge request](https://gitlab.kitware.com/paraview/paraview/merge_requests/167)
+for details.
+
 Changes in 4.3
 --------------
 

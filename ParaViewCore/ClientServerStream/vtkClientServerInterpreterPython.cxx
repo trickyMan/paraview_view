@@ -151,6 +151,7 @@ static PyObject* MakeArrayOf(const vtkClientServerStream& msg, int arg, vtkTypeU
   if (!msg.GetArgument(0, arg, argArray, length))
     {
     delete [] argArray;
+    argArray = NULL;
     Py_RETURN_NONE;
     }
 
@@ -187,8 +188,6 @@ static vtkObjectBase* NewInstanceCallback(void* ctx)
 
   vtkObjectBase* obj = PyVTKObject_GetObject(instance);
   obj->Register(NULL);
-  // The caller owns the new object, so kick it out of the object cache.
-  vtkPythonUtil::RemoveObjectFromMap(instance);
 
   return obj;
 }
@@ -363,7 +362,7 @@ static int CommandFunctionCallback(vtkClientServerInterpreter* /*interp*/,
     return 0;
     }
 
-  vtkSmartPyObject vtkObject(PyVTKObject_New(data->Object, NULL, ptr));
+  vtkSmartPyObject vtkObject(vtkPythonUtil::GetObjectFromPointer(ptr));
   PyObject* methodObject = PyObject_GetAttrString(vtkObject, method);
 
   const int argOffset = 2;
@@ -428,8 +427,7 @@ static int CommandFunctionCallback(vtkClientServerInterpreter* /*interp*/,
         vtkObjectBase* argObj;
         if (msg.GetArgument(0, msgArg, &argObj) && argObj)
           {
-          PyObject* cls = vtkPythonUtil::FindNearestBaseClass(argObj);
-          PyObject* obj = PyVTKObject_New(cls, NULL, argObj);
+          PyObject* obj = vtkPythonUtil::GetObjectFromPointer(argObj);
           PyTuple_SET_ITEM(args.GetPointer(), pyArg, obj);
           }
         else
@@ -452,11 +450,6 @@ static int CommandFunctionCallback(vtkClientServerInterpreter* /*interp*/,
     }
 
   vtkSmartPyObject callResult(PyObject_CallObject(methodObject, args));
-
-  // Stop tracking the created Python object within VTK. Without this, the
-  // vtkPython code tries to delete `ptr`, but we can't let that happen since
-  // even this function doesn't own `ptr`.
-  vtkPythonUtil::RemoveObjectFromMap(vtkObject);
 
   if (!callResult)
     {

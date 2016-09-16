@@ -122,7 +122,6 @@
         { "class": "vtkPVAxesWidget" },
         { "class": "vtkPVCenterAxesActor" },
         { "class": "vtkPVDefaultPass" },
-        { "class": "vtkPVGenericRenderWindowInteractor" },
         { "class": "vtkPVGeometryFilter" },
         { "class": "vtkPVGL2PSExporter" },
         { "class": "vtkPVInteractorStyle" },
@@ -134,7 +133,6 @@
         { "class": "vtkPVMergeTablesMultiBlock" },
         { "class": "vtkPVPlotTime" },
         { "class": "vtkPVRecoverGeometryWireframe" },
-        { "class": "vtkPVRenderViewProxy" },
         { "class": "vtkPVScalarBarActor" },
         { "class": "vtkPVTrackballMoveActor" },
         { "class": "vtkPVTrackballMultiRotate" },
@@ -361,6 +359,7 @@
         { "class": "vtkInteractorObserver" },
         { "class": "vtkInteractorStyle" },
         { "class": "vtkInteractorStyleSwitchBase" },
+        { "class": "vtkLabeledContourMapper" },
         { "class": "vtkLight" },
         { "class": "vtkLightCollection" },
         { "class": "vtkLightKit" },
@@ -392,8 +391,11 @@
         { "class": "vtkTDxInteractorStyle" },
         { "class": "vtkTDxInteractorStyleCamera" },
         { "class": "vtkTDxInteractorStyleSettings" },
+        { "class": "vtkTextActor" },
+        { "class": "vtkTextActor3D" },
         { "class": "vtkTextMapper" },
         { "class": "vtkTextProperty" },
+        { "class": "vtkTextPropertyCollection" },
         { "class": "vtkTextRenderer" },
         { "class": "vtkTexture" },
         { "class": "vtkTexturedActor2D" },
@@ -490,8 +492,6 @@
         { "class": "vtkFreeTypeUtilities" },
         { "class": "vtkMathTextFreeTypeTextRenderer" },
         { "class": "vtkMathTextUtilities" },
-        { "class": "vtkTextActor" },
-        { "class": "vtkTextActor3D" },
         { "class": "vtkTextRendererStringToImage" },
         { "class": "vtkVectorText" }
       ],
@@ -620,13 +620,8 @@
       "path": "ParaViewCore/ServerImplementation/Rendering",
       "include": [
         { "path": "module.cmake" },
-        { "class": "vtkSIChartRepresentationProxy" },
         { "class": "vtkSIImageTextureProxy" },
         { "class": "vtkSIPVRepresentationProxy" },
-        { "class": "vtkSIScalarBarActorProxy" },
-        { "class": "vtkSISelectionRepresentationProxy" },
-        { "class": "vtkSITextSourceRepresentationProxy" },
-        { "class": "vtkSIUniformGridVolumeRepresentationProxy" },
         { "class": "vtkSIUnstructuredGridVolumeRepresentationProxy" }
       ],
       "replace": [
@@ -642,8 +637,10 @@
       "path": "ParaViewCore/ServerManager/Rendering",
       "include": [
         { "path": "module.cmake" },
+        { "path": "ColorMaps.json" },
         { "class": "vtkPVComparativeAnimationCue" },
         { "class": "vtkPVComparativeView" },
+        { "class": "vtkPVRepresentedArrayListSettings" },
         { "class": "vtkSMBagChartSeriesListDomain" },
         { "class": "vtkSMBoxRepresentationProxy" },
         { "class": "vtkSMCameraLink" },
@@ -672,10 +669,12 @@
         { "class": "vtkSMSpreadSheetRepresentationProxy" },
         { "class": "vtkSMTextWidgetRepresentationProxy" },
         { "class": "vtkSMTransferFunctionManager" },
+        { "class": "vtkSMTransferFunctionPresets"},
         { "class": "vtkSMTransferFunctionProxy" },
         { "class": "vtkSMUtilities" },
         { "class": "vtkSMViewLayoutProxy" },
         { "class": "vtkSMViewProxy" },
+        { "class": "vtkSMViewProxyInteractorHelper" },
         { "class": "vtkSMWidgetRepresentationProxy" }
       ],
       "replace": [
@@ -775,6 +774,7 @@
         { "class": "vtkContextPolygon" },
         { "class": "vtkPlot" },
         { "class": "vtkPlot3D" },
+        { "class": "vtkPlotArea" },
         { "class": "vtkPlotBag" },
         { "class": "vtkPlotBar" },
         { "class": "vtkPlotFunctionalBag" },
@@ -872,7 +872,12 @@
     { "name": "vtkPVVTKExtensionsDefault",
       "path": "ParaViewCore/VTKExtensions/Default",
       "include": [
-        { "class": "vtkAppendRectilinearGrid" }
+        { "class": "vtkAppendRectilinearGrid" },
+        { "class": "vtkGridAxes2DActor" },
+        { "class": "vtkGridAxes3DActor" },
+        { "class": "vtkGridAxesHelper" },
+        { "class": "vtkGridAxesPlane2DActor" },
+        { "class": "vtkPVGridAxes3DActor" }
       ]
     },
     { "name": "vtkParallelMPI",
@@ -923,7 +928,8 @@
     },
     { "path":"ParaViewCore/ServerManager/SMApplication/Resources/rendering.xml",
       "proxies":[
-        "Camera"
+        "Camera",
+        "TextProperty"
       ]
     },
     { "path":"ParaViewCore/ServerManager/SMApplication/Resources/rendering.xml",
@@ -960,7 +966,8 @@
       "proxies":[
         "PiecewiseFunction",
         "PVLookupTable",
-        "ViewLayout"
+        "ViewLayout",
+        "GridAxes3DActor"
       ]
     }
   ]

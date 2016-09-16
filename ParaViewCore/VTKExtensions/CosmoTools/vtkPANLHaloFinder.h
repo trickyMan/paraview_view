@@ -155,11 +155,58 @@ public:
   vtkGetMacro(NumNeighbors,int)
 
   enum CenterFindingType {
-    NONE,
-    MOST_BOUND_PARTICLE,
-    MOST_CONNECTED_PARTICLE,
-    HIST_CENTER_FINDING
+    NONE = 0,
+    MOST_BOUND_PARTICLE = 1,
+    MOST_CONNECTED_PARTICLE = 2,
+    HIST_CENTER_FINDING = 3
   };
+
+  // Description:
+  // Gets/Sets the center finding method used by the halo finder once halos are
+  // identified.
+  // Default: NONE
+  vtkSetMacro(CenterFindingMode,int)
+  vtkGetMacro(CenterFindingMode,int)
+
+  // Description:
+  // Gets/Sets the smoothing length used by the center finders
+  // Default: 0.0
+  vtkSetMacro(SmoothingLength,double)
+  vtkGetMacro(SmoothingLength,double)
+
+  // Description:
+  // Gets/Sets the OmegaDM parameter of the simulation.  Used by the center
+  // finding algorithms.
+  // Default: 0.26627
+  vtkSetMacro(OmegaDM,double)
+  vtkGetMacro(OmegaDM,double)
+
+  // Description:
+  // Gets/Sets the OmegaNU parameter of the simulation.  Used by the center
+  // finding algorithms.
+  // Default: 0.0
+  vtkSetMacro(OmegaNU,double)
+  vtkGetMacro(OmegaNU,double)
+
+  // Description:
+  // Gets/Sets the Deut parameter of the simulation.  Used by the center
+  // finding algorithms.
+  // Default: 0.02258
+  vtkSetMacro(Deut,double)
+  vtkGetMacro(Deut,double)
+
+  // Description:
+  // Gets/Sets the Hubble parameter of the simulation.  Used by the center
+  // finding algorithms.
+  // Default: 0.673
+  vtkSetMacro(Hubble,double)
+  vtkGetMacro(Hubble,double)
+
+  // Description:
+  // Gets/Sets the current redshift.  Used by the center finding algorithms.
+  // Default: 0.0
+  vtkSetMacro(RedShift,double)
+  vtkGetMacro(RedShift,double)
 
 protected:
   vtkPANLHaloFinder();
@@ -167,6 +214,7 @@ protected:
 
   virtual int RequestInformation(vtkInformation *, vtkInformationVector **, vtkInformationVector *);
   virtual int RequestData(vtkInformation *, vtkInformationVector **, vtkInformationVector *);
+  int FillInputPortInformation(int port, vtkInformation *info);
 
   double RL;
   double DistanceConvertFactor;
@@ -187,10 +235,11 @@ protected:
   bool RunSubHaloFinder;
 
   // Center finding parameters
-  CenterFindingType CenterFindingMode;
+  int CenterFindingMode;
   double SmoothingLength;
-  double OmegaMatter;
-  double OmegaCB;
+  double OmegaNU;
+  double OmegaDM;
+  double Deut;
   double Hubble;
   double RedShift;
 
@@ -199,11 +248,12 @@ protected:
   class vtkInternals;
   vtkInternals* Internal;
 private:
-  void DistributeInput(vtkUnstructuredGrid* input);
+  void ExtractDataArrays(vtkUnstructuredGrid* input, vtkIdType offset);
+  void DistributeInput();
   void CreateGhostParticles();
   void ExecuteHaloFinder(vtkUnstructuredGrid* allParticles, vtkUnstructuredGrid* fofProperties);
   void ExecuteSubHaloFinder(vtkUnstructuredGrid* allParticles, vtkUnstructuredGrid* subFofProperties);
-  void FindCenters(vtkUnstructuredGrid* fofProperties);
+  void FindCenters(vtkUnstructuredGrid* allParticles, vtkUnstructuredGrid* fofProperties);
 };
 
 #endif // VTKPANLHALOFINDER_H

@@ -48,7 +48,7 @@ set(Module_SRCS
   vtkPVAxesWidget.cxx
   vtkPVCenterAxesActor.cxx
   vtkPVDefaultPass.cxx
-  vtkPVGenericRenderWindowInteractor.cxx
+  vtkPVDiscretizableColorTransferFunction.cxx
   vtkPVGeometryFilter.cxx
   vtkPVInteractorStyle.cxx
   vtkPVJoystickFly.cxx
@@ -60,7 +60,6 @@ set(Module_SRCS
   vtkPVMergeTablesMultiBlock.cxx
   vtkPVPlotTime.cxx
   vtkPVRecoverGeometryWireframe.cxx
-  vtkPVRenderViewProxy.cxx
   vtkPVScalarBarActor.cxx
   vtkPVTrackballMoveActor.cxx
   vtkPVTrackballMultiRotate.cxx
@@ -92,6 +91,13 @@ if ("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL")
     )
 endif()
 
+if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
+  set_source_files_properties(
+    vtkPVDefaultPass.cxx
+    vtkPVGeometryFilter.cxx
+    PROPERTIES COMPILE_FLAGS -DVTKGL2)
+endif()
+
 if (PARAVIEW_USE_MPI)
   list(APPEND Module_SRCS
     vtkAllToNRedistributeCompositePolyData.cxx
@@ -107,7 +113,7 @@ if (PARAVIEW_USE_MPI)
       vtkIceTCompositePass.cxx
       vtkIceTContext.cxx)
     if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
-      set_source_files_properties(vtkIceTCompositePass.cxx vtkPVGeometryFilter.cxx
+      set_source_files_properties(vtkIceTCompositePass.cxx
         PROPERTIES COMPILE_FLAGS -DVTKGL2)
     endif()
   endif()
@@ -126,7 +132,6 @@ set_source_files_properties(
   vtkCameraManipulatorGUIHelper
   vtkImageCompressor
   vtkPVJoystickFly
-  vtkPVRenderViewProxy
   ABSTRACT)
 
 #---------------------------------------------------------
@@ -149,8 +154,12 @@ foreach (file vtkIceTCompositeZPassShader_fs.glsl)
 endforeach()
 #---------------------------------------------------------
 
-vtk_module_library(vtkPVVTKExtensionsRendering ${Module_SRCS})
 if(PARAVIEW_USE_MPI)
   include(vtkMPI)
+endif()
+vtk_module_library(vtkPVVTKExtensionsRendering ${Module_SRCS})
+if(PARAVIEW_USE_MPI)
   vtk_mpi_link(${vtk-module})
 endif()
+include(vtkOpenGL)
+vtk_opengl_link(vtkPVVTKExtensionsRendering)

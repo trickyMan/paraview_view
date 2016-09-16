@@ -17,14 +17,16 @@
 #include "vtkCellType.h"
 #include "vtkDataArray.h"
 #include "vtkFloatArray.h"
+#include "vtkInformation.h"
 #include "vtkIntArray.h"
-#include "vtkLongLongArray.h"
+#include "vtkMultiBlockDataSet.h"
 #include "vtkMultiProcessController.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
 #include "vtkPoints.h"
 #include "vtkPointData.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkTypeInt64Array.h"
 
 #include "CosmoHaloFinderP.h"
 #include "FOFHaloProperties.h"
@@ -175,13 +177,16 @@ public:
 
   void reserveForInputData(vtkIdType numPts)
   {
-    this->xx.resize(numPts);
-    this->yy.resize(numPts);
-    this->zz.resize(numPts);
-    this->vx.resize(numPts);
-    this->vy.resize(numPts);
-    this->vz.resize(numPts);
-    this->tag.resize(numPts);
+    if (numPts > 0 && this->xx.capacity() < static_cast<size_t>(numPts))
+      {
+      this->xx.resize(numPts);
+      this->yy.resize(numPts);
+      this->zz.resize(numPts);
+      this->vx.resize(numPts);
+      this->vy.resize(numPts);
+      this->vz.resize(numPts);
+      this->tag.resize(numPts);
+      }
   }
   void clear()
   {
@@ -218,6 +223,14 @@ vtkPANLHaloFinder::vtkPANLHaloFinder()
   this->MinCandidateSize = 200;
   this->NumSPHNeighbors = 64;
   this->NumNeighbors = 20;
+
+  this->CenterFindingMode = NONE;
+  this->SmoothingLength = 0.0;
+  this->OmegaDM = 0.26627;
+  this->OmegaNU = 0.0;
+  this->Deut = 0.02258;
+  this->Hubble = 0.673;
+  this->RedShift = 0.0;
 }
 
 vtkPANLHaloFinder::~vtkPANLHaloFinder()
@@ -235,10 +248,22 @@ int vtkPANLHaloFinder::RequestInformation(vtkInformation *, vtkInformationVector
   return 1;
 }
 
+int vtkPANLHaloFinder::FillInputPortInformation(int port, vtkInformation *info)
+{
+  this->Superclass::FillInputPortInformation(port,info);
+  info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
+  return 1;
+}
+
 int vtkPANLHaloFinder::RequestData(vtkInformation *, vtkInformationVector **inVector, vtkInformationVector *outVector)
 {
   vtkUnstructuredGrid* grid = vtkUnstructuredGrid::GetData(inVector[0],0);
-  assert(grid);
+  vtkMultiBlockDataSet* multiBlock = vtkMultiBlockDataSet::GetData(inVector[0],0);
+  if (grid == NULL && multiBlock == NULL)
+    {
+    vtkErrorMacro("No Input!");
+    return 0;
+    }
   vtkUnstructuredGrid* output = vtkUnstructuredGrid::GetData(outVector,0);
   assert(output);
   vtkUnstructuredGrid* fofProperties = vtkUnstructuredGrid::GetData(outVector,1);
@@ -248,10 +273,29 @@ int vtkPANLHaloFinder::RequestData(vtkInformation *, vtkInformationVector **inVe
 
   cosmotk::Partition::initialize();
 
-  this->DistributeInput(grid);
+  if (grid != NULL)
+    {
+    this->ExtractDataArrays(grid,0);
+    }
+  else
+    {
+    this->Internal->reserveForInputData(multiBlock->GetNumberOfPoints());
+    vtkIdType pointsSoFar = 0;
+    for (vtkIdType i = 0; i < multiBlock->GetNumberOfBlocks(); ++i)
+      {
+      vtkUnstructuredGrid* block = vtkUnstructuredGrid::SafeDownCast(
+                                     multiBlock->GetBlock(i));
+      if (block != NULL)
+        {
+        this->ExtractDataArrays(block, pointsSoFar);
+        pointsSoFar += block->GetNumberOfPoints();
+        }
+      }
+    }
+  this->DistributeInput();
   this->CreateGhostParticles();
   this->ExecuteHaloFinder(output,fofProperties);
-  this->FindCenters(fofProperties);
+  this->FindCenters(output,fofProperties);
   if (this->RunSubHaloFinder)
     {
     this->ExecuteSubHaloFinder(output,subFofProperties);
@@ -259,7 +303,7 @@ int vtkPANLHaloFinder::RequestData(vtkInformation *, vtkInformationVector **inVe
   return 1;
 }
 
-void vtkPANLHaloFinder::DistributeInput(vtkUnstructuredGrid *input)
+void vtkPANLHaloFinder::ExtractDataArrays(vtkUnstructuredGrid *input, vtkIdType offset)
 {
   vtkPointData* pd = input->GetPointData();
   assert(pd);
@@ -272,20 +316,23 @@ void vtkPANLHaloFinder::DistributeInput(vtkUnstructuredGrid *input)
   vtkDataArray* id = pd->GetArray("id");
   assert(id);
   const vtkIdType numParticlesBefore = input->GetNumberOfPoints();
-  this->Internal->reserveForInputData(numParticlesBefore);
+  this->Internal->reserveForInputData(offset + numParticlesBefore);
   double point[3];
   for (vtkIdType i = 0; i < numParticlesBefore; ++i)
     {
     input->GetPoint(i,point);
-    this->Internal->xx[i] = point[0];
-    this->Internal->yy[i] = point[1];
-    this->Internal->zz[i] = point[2];
-    this->Internal->vx[i] = vx->GetTuple1(i);
-    this->Internal->vy[i] = vy->GetTuple1(i);
-    this->Internal->vz[i] = vz->GetTuple1(i);
-    this->Internal->tag[i] = id->GetTuple1(i);
+    this->Internal->xx[i + offset] = point[0];
+    this->Internal->yy[i + offset] = point[1];
+    this->Internal->zz[i + offset] = point[2];
+    this->Internal->vx[i + offset] = vx->GetTuple1(i);
+    this->Internal->vy[i + offset] = vy->GetTuple1(i);
+    this->Internal->vz[i + offset] = vz->GetTuple1(i);
+    this->Internal->tag[i + offset] = id->GetTuple1(i);
     }
+}
 
+void vtkPANLHaloFinder::DistributeInput()
+{
   cosmotk::ParticleDistribute particleDistribute;
   particleDistribute.setParameters("",this->RL,"RECORD");
   particleDistribute.setConvertParameters(this->DistanceConvertFactor,this->MassConvertFactor);
@@ -368,10 +415,10 @@ void vtkPANLHaloFinder::ExecuteHaloFinder(vtkUnstructuredGrid *allParticles,
   vtkNew< vtkFloatArray > velocityZ;
   velocityZ->SetName("vz");
   velocityZ->SetNumberOfTuples(this->Internal->xx.size());
-  vtkNew< vtkLongLongArray > particleId;
+  vtkNew< vtkTypeInt64Array > particleId;
   particleId->SetName("id");
   particleId->SetNumberOfTuples(this->Internal->xx.size());
-  vtkNew< vtkLongLongArray > haloTags;
+  vtkNew< vtkTypeInt64Array > haloTags;
   haloTags->SetName("fof_halo_tag");
   haloTags->SetNumberOfTuples(this->Internal->xx.size());
 
@@ -421,7 +468,7 @@ void vtkPANLHaloFinder::ExecuteHaloFinder(vtkUnstructuredGrid *allParticles,
   count->SetName("fof_halo_count");
   count->SetNumberOfTuples(numberOfFOFHalos);
   pointData->AddArray(count.GetPointer());
-  vtkNew< vtkLongLongArray > tag;
+  vtkNew< vtkTypeInt64Array > tag;
   tag->SetName("fof_halo_tag");
   tag->SetNumberOfTuples(numberOfFOFHalos);
   pointData->AddArray(tag.GetPointer());
@@ -461,7 +508,7 @@ void vtkPANLHaloFinder::ExecuteSubHaloFinder(vtkUnstructuredGrid *allParticles,
   std::vector< POSVEL_T > shX, shY, shZ, shVX, shVY, shVZ;
   std::vector< ID_T > shTag, shHID, shID;
 
-  vtkNew< vtkLongLongArray > subhaloId;
+  vtkNew< vtkTypeInt64Array > subhaloId;
   subhaloId->SetName("subhalo_tag");
   subhaloId->SetNumberOfTuples(this->Internal->xx.size());
   for (size_t i = 0; i < this->Internal->xx.size(); ++i)
@@ -589,11 +636,11 @@ void vtkPANLHaloFinder::ExecuteSubHaloFinder(vtkUnstructuredGrid *allParticles,
   subhaloCount->SetName("subhalo_count");
   subhaloCount->SetNumberOfTuples(subMass.size());
   pointData->AddArray(subhaloCount.GetPointer());
-  vtkNew< vtkLongLongArray > tag;
+  vtkNew< vtkTypeInt64Array > tag;
   tag->SetName("fof_halo_tag");
   tag->SetNumberOfTuples(subMass.size());
   pointData->AddArray(tag.GetPointer());
-  vtkNew< vtkLongLongArray > subtag;
+  vtkNew< vtkTypeInt64Array > subtag;
   subtag->SetName("subhalo_tag");
   subtag->SetNumberOfTuples(subMass.size());
   pointData->AddArray(subtag.GetPointer());
@@ -622,7 +669,8 @@ void vtkPANLHaloFinder::ExecuteSubHaloFinder(vtkUnstructuredGrid *allParticles,
 
 }
 
-void vtkPANLHaloFinder::FindCenters(vtkUnstructuredGrid *fofProperties)
+void vtkPANLHaloFinder::FindCenters(vtkUnstructuredGrid* allParticles,
+                                    vtkUnstructuredGrid *fofProperties)
 {
   if (this->CenterFindingMode == vtkPANLHaloFinder::NONE)
     {
@@ -630,6 +678,9 @@ void vtkPANLHaloFinder::FindCenters(vtkUnstructuredGrid *fofProperties)
     }
   int numberOfFOFHalos = this->Internal->haloFinder->getNumberOfHalos();
   int* fofHaloCount = this->Internal->haloFinder->getHaloCount();
+  double OmegaBar = this->Deut/this->Hubble/this->Hubble;
+  double OmegaCB = OmegaDM + OmegaBar;
+  double OmegaMatter = OmegaCB + this->OmegaNU;
 
   vtkNew< vtkFloatArray > centers;
   centers->SetName("fof_center");
@@ -644,7 +695,7 @@ void vtkPANLHaloFinder::FindCenters(vtkUnstructuredGrid *fofProperties)
     haloData.SetParticles(centerFinder);
     centerFinder.setParameters(this->BB,this->SmoothingLength,
                                this->DistanceConvertFactor,this->RL,
-                               this->NP,this->OmegaMatter,this->OmegaCB,
+                               this->NP,OmegaMatter,OmegaCB,
                                this->Hubble,this->RedShift);
     int centerIndex = -1;
     if (this->CenterFindingMode == MOST_BOUND_PARTICLE)
@@ -681,7 +732,7 @@ void vtkPANLHaloFinder::FindCenters(vtkUnstructuredGrid *fofProperties)
     float center[] = { 0.0, 0.0, 0.0 };
     if (centerIndex >= 0)
       {
-      double* point = fofProperties->GetPoint(haloData.GetActualIndex(centerIndex));
+      double* point = allParticles->GetPoint(haloData.GetActualIndex(centerIndex));
       center[0] = point[0];
       center[1] = point[1];
       center[2] = point[2];

@@ -56,6 +56,10 @@ r"""
             This option is useful when running in mpi mode and you want pvservers to
             connect to this pvpython application.
 
+        --save-data-dir
+            Server directory under which all data will be saved.  Data, state, and
+            screenshots can be saved to relative paths under this directory.
+
     Any ParaViewWeb executable script comes with a set of standard arguments that can be overriden if need be::
 
         --port 8080
@@ -92,7 +96,7 @@ try:
 except ImportError:
     # since  Python 2.6 and earlier don't have argparse, we simply provide
     # the source for the same as _argparse and we use it instead.
-    import _argparse as argparse
+    from vtk.util import _argparse as argparse
 
 # =============================================================================
 # Create custom Pipeline Manager class to handle clients requests
@@ -115,6 +119,7 @@ class _VisualizerServer(pv_wamp.PVServerProtocol):
     colorPalette = None
     proxies = None
     allReaders = True
+    saveDataDir = os.getcwd()
 
     @staticmethod
     def add_arguments(parser):
@@ -131,33 +136,39 @@ class _VisualizerServer(pv_wamp.PVServerProtocol):
         parser.add_argument("--plugins", default="", help="List of fully qualified path names to plugin objects to load", dest="plugins")
         parser.add_argument("--proxies", default=None, help="Path to a file with json text containing filters to load", dest="proxies")
         parser.add_argument("--no-auto-readers", help="If provided, disables ability to use non-configured readers", action="store_true", dest="no_auto_readers")
+        parser.add_argument("--save-data-dir", default='', help="Server directory under which all data will be saved", dest="saveDataDir")
 
     @staticmethod
     def configure(args):
-        _VisualizerServer.authKey      = args.authKey
-        _VisualizerServer.dataDir      = args.path
-        _VisualizerServer.dsHost       = args.dsHost
-        _VisualizerServer.dsPort       = args.dsPort
-        _VisualizerServer.rsHost       = args.rsHost
-        _VisualizerServer.rsPort       = args.rsPort
-        _VisualizerServer.rcPort       = args.reverseConnectPort
-        _VisualizerServer.excludeRegex = args.exclude
-        _VisualizerServer.groupRegex   = args.group
-        _VisualizerServer.plugins      = args.plugins
-        _VisualizerServer.proxies      = args.proxies
-        _VisualizerServer.colorPalette = args.palettes
-        _VisualizerServer.allReaders   = not args.no_auto_readers
+        _VisualizerServer.authKey         = args.authKey
+        _VisualizerServer.dataDir         = args.path
+        _VisualizerServer.dsHost          = args.dsHost
+        _VisualizerServer.dsPort          = args.dsPort
+        _VisualizerServer.rsHost          = args.rsHost
+        _VisualizerServer.rsPort          = args.rsPort
+        _VisualizerServer.rcPort          = args.reverseConnectPort
+        _VisualizerServer.excludeRegex    = args.exclude
+        _VisualizerServer.groupRegex      = args.group
+        _VisualizerServer.plugins         = args.plugins
+        _VisualizerServer.proxies         = args.proxies
+        _VisualizerServer.colorPalette    = args.palettes
+        _VisualizerServer.allReaders      = not args.no_auto_readers
+
+        # If no save directory is provided, default it to the data directory
+        if args.saveDataDir == '':
+            _VisualizerServer.saveDataDir = _VisualizerServer.dataDir
+        else:
+            _VisualizerServer.saveDataDir = args.saveDataDir
 
         if args.file:
-            _VisualizerServer.fileToLoad = args.path + '/' + args.file
+            _VisualizerServer.fileToLoad  = os.path.join(args.path, args.file)
 
     def initialize(self):
         # Bring used components
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebStartupRemoteConnection(_VisualizerServer.dsHost, _VisualizerServer.dsPort, _VisualizerServer.rsHost, _VisualizerServer.rsPort, _VisualizerServer.rcPort))
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebStartupPluginLoader(_VisualizerServer.plugins))
-        self.registerVtkWebProtocol(pv_protocols.ParaViewWebStateLoader(_VisualizerServer.fileToLoad))
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebFileListing(_VisualizerServer.dataDir, "Home", _VisualizerServer.excludeRegex, _VisualizerServer.groupRegex))
-        self.registerVtkWebProtocol(pv_protocols.ParaViewWebProxyManager(allowedProxiesFile=_VisualizerServer.proxies, baseDir=_VisualizerServer.dataDir, allowUnconfiguredReaders=_VisualizerServer.allReaders))
+        self.registerVtkWebProtocol(pv_protocols.ParaViewWebProxyManager(allowedProxiesFile=_VisualizerServer.proxies, baseDir=_VisualizerServer.dataDir, fileToLoad=_VisualizerServer.fileToLoad, allowUnconfiguredReaders=_VisualizerServer.allReaders))
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebColorManager(pathToColorMaps=_VisualizerServer.colorPalette))
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebMouseHandler())
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebViewPort())
@@ -167,12 +178,13 @@ class _VisualizerServer(pv_wamp.PVServerProtocol):
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebSelectionHandler())
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebWidgetManager())
         self.registerVtkWebProtocol(pv_protocols.ParaViewWebKeyValuePairStore())
+        self.registerVtkWebProtocol(pv_protocols.ParaViewWebSaveData(baseSavePath=_VisualizerServer.saveDataDir))
 
         # Update authentication key to use
         self.updateSecret(_VisualizerServer.authKey)
 
         # Disable interactor-based render calls
-        simple.GetRenderView().GetRenderWindow().GetInteractor().RenderCallsEnabledOff()
+        simple.GetRenderView().EnableRenderOnInteraction = 0
 
 # =============================================================================
 # Main: Parse args and start server

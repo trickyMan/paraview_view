@@ -18,6 +18,9 @@ set(_vtk_mpi_modules
 
   vtkFiltersParallelFlowPaths
   #  vtkStreamTracer (Parallel)
+
+  vtkIOMPIParallel
+  # vtkMPIMultiBlockPLOT3DReader.
   )
 
 # Add CosmoTools VTK extensions if enabled.
@@ -29,13 +32,17 @@ if (UNIX AND PARAVIEW_ENABLE_COSMOTOOLS)
     )
 endif()
 
+if( PARAVIEW_ENABLE_CGNS )
+  list(APPEND _vtk_mpi_modules  vtkPVVTKExtensionsCGNSReader)
+endif()
+
+
 set(_vtk_modules
   # VTK modules which ParaView has a explicity compile
   # time dependency on
   vtkRenderingVolume
   vtkRenderingLabel
   vtkRenderingFreeType
-  vtkRenderingFreeType${VTK_RENDERING_BACKEND}
   vtkRenderingVolume${VTK_RENDERING_BACKEND}
   vtkRendering${VTK_RENDERING_BACKEND}
   vtkRenderingLOD
@@ -356,6 +363,10 @@ endif()
 if (PARAVIEW_ENABLE_MATPLOTLIB)
   list (APPEND _vtk_modules vtkRenderingMatplotlib)
 endif()
+
+if (PARAVIEW_ENABLE_XDMF3)
+  list (APPEND _vtk_modules vtkIOXdmf3)
+endif ()
 
 if (PARAVIEW_ENABLE_PYTHON)
   list (APPEND _vtk_modules vtkFiltersPython)

@@ -22,6 +22,7 @@
 
 #include "pqDataRepresentation.h"
 #include "pqMultiSliceAxisWidget.h"
+#include "pqPropertyLinks.h"
 #include "pqRepresentation.h"
 
 #include "vtkAxis.h"
@@ -79,6 +80,9 @@ pqMultiSliceView::~pqMultiSliceView()
 //-----------------------------------------------------------------------------
 QWidget* pqMultiSliceView::createWidget()
 {
+  pqPropertyLinks *links = new pqPropertyLinks(this);
+  vtkSMProxy* smproxy = this->getProxy();
+
   // Get the internal widget that we want to decorate
   this->InternalWidget = qobject_cast<QVTKWidget*>(this->pqRenderView::createWidget());
 
@@ -118,6 +122,24 @@ QWidget* pqMultiSliceView::createWidget()
   this->AxisZ->setFixedWidth(MULTI_SLICE_AXIS_THIKNESS);
   this->AxisZ->renderView();
 
+  this->AxisXYZ[0] = this->AxisX;
+  this->AxisXYZ[1] = this->AxisY;
+  this->AxisXYZ[2] = this->AxisZ;
+
+  // Setup links so the UI updates when the property changes.
+  links->addPropertyLink(this->AxisX, "title", SIGNAL(titleChanged(const QString&)),
+    smproxy, smproxy->GetProperty("XTitle"));
+  this->AxisX->connect(links, SIGNAL(smPropertyChanged()), SLOT(renderView()));
+
+  links->addPropertyLink(this->AxisY, "title", SIGNAL(titleChanged(const QString&)),
+    smproxy, smproxy->GetProperty("YTitle"));
+  this->AxisY->connect(links, SIGNAL(smPropertyChanged()), SLOT(renderView()));
+
+  links->addPropertyLink(this->AxisZ, "title", SIGNAL(titleChanged(const QString&)),
+    smproxy, smproxy->GetProperty("ZTitle"));
+  this->AxisZ->connect(links, SIGNAL(smPropertyChanged()), SLOT(renderView()));
+
+
   gridLayout->addWidget(this->AxisY, 0, 1);  // TOP
   gridLayout->addWidget(this->AxisX, 1, 0); // LEFT
   gridLayout->addWidget(this->AxisZ, 1, 2); // RIGHT
@@ -132,21 +154,15 @@ QWidget* pqMultiSliceView::createWidget()
     this->InternalWidget->SetRenderWindow(renModule->GetRenderWindow());
     }
 
-  // Make sure we are aware when the slice positions changes
-  QObject::connect(this->AxisX, SIGNAL(modelUpdated()),
-                   this, SLOT(updateSlices()));
-  QObject::connect(this->AxisY, SIGNAL(modelUpdated()),
-                   this, SLOT(updateSlices()));
-  QObject::connect(this->AxisZ, SIGNAL(modelUpdated()),
-                   this, SLOT(updateSlices()));
-
-  // Attach click listener to slice marks
-  QObject::connect(this->AxisX, SIGNAL(markClicked(int,int,double)),
-                   this, SLOT(onSliceClicked(int,int,double)));
-  QObject::connect(this->AxisY, SIGNAL(markClicked(int,int,double)),
-                   this, SLOT(onSliceClicked(int,int,double)));
-  QObject::connect(this->AxisZ, SIGNAL(markClicked(int,int,double)),
-                   this, SLOT(onSliceClicked(int,int,double)));
+  for (int cc=0; cc < 3; cc++)
+    {
+    // Make sure we are aware when the slice positions changes
+    this->connect(this->AxisXYZ[cc], SIGNAL(sliceAdded(int)), SLOT(onSliceAdded(int)));
+    this->connect(this->AxisXYZ[cc], SIGNAL(sliceRemoved(int)), SLOT(onSliceRemoved(int)));
+    this->connect(this->AxisXYZ[cc], SIGNAL(sliceModified(int)), SLOT(onSliceModified(int)));
+    // Attach click listener to slice marks
+    this->connect(this->AxisXYZ[cc], SIGNAL(markClicked(int,int,double)), SLOT(onSliceClicked(int,int,double)));
+    }
 
   // Make sure the UI reflect the proxy state
   this->updateViewModelCallBack(NULL, 0, NULL);
@@ -175,13 +191,6 @@ void pqMultiSliceView::updateAxisBounds()
     this->AxisY->setRange(-10, 10);
     this->AxisZ->setRange(-10, 10);
     }
-
-  const char* xlabel = viewPxy->GetAxisLabel(0);
-  const char* ylabel = viewPxy->GetAxisLabel(1);
-  const char* zlabel = viewPxy->GetAxisLabel(2);
-  this->AxisX->setTitle(xlabel? xlabel : "X");
-  this->AxisY->setTitle(ylabel? ylabel : "Y");
-  this->AxisZ->setTitle(zlabel? zlabel : "Z");
 
   // Make sure we render the new range
   this->AxisX->renderView();
@@ -213,9 +222,56 @@ void pqMultiSliceView::updateSlices()
 
   // Get back to an idle mode
   this->UserIsInteracting = false;
+}
+
+//-----------------------------------------------------------------------------
+int pqMultiSliceView::getAxisIndex(QObject* axis)
+{
+  for (int cc=0; cc < 3; cc++)
+    {
+    if (this->AxisXYZ[cc] == axis)
+      {
+      return cc;
+      }
+    }
+  return -1;
+}
+
+//-----------------------------------------------------------------------------
+void pqMultiSliceView::onSliceAdded(int activeSliceIndex)
+{
+  QObject* aSender = this->sender();
+  int axisIndex = this->getAxisIndex(aSender);
+
+  Q_ASSERT(axisIndex >= 0 && axisIndex <=2);
+  this->updateSlices();
 
   // Notify that the slices location have changed
-  emit slicesChanged();
+  emit sliceAdded(axisIndex, activeSliceIndex);
+}
+
+//-----------------------------------------------------------------------------
+void pqMultiSliceView::onSliceRemoved(int activeSliceIndex)
+{
+  QObject* aSender = this->sender();
+  int axisIndex = this->getAxisIndex(aSender);
+  Q_ASSERT(axisIndex >= 0 && axisIndex <=2);
+  this->updateSlices();
+
+  // Notify that the slices location have changed
+  emit sliceRemoved(axisIndex, activeSliceIndex);
+}
+
+//-----------------------------------------------------------------------------
+void pqMultiSliceView::onSliceModified(int activeSliceIndex)
+{
+  QObject* aSender = this->sender();
+  int axisIndex = this->getAxisIndex(aSender);
+  Q_ASSERT(axisIndex >= 0 && axisIndex <=2);
+  this->updateSlices();
+
+  // Notify that the slices location have changed
+  emit sliceModified(axisIndex, activeSliceIndex);
 }
 
 //-----------------------------------------------------------------------------
@@ -274,7 +330,7 @@ void pqMultiSliceView::updateViewModelCallBack(vtkObject*,unsigned long, void*)
   this->render();
 }
 //-----------------------------------------------------------------------------
-const double* pqMultiSliceView::GetSlices(int axisIndex, int &numberOfSlices)
+const double* pqMultiSliceView::GetVisibleSlices(int axisIndex, int &numberOfSlices)
 {
   switch(axisIndex)
     {
@@ -284,6 +340,24 @@ const double* pqMultiSliceView::GetSlices(int axisIndex, int &numberOfSlices)
     return this->AxisY->getVisibleSlices(numberOfSlices);
   case 2:
     return this->AxisZ->getVisibleSlices(numberOfSlices);
+    }
+
+  // Invalid axis
+  numberOfSlices = 0;
+  return NULL;
+}
+
+//-----------------------------------------------------------------------------
+const double* pqMultiSliceView::GetAllSlices(int axisIndex, int &numberOfSlices)
+{
+  switch(axisIndex)
+    {
+  case 0:
+    return this->AxisX->getSlices(numberOfSlices);
+  case 1:
+    return this->AxisY->getSlices(numberOfSlices);
+  case 2:
+    return this->AxisZ->getSlices(numberOfSlices);
     }
 
   // Invalid axis

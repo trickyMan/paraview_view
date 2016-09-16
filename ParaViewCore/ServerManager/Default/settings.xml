@@ -91,7 +91,6 @@
         </EnumerationDomain>
         <Hints>
           <RestartRequired />
-          <SaveInQSettings />
         </Hints>
       </IntVectorProperty>
 
@@ -105,6 +104,22 @@
           from multi-component arrays.
         </Documentation>
         <BooleanDomain name="bool"/>
+      </IntVectorProperty>
+
+      <IntVectorProperty name="BlockColorsDistinctValues"
+                         number_of_elements="1"
+                         default_values="12"
+                         command="SetBlockColorsDistinctValues"
+                         panel_visibility="advanced">
+        <Documentation>
+          Determines the number of distinct values in
+          vtkBlockColors. This array is added to each block if
+          the dataset is a composite dataset. The array has one value
+          set to the reminder of blockIndex divided by
+          BlockColorsDistinctValues (blockIndex mod
+          BlockColorsDistinctValues).
+        </Documentation>
+        <IntRangeDomain min="2" name="range" />
       </IntVectorProperty>
 
       <IntVectorProperty name="TransferFunctionResetMode"
@@ -290,6 +305,7 @@
 
       <PropertyGroup label="Data Processing Options">
         <Property name="AutoConvertProperties" />
+        <Property name="BlockColorsDistinctValues" />
       </PropertyGroup>
 
       <PropertyGroup label="Multicore Support">
@@ -418,7 +434,7 @@
 
       <DoubleVectorProperty name="LODThreshold"
         label="LOD Threshold"
-        default_values="5.0"
+        default_values="20.0"
         number_of_elements="1">
         <DoubleRangeDomain name="range" min="0.0" max="102400.0" />
         <Documentation>
@@ -550,6 +566,18 @@
         </Documentation>
       </IntVectorProperty>
 
+      <IntVectorProperty name="PointPickingRadius"
+                         command="SetPointPickingRadius"
+                         default_values="50"
+                         number_of_elements="1"
+                         panel_visibility="advanced">
+        <IntRangeDomain name="range" min="0" max="100" />
+        <Documentation>
+          Set the radius (in pixels) to include when using *Select Points On*
+          to click-and-select a single point on the **Render View**.
+        </Documentation>
+      </IntVectorProperty>
+
       <PropertyGroup label="Geometry Mapper Options">
         <Property name="UseDisplayLists" />
         <Property name="ResolveCoincidentTopology" />
@@ -633,6 +661,29 @@
       <PropertyGroup label="3D Interaction Options">
         <Property name="Camera3DManipulators" />
       </PropertyGroup>
+      <Hints>
+        <UseDocumentationForLabels />
+      </Hints>
+    </SettingsProxy>
+
+    <!-- ================================================================== -->
+    <SettingsProxy name="RepresentedArrayListSettings"
+                   label="Color Arrays"
+                   processes="client"
+                   class="vtkPVRepresentedArrayListSettings">
+      <StringVectorProperty command="SetFilterExpression"
+                            name="FilterExpressions"
+                            label="Filter Expressions"
+                            number_of_elements_per_command="1"
+                            repeat_command="1"
+                            set_number_command="SetNumberOfFilterExpressions"
+                            use_index="1">
+        <Documentation>
+          List of expressions used to filter out arrays you do not want to display in the color array list.
+        </Documentation>
+        <!--<StringListDomain name="blah">
+        </StringListDomain>-->
+      </StringVectorProperty>
       <Hints>
         <UseDocumentationForLabels />
       </Hints>

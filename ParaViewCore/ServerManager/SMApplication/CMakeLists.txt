@@ -37,6 +37,11 @@ SET_SOURCE_FILES_PROPERTIES(
   ABSTRACT
   )
 
+# OpenGL2 specific definitions
+if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
+  add_definitions(-DVTKGL2)
+endif()
+
 vtk_module_library(vtkPVServerManagerApplication ${Module_SRCS})
 
 #------------------------------------------------------------------------------
@@ -110,6 +115,32 @@ SET(requestedResourceFiles
   ${CMAKE_CURRENT_SOURCE_DIR}/Resources/writers.xml
   ${module_sm_xmls}
   )
+if (PARAVIEW_USE_MPI)
+  list(APPEND requestedResourceFiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/proxies_mpi.xml)
+endif()
+if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
+  list(APPEND requestedResourceFiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/proxies_opengl2.xml)
+else()
+  # Old OpenGL.
+  list(APPEND requestedResourceFiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/proxies_opengl1.xml)
+endif()
+
+#------------------------------------------------------------------------------
+list(FIND VTK_MODULES_ENABLED "vtkIOXdmf3" vtkioxdmf3_index)
+if (vtkioxdmf3_index GREATER 0)
+  list(APPEND requestedResourceFiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/proxies_xdmf3.xml)
+endif()
+
+list(FIND VTK_MODULES_ENABLED "vtkIOADIOS" vtkioadios_index)
+if (vtkioadios_index GREATER 0)
+  list(APPEND requestedResourceFiles
+    ${CMAKE_CURRENT_SOURCE_DIR}/Resources/proxies_adios.xml)
+endif()
+#------------------------------------------------------------------------------
 
 if (PARAVIEW_ENABLE_PYTHON)
   list(APPEND requestedResourceFiles

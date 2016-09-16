@@ -35,9 +35,11 @@
 #include "vtkTable.h"
 #include "vtkTimerLog.h"
 #include "vtkUniformGrid.h"
+#include "vtkUnsignedCharArray.h"
+#include "vtkSmartPointer.h"
 
 #include <map>
-
+#include <vector>
 vtkStandardNewMacro(vtkAMRFragmentIntegration);
 
 vtkAMRFragmentIntegration::vtkAMRFragmentIntegration ()
@@ -125,16 +127,16 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
       vtkErrorMacro ("No RegionID in volume.  Run Connectivity filter.");
       return 0;
       }
-    vtkDataArray* ghostLevels = grid->GetCellData ()->GetArray ("vtkGhostLevels");
-    if (!ghostLevels) 
+    vtkUnsignedCharArray* ghostArray = grid->GetCellGhostArray();
+    if (!ghostArray) 
       {
-      vtkErrorMacro ("No vtkGhostLevels array attached to the CTH volume data");
+      vtkErrorMacro ("No ghost array attached to the CTH volume data");
       return 0;
       }
     for (int c = 0; c < grid->GetNumberOfCells (); c ++)
       {
       vtkIdType fragId = static_cast<vtkIdType> (regionId->GetTuple1 (c));
-      if (ghostLevels->GetTuple1 (c) < 0.5)
+      if ((ghostArray->GetValue (c) & vtkDataSetAttributes::DUPLICATECELL) == 0)
         {
         vtkIdType index = fragIndices.size ();
         fragIndices[fragId] = index;
@@ -174,30 +176,28 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
   fragments->AddColumn (fragMass);
   fragMass->Delete ();
 
-  vtkDoubleArray** volWeightArrays = new vtkDoubleArray*[volumeWeightedNames.size ()];
+  std::vector<vtkSmartPointer<vtkDoubleArray> > volWeightArrays(volumeWeightedNames.size());
   for (size_t v = 0; v < volumeWeightedNames.size (); v ++)
     {
-    volWeightArrays[v] = vtkDoubleArray::New ();
+    volWeightArrays[v] = vtkSmartPointer<vtkDoubleArray>::New ();
     std::string name ("Volume Weighted ");
     name += volumeWeightedNames[v];
     volWeightArrays[v]->SetName (name.c_str ());
     volWeightArrays[v]->SetNumberOfComponents (1);
     volWeightArrays[v]->SetNumberOfTuples (totalFragments + 1);
     fragments->AddColumn (volWeightArrays[v]);
-    volWeightArrays[v]->Delete ();
     }
 
-  vtkDoubleArray** massWeightArrays = new vtkDoubleArray*[massWeightedNames.size ()];
+  std::vector<vtkSmartPointer<vtkDoubleArray> > massWeightArrays(massWeightedNames.size());
   for (size_t m = 0; m < massWeightedNames.size (); m ++)
     {
-    massWeightArrays[m] = vtkDoubleArray::New ();
+    massWeightArrays[m] = vtkSmartPointer<vtkDoubleArray>::New ();
     std::string name ("Mass Weighted ");
     name += massWeightedNames[m];
     massWeightArrays[m]->SetName (name.c_str ());
     massWeightArrays[m]->SetNumberOfComponents (1);
     massWeightArrays[m]->SetNumberOfTuples (totalFragments + 1);
     fragments->AddColumn (massWeightArrays[m]);
-    massWeightArrays[m]->Delete ();
     }
 
   for (int i = 0; i < fragIdArray->GetNumberOfTuples (); i ++) 
@@ -216,8 +216,8 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
     }
   vtkTimerLog::MarkEndEvent ("Initializing arrays");
 
-  vtkDataArray** preVolWeightArrays = new vtkDataArray*[volumeWeightedNames.size ()];
-  vtkDataArray** preMassWeightArrays = new vtkDataArray*[massWeightedNames.size ()];
+  std::vector<vtkDataArray*>preVolWeightArrays(volumeWeightedNames.size());
+  std::vector<vtkDataArray*>preMassWeightArrays(massWeightedNames.size());
 
   vtkTimerLog::MarkStartEvent ("Independent integration");
   for (iter->InitTraversal (); !iter->IsDoneWithTraversal (); iter->GoToNextItem ())
@@ -228,10 +228,10 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
       vtkErrorMacro ("NonOverlappingAMR not made up of UniformGrids");
       return 0;
       }
-    vtkDataArray* ghostLevels = grid->GetCellData ()->GetArray ("vtkGhostLevels");
-    if (!ghostLevels) 
+    vtkUnsignedCharArray* ghostArray = grid->GetCellGhostArray();
+    if (!ghostArray) 
       {
-      vtkErrorMacro ("No vtkGhostLevels array attached to the CTH volume data");
+      vtkErrorMacro ("No ghost array attached to the CTH volume data");
       return 0;
       }
     std::string regionName ("RegionId-");
@@ -266,7 +266,8 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
     double cellVol = spacing[0] * spacing[1] * spacing[2];
     for (int c = 0; c < grid->GetNumberOfCells (); c ++)
       {
-      if (regionId->GetTuple1 (c) > 0.0 && ghostLevels->GetTuple1 (c) < 0.5) 
+      if (regionId->GetTuple1 (c) > 0.0 && 
+          (ghostArray->GetValue (c) & vtkDataSetAttributes::DUPLICATECELL) == 0)
         {
         vtkIdType fragId = static_cast<vtkIdType> (regionId->GetTuple1 (c));
         std::map<vtkIdType, vtkIdType>::iterator loc = fragIndices.find (fragId);
@@ -318,15 +319,15 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
     fragMassReceive->SetNumberOfComponents (1);
     // fragMassReceive->SetNumberOfTuples (totalFragments + 1);
 
-    vtkDoubleArray** volWeightReceive = new vtkDoubleArray*[volumeWeightedNames.size ()];
+    std::vector<vtkSmartPointer<vtkDoubleArray> >volWeightReceive(volumeWeightedNames.size());
     for (size_t v = 0; v < volumeWeightedNames.size (); v ++)
       {
-      volWeightReceive[v] = vtkDoubleArray::New ();
+      volWeightReceive[v] = vtkSmartPointer<vtkDoubleArray>::New ();
       volWeightReceive[v]->SetNumberOfComponents (1);
       // volWeightReceive[v]->SetNumberOfTuples (totalFragments + 1);
       }
 
-    vtkDoubleArray** massWeightReceive = new vtkDoubleArray*[massWeightedNames.size ()];
+    std::vector<vtkSmartPointer<vtkDoubleArray> > massWeightReceive(massWeightedNames.size());
     for (size_t m = 0; m < massWeightedNames.size (); m ++)
       {
       massWeightReceive[m] = vtkDoubleArray::New ();
@@ -448,19 +449,6 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
     fragIndicesReceive->Delete ();
     fragVolumeReceive->Delete ();
     fragMassReceive->Delete ();
-
-    for (size_t v = 0; v < volumeWeightedNames.size (); v ++)
-      {
-      volWeightReceive[v]->Delete ();
-      }
-
-    for (size_t m = 0; m < massWeightedNames.size (); m ++)
-      {
-      massWeightReceive[m]->Delete ();
-      }
-
-    delete [] volWeightReceive;
-    delete [] massWeightReceive;
     }
 
   if (myProc == 0)
@@ -494,9 +482,5 @@ vtkTable* vtkAMRFragmentIntegration::DoRequestData(vtkNonOverlappingAMR* volume,
     fragments->SetNumberOfRows (0);
     }
   vtkTimerLog::MarkEndEvent ("Combining integration");
-
-  delete [] volWeightArrays;
-  delete [] massWeightArrays;
-
   return fragments;
 }

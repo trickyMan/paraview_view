@@ -32,6 +32,7 @@ set (Module_SRCS
   vtk3DWidgetRepresentation.cxx
   vtkAMROutlineRepresentation.cxx
   vtkAMRStreamingPriorityQueue.cxx
+  vtkAMRStreamingVolumeRepresentation.cxx
   vtkCacheSizeKeeper.cxx
   vtkCaveSynchronizedRenderers.cxx
   vtkChartRepresentation.cxx
@@ -70,6 +71,7 @@ set (Module_SRCS
   vtkPVImplicitPlaneRepresentation.cxx
   vtkPVLastSelectionInformation.cxx
   vtkPVMultiSliceView.cxx
+  vtkPVOpenGLInformation.cxx
   vtkPVOpenGLExtensionsInformation.cxx
   vtkPVOrthographicSliceView.cxx
   vtkPVParallelCoordinatesRepresentation.cxx
@@ -86,6 +88,7 @@ set (Module_SRCS
   vtkPVSynchronizedRenderWindows.cxx
   vtkPVView.cxx
   vtkPVXYChartView.cxx
+  vtkQuartileChartRepresentation.cxx
   vtkSelectionDeliveryFilter.cxx
   vtkSelectionRepresentation.cxx
   vtkSpreadSheetRepresentation.cxx
@@ -98,12 +101,6 @@ set (Module_SRCS
   vtkXYChartRepresentation.cxx
 )
 
-# Disabled unless using the OpenGL backend.
-if ("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL")
-  list(APPEND Module_SRCS
-    vtkAMRStreamingVolumeRepresentation.cxx
-    )
-endif()
 if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
   add_definitions(-DVTKGL2)
 endif()
@@ -141,3 +138,5 @@ set (${vtk-module}_HDRS vtkStreamingPriorityQueue.h)
 # Use a custom hints file for this module.
 set(${vtk-module}_WRAP_HINTS "${CMAKE_CURRENT_SOURCE_DIR}/hints")
 vtk_module_library(vtkPVClientServerCoreRendering ${Module_SRCS})
+include(vtkOpenGL)
+vtk_opengl_link(vtkPVClientServerCoreRendering)

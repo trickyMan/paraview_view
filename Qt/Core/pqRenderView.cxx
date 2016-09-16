@@ -38,8 +38,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkIntArray.h"
 #include "vtkProcessModule.h"
 #include "vtkPVDataInformation.h"
-#include "vtkPVGenericRenderWindowInteractor.h"
-#include "vtkPVInteractorStyle.h"
 #include "vtkPVRenderView.h"
 #include "vtkSelection.h"
 #include "vtkSelectionNode.h"
@@ -66,7 +64,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QMouseEvent>
 #include <QMenu>
 #include <QSet>
-#include <QPrinter>
 #include <QPainter>
 #include <QGridLayout>
 
@@ -108,11 +105,9 @@ public:
   bool UpdatingStack;
   int CurrentInteractionMode;
 
-  bool InitializedWidgets;
   pqInternal()
     {
     this->CurrentInteractionMode = -1;
-    this->InitializedWidgets = false;
     this->UpdatingStack = false;
     this->InteractionUndoStack = vtkSmartPointer<vtkSMUndoStack>::New();
     // FIXME this->InteractionUndoStack->SetClientOnly(true);
@@ -186,33 +181,28 @@ vtkSMRenderViewProxy* pqRenderView::getRenderViewProxy() const
 }
 
 //-----------------------------------------------------------------------------
-QWidget* pqRenderView::createWidget() 
+void pqRenderView::initialize()
 {
-  QWidget* vtkwidget = this->Superclass::createWidget();
-  return vtkwidget;
+  this->Superclass::initialize();
+
+  // initialize the interaction undo-redo stack.
+  vtkSMRenderViewProxy* viewProxy = this->getRenderViewProxy();
+  this->Internal->UndoStackBuilder->SetRenderView(viewProxy);
 }
 
 //-----------------------------------------------------------------------------
-// This method is called for all pqRenderView objects irrespective
-// of whether it is created from state/undo-redo/python or by the GUI. Hence
-// don't change any render module properties here.
-void pqRenderView::initializeWidgets()
+QWidget* pqRenderView::createWidget()
 {
-  if (this->Internal->InitializedWidgets)
+  QWidget* vtkwidget = this->Superclass::createWidget();
+  if (QVTKWidget* qvtkwidget = qobject_cast<QVTKWidget*>(vtkwidget))
     {
-    return;
+    vtkSMRenderViewProxy* renModule = this->getRenderViewProxy();
+    qvtkwidget->SetRenderWindow(renModule->GetRenderWindow());
+    // This is needed to ensure that the interactor is initialized with
+    // ParaView specific interactor styles etc.
+    renModule->SetupInteractor(qvtkwidget->GetInteractor());
     }
-
-  this->Internal->InitializedWidgets = true;
-
-  vtkSMRenderViewProxy* renModule = this->getRenderViewProxy();
-
-  QVTKWidget* vtkwidget = qobject_cast<QVTKWidget*>(this->getWidget());
-  if (vtkwidget)
-    {
-    vtkwidget->SetRenderWindow(renModule->GetRenderWindow());
-    }
-  this->Internal->UndoStackBuilder->SetRenderView(renModule);
+  return vtkwidget;
 }
 
 //-----------------------------------------------------------------------------
@@ -366,7 +356,7 @@ void pqRenderView::linkToOtherView()
 {
   pqLinkViewWidget* linkWidget = new pqLinkViewWidget(this);
   linkWidget->setAttribute(Qt::WA_DeleteOnClose);
-  QPoint pos = this->getWidget()->mapToGlobal(QPoint(2,2));
+  QPoint pos = this->widget()->mapToGlobal(QPoint(2,2));
   linkWidget->move(pos);
   linkWidget->show();
 }
@@ -530,10 +520,10 @@ void pqRenderView::resetViewDirection(
 }
 
 //-----------------------------------------------------------------------------
-void pqRenderView::selectOnSurface(int rect[4], bool expand)
+void pqRenderView::selectOnSurface(int rect[4], pqSelectionOperator selOp)
 {
   QList<pqOutputPort*> opPorts;
-  this->selectOnSurfaceInternal(rect, opPorts, false, expand, false);
+  this->selectOnSurfaceInternal(rect, opPorts, false, selOp, false);
   this->emitSelectionSignal(opPorts);
 }
 
@@ -593,7 +583,7 @@ void pqRenderView::collectSelectionPorts(
   vtkCollection* selectedRepresentations,
   vtkCollection* selectionSources,
   QList<pqOutputPort*>& output_ports,
-  bool expand,
+  pqSelectionOperator selOp,
   bool select_blocks)
 {
   if (!selectedRepresentations ||
@@ -643,9 +633,15 @@ void pqRenderView::collectSelectionPorts(
       selectionSource.TakeReference(newSelSource);
       }
 
-    if (expand)
+    if (selOp == PV_SELECTION_MERGE)
       {
       vtkSMSelectionHelper::MergeSelection(selectionSource,
+        opPort->getSelectionInput(),
+        selectedSource, opPort->getPortNumber());
+      }
+    else if (selOp == PV_SELECTION_SUBTRACT)
+      {
+      vtkSMSelectionHelper::SubtractSelection(selectionSource,
         opPort->getSelectionInput(),
         selectedSource, opPort->getPortNumber());
       }
@@ -658,7 +654,7 @@ void pqRenderView::collectSelectionPorts(
 void pqRenderView::selectOnSurfaceInternal(
   int rect[4], QList<pqOutputPort*>& pqOutputPorts,
   bool select_points,
-  bool expand,
+  pqSelectionOperator selOp,
   bool select_blocks)
 {
   BEGIN_UNDO_EXCLUDE();
@@ -692,34 +688,34 @@ void pqRenderView::selectOnSurfaceInternal(
 
   END_UNDO_EXCLUDE();
   this->collectSelectionPorts(selectedRepresentations,
-    selectionSources, pqOutputPorts, expand, select_blocks);
+    selectionSources, pqOutputPorts, selOp, select_blocks);
 }
 
 //-----------------------------------------------------------------------------
-void pqRenderView::selectPointsOnSurface(int rect[4], bool expand)
+void pqRenderView::selectPointsOnSurface(int rect[4], pqSelectionOperator selOp)
 {
   QList<pqOutputPort*> output_ports;
-  this->selectOnSurfaceInternal(rect, output_ports, true, expand, false);
+  this->selectOnSurfaceInternal(rect, output_ports, true, selOp, false);
   // Fire selection event to let the world know that this view selected
   // something.
   this->emitSelectionSignal(output_ports);
 }
 
 //-----------------------------------------------------------------------------
-void pqRenderView::selectPolygonPoints(vtkIntArray* polygon, bool expand)
+void pqRenderView::selectPolygonPoints(vtkIntArray* polygon, pqSelectionOperator selOp)
 {
   QList<pqOutputPort*> output_ports;
-  this->selectPolygonInternal(polygon, output_ports, true, expand, false);
+  this->selectPolygonInternal(polygon, output_ports, true, selOp, false);
   // Fire selection event to let the world know that this view selected
   // something.
   this->emitSelectionSignal(output_ports);
 }
 
 //-----------------------------------------------------------------------------
-void pqRenderView::selectPolygonCells(vtkIntArray* polygon, bool expand)
+void pqRenderView::selectPolygonCells(vtkIntArray* polygon, pqSelectionOperator selOp)
 {
   QList<pqOutputPort*> output_ports;
-  this->selectPolygonInternal(polygon, output_ports, false, expand, false);
+  this->selectPolygonInternal(polygon, output_ports, false, selOp, false);
   // Fire selection event to let the world know that this view selected
   // something.
   this->emitSelectionSignal(output_ports);
@@ -728,7 +724,7 @@ void pqRenderView::selectPolygonCells(vtkIntArray* polygon, bool expand)
 //-----------------------------------------------------------------------------
 void pqRenderView::selectPolygonInternal(vtkIntArray* polygon,
   QList<pqOutputPort*>& pqOutputPorts,  bool select_points,
-  bool expand, bool select_blocks)
+  pqSelectionOperator selOp, bool select_blocks)
 {
   vtkSMRenderViewProxy* renderModuleP = this->getRenderViewProxy();
   vtkSmartPointer<vtkCollection> selectedRepresentations =
@@ -760,7 +756,7 @@ void pqRenderView::selectPolygonInternal(vtkIntArray* polygon,
 
   END_UNDO_EXCLUDE();
   this->collectSelectionPorts(selectedRepresentations,
-    selectionSources, pqOutputPorts, expand, select_blocks);
+    selectionSources, pqOutputPorts, selOp, select_blocks);
 }
 
 //-----------------------------------------------------------------------------
@@ -786,7 +782,7 @@ void pqRenderView::selectFrustum(int rect[4])
   END_UNDO_EXCLUDE();
 
   this->collectSelectionPorts(selectedRepresentations,
-    selectionSources, output_ports, false, false);
+    selectionSources, output_ports, PV_SELECTION_NEW, false);
 
   // Fire selection event to let the world know that this view selected
   // something.
@@ -816,7 +812,7 @@ void pqRenderView::selectFrustumPoints(int rect[4])
   END_UNDO_EXCLUDE();
 
   this->collectSelectionPorts(selectedRepresentations,
-    selectionSources, output_ports, false, false);
+    selectionSources, output_ports, PV_SELECTION_NEW, false);
 
   // Fire selection event to let the world know that this view selected
   // something.
@@ -824,11 +820,11 @@ void pqRenderView::selectFrustumPoints(int rect[4])
 }
 
 //-----------------------------------------------------------------------------
-void pqRenderView::selectBlock(int rectangle[4], bool expand)
+void pqRenderView::selectBlock(int rectangle[4], pqSelectionOperator selOp)
 {
   bool block = this->blockSignals(true);
   QList<pqOutputPort*> opPorts;
-  this->selectOnSurfaceInternal(rectangle, opPorts, false, expand, true);
+  this->selectOnSurfaceInternal(rectangle, opPorts, false, selOp, true);
   this->blockSignals(block);
   this->emitSelectionSignal(opPorts);
 }
@@ -900,5 +896,5 @@ void pqRenderView::onInteractionModeChange()
 //-----------------------------------------------------------------------------
 void pqRenderView::setCursor(const QCursor &c)
 {
-  this->getWidget()->setCursor(c);
+  this->widget()->setCursor(c);
 }

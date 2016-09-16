@@ -31,6 +31,7 @@
 #include "vtkPointData.h"
 #include "vtkPolygon.h"
 #include "vtkTriangle.h"
+#include "vtkUnsignedCharArray.h"
 #include "vtkUnstructuredGrid.h"
 
 
@@ -129,8 +130,7 @@ void vtkIntegrateAttributes::ExecuteBlock(
   vtkIntegrateAttributes::vtkFieldList& pdList,
   vtkIntegrateAttributes::vtkFieldList& cdList)
 {
-  vtkDataArray* ghostLevelArray =
-    input->GetCellData()->GetArray("vtkGhostLevels");
+  vtkUnsignedCharArray* ghostArray = input->GetCellGhostArray();
 
   // This is sort of a hack since it's incredibly painful to change all the
   // signatures to take the pdList, cdList and fieldset_index.
@@ -146,8 +146,11 @@ void vtkIntegrateAttributes::ExecuteBlock(
   for (cellId = 0; cellId < numCells; ++cellId)
     {
     cellType = input->GetCellType(cellId);
-    // Make sure we are not integrating ghost cells.
-    if (ghostLevelArray && ghostLevelArray->GetComponent(cellId,0) > 0.0)
+    // Make sure we are not integrating ghost/blanked cells.
+    if (ghostArray &&
+        (ghostArray->GetValue(cellId) &
+         (vtkDataSetAttributes::DUPLICATECELL |
+          vtkDataSetAttributes::HIDDENCELL)))
       {
       continue;
       }
@@ -530,15 +533,6 @@ int vtkIntegrateAttributes::RequestData(vtkInformation*,
       pt[2] = this->SumCenter[2];
       }
     output->GetPoints()->SetPoint(0, pt);
-
-    if (output->GetPointData()->GetArray("vtkGhostLevels"))
-      {
-      output->GetPointData()->RemoveArray("vtkGhostLevels");
-      }
-    if (output->GetCellData()->GetArray("vtkGhostLevels"))
-      {
-      output->GetCellData()->RemoveArray("vtkGhostLevels");
-      }
     }
 
   return 1;

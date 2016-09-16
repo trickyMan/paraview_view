@@ -136,6 +136,11 @@ def CreateView(view_xml_name, **params):
     SetProperties(view, **params)
     controller.PostInitializeProxy(view)
     controller.RegisterViewProxy(view, registrationName)
+
+    # setup an interactor if current process support interaction if an
+    # interactor hasn't already been set. This overcomes the problem where VTK
+    # segfaults if the interactor is created after the window was created.
+    view.MakeRenderWindowInteractor(True)
     return view
 
 # -----------------------------------------------------------------------------
@@ -234,6 +239,12 @@ def Render(view=None):
     """Renders the given view (default value is active view)"""
     if not view:
         view = active_objects.view
+    if not view:
+        raise AttributeError, "view cannot be None"
+    # setup an interactor if current process support interaction if an
+    # interactor hasn't already been set. This overcomes the problem where VTK
+    # segfaults if the interactor is created after the window was created.
+    view.MakeRenderWindowInteractor(True)
     view.StillRender()
     if _funcs_internals.first_render:
         # Not all views have a ResetCamera method
@@ -248,6 +259,26 @@ def Render(view=None):
 def RenderAllViews():
     """Render all views"""
     for view in GetViews(): Render(view)
+
+# -----------------------------------------------------------------------------
+def Interact(view=None):
+    """Call this method to start interacting with a view. This method will
+    block till the interaction is done. This method will simply return
+    if the local process cannot support interactions."""
+    if not view:
+        view = active_objects.view
+    if not view:
+        raise ValueError, "view argument cannot be None"
+    if not view.MakeRenderWindowInteractor(False):
+        raise RuntimeError, "Configuration doesn't support interaction."
+    paraview.print_debug_info("Staring interaction. Use 'q' to quit.")
+
+    # Views like ComparativeRenderView require that Render() is called before
+    # the Interaction is begun. Hence we call a Render() before start the
+    # interactor loop. This also avoids the case where there are pending updates
+    # and thus the interaction will be begun on stale datasets.
+    Render(view)
+    view.GetInteractor().Start()
 
 # -----------------------------------------------------------------------------
 
@@ -324,7 +355,7 @@ def LoadState(filename, connection=None):
 # -----------------------------------------------------------------------------
 
 def SaveState(filename):
-    servermanager.SaveXMLState(filename)
+    servermanager.SaveState(filename)
 
 #==============================================================================
 # Representation methods
@@ -546,7 +577,7 @@ def RenameSource(newName, proxy=None):
         proxy = active_objects.source
     pxm = servermanager.ProxyManager()
     oldName = pxm.GetProxyName("sources", proxy)
-    if oldName:
+    if oldName and newName != oldName:
       pxm.RegisterProxy("sources", newName, proxy)
       pxm.UnRegisterProxy("sources", oldName, proxy)
 
@@ -941,6 +972,13 @@ def GetOpacityTransferFunction(arrayname, **params):
     return otf
 
 # -----------------------------------------------------------------------------
+def ImportPresets(filename):
+    """Import presets from a file. The file can be in the legacy color map xml
+    format or in the new JSON format. Returns True on success."""
+    presets = servermanager.vtkSMTransferFunctionPresets()
+    return presets.ImportPresets(filename)
+
+# -----------------------------------------------------------------------------
 def CreateLookupTable(**params):
     """Create and return a lookup table.  Optionally, parameters can be given
     to assign to the lookup table.
@@ -1269,6 +1307,19 @@ def LoadDistributedPlugin(pluginname, remote=True, ns=None):
     raise RuntimeError, "Plugin '%s' not found" % pluginname
 
 #==============================================================================
+# Custom Filters Management
+#==============================================================================
+def LoadCustomFilters(filename, ns=None):
+    """Loads a custom filter XML file and updates this module with new
+    constructors if any.
+    If you loaded the simple module with from paraview.simple import *,
+    make sure to pass globals() as an argument."""
+    servermanager.ProxyManager().SMProxyManager.LoadCustomProxyDefinitions(filename)
+    if not ns:
+        ns = globals()
+    _add_functions(ns)
+
+#==============================================================================
 # Selection Management
 #==============================================================================
 def _select(seltype, query=None, proxy=None):
@@ -1500,6 +1551,8 @@ def _create_func(key, module):
         # these functions for pipeline proxies or animation proxies.
         if isinstance(px, servermanager.SourceProxy):
             controller.RegisterPipelineProxy(px, registrationName)
+        elif px.GetXMLGroup() == "animation":
+           controller.RegisterAnimationProxy(px)
         return px
 
     return CreateObject

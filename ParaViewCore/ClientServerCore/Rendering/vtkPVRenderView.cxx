@@ -19,7 +19,9 @@
 #include "vtkBoundingBox.h"
 #include "vtkCamera.h"
 #include "vtkCommand.h"
+#include "vtkCuller.h"
 #include "vtkDataRepresentation.h"
+#include "vtkPVGridAxes3DActor.h"
 #include "vtkInformationDoubleKey.h"
 #include "vtkInformationDoubleVectorKey.h"
 #include "vtkInformation.h"
@@ -49,7 +51,6 @@
 #include "vtkPVDataDeliveryManager.h"
 #include "vtkPVDataRepresentation.h"
 #include "vtkPVDisplayInformation.h"
-#include "vtkPVGenericRenderWindowInteractor.h"
 #include "vtkPVHardwareSelector.h"
 #include "vtkPVInteractorStyle.h"
 #include "vtkPVOptions.h"
@@ -132,9 +133,103 @@ public:
     {
     }
 #endif // PARAVIEW_USE_PISTON
-
 };
 
+namespace
+{
+  // In multi-process rendering modes, data delivered to a set of ranks is not
+  // not cleared until the data pipeline updates. This avoids having to
+  // redeliver data when simply switching between remote and local rendering
+  // modes. Now consider this case. You're rendering a Sphere in client-server
+  // mode with remote rendering disabled; the geometry is delivered to the
+  // client. Next, you switch to force remote-rendering; the geometry delivered
+  // to the client is still there and hence will get rendered, even through
+  // we'll replace the pixels with those obtained from the server. Hence, we
+  // need to cull the props in the composited renderer on the local process when
+  // it's not participating in the compositing. This culler enables us to do
+  // that. We also add support to add props to the DoNotCullList since the
+  // vtkPVGridAxes3DActor is an exception to this rule.
+  class vtkPVRendererCuller : public vtkCuller
+  {
+public:
+  static vtkPVRendererCuller* New();
+  vtkTypeMacro(vtkPVRendererCuller, vtkCuller);
+
+  virtual double Cull(vtkRenderer *vtkNotUsed(ren), vtkProp **propList,
+                      int& listLength, int& initialized)
+    {
+    double total_time = 0;
+    double *allocatedTimeList = new double[listLength];
+    for (int propLoop = 0; propLoop < listLength; ++propLoop)
+      {
+      // Get the prop out of the list
+      vtkProp* prop = propList[propLoop];
+      double prop_time = initialized? prop->GetRenderTimeMultiplier() : 1.0;
+      if (this->RenderOnLocalProcess == false &&
+          this->DoNotCullList.find(prop) == this->DoNotCullList.end())
+        {
+        prop_time = 0;
+        }
+      prop->SetRenderTimeMultiplier(prop_time);
+      allocatedTimeList[propLoop] = prop_time;
+      total_time += prop_time;
+      }
+
+    // ========================================================================
+    // The following code is borrowed from vtkFrustumCoverageCuller.
+    // ========================================================================
+    // Now traverse the list from the beginning, swapping any zero entries back
+    // in the list, while preserving the order of the non-zero entries. This
+    // requires two indices for the two items we are comparing at any step.
+    // The second index always moves back by one, but the first index moves back
+    // by one only when it is pointing to something that has a non-zero value.
+    int index1 = 0, index2 = 0;
+    for ( index2 = 1; index2 < listLength; index2++ )
+      {
+      if ( allocatedTimeList[index1] == 0.0 )
+        {
+        if ( allocatedTimeList[index2] != 0.0 )
+          {
+          allocatedTimeList[index1] = allocatedTimeList[index2];
+          propList[index1]          = propList[index2];
+          propList[index2]          = NULL;
+          allocatedTimeList[index2] = 0.0;
+          }
+        else
+          {
+          propList[index1]          = propList[index2]           = NULL;
+          allocatedTimeList[index1] = allocatedTimeList[index2]  = 0.0;
+          }
+        }
+      if (allocatedTimeList[index1] != 0.0)
+        {
+        index1++;
+        }
+      }
+    // Compute the new list length - index1 is always pointing to the
+    // first 0.0 entry or the last entry if none were zero (in which case
+    // we won't change the list length)
+    listLength = (allocatedTimeList[index1] == 0.0)?(index1):listLength;
+    delete[] allocatedTimeList;
+    return total_time;
+    }
+
+  vtkSetMacro(RenderOnLocalProcess, bool);
+  vtkGetMacro(RenderOnLocalProcess, bool);
+
+  // List of props to never cull.
+  std::set<void*> DoNotCullList;
+private:
+  vtkPVRendererCuller() : RenderOnLocalProcess(false)
+    {
+    }
+  ~vtkPVRendererCuller()
+    {
+    }
+  bool RenderOnLocalProcess;
+  };
+  vtkStandardNewMacro(vtkPVRendererCuller);
+}
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkPVRenderView);
@@ -149,9 +244,15 @@ vtkInformationKeyRestrictedMacro(
   vtkPVRenderView, VIEW_PLANES, DoubleVector, 24);
 
 vtkCxxSetObjectMacro(vtkPVRenderView, LastSelection, vtkSelection);
+
+#define VTK_STEREOTYPE_SAME_AS_CLIENT 0
+
 //----------------------------------------------------------------------------
 vtkPVRenderView::vtkPVRenderView()
-  : Annotation()
+  : Annotation(),
+  OrientationWidgetVisibility(false),
+  StereoType(VTK_STEREO_RED_BLUE),
+  ServerStereoType(VTK_STEREOTYPE_SAME_AS_CLIENT)
 {
   this->Internals = new vtkInternals();
   // non-reference counted, so no worries about reference loops.
@@ -200,22 +301,14 @@ vtkPVRenderView::vtkPVRenderView()
   this->NonDistributedRenderingRequired = false;
   this->DistributedRenderingRequiredLOD = false;
   this->NonDistributedRenderingRequiredLOD = false;
+  this->Culler = vtkSmartPointer<vtkPVRendererCuller>::New();
 
   this->SynchronizedRenderers = vtkPVSynchronizedRenderer::New();
-
-  if (this->SynchronizedWindows->GetLocalProcessIsDriver())
-    {
-    this->Interactor = vtkPVGenericRenderWindowInteractor::New();
-    // essential to call Initialize() otherwise first time the render is called
-    // on  the render window, it initializes the interactor which in turn
-    // results in a call to Render() which can cause uncanny side effects.
-    this->Interactor->Initialize();
-    }
 
   vtkRenderWindow* window = this->SynchronizedWindows->NewRenderWindow();
   window->SetMultiSamples(0);
   window->SetOffScreenRendering(this->UseOffscreenRendering? 1 : 0);
-  window->SetInteractor(this->Interactor);
+
   this->RenderView = vtkRenderViewBase::New();
   this->RenderView->SetRenderWindow(window);
   window->Delete();
@@ -238,6 +331,7 @@ vtkPVRenderView::vtkPVRenderView()
   observer->FastDelete();
 
   this->GetRenderer()->SetUseDepthPeeling(1);
+  this->GetRenderer()->AddCuller(this->Culler);
 
   this->Light = vtkLight::New();
   this->Light->SetAmbientColor(1, 1, 1);
@@ -249,14 +343,13 @@ vtkPVRenderView::vtkPVRenderView()
   this->GetRenderer()->AddLight(this->Light);
   this->GetRenderer()->SetAutomaticLightCreation(0);
 
-  if (this->Interactor)
+  // Setup interactor styles. Since these are only needed on the process that
+  // the users interact with, we only create it on the "driver" process.
+  if (this->SynchronizedWindows->GetLocalProcessIsDriver())
     {
     this->InteractorStyle = // Default one will be the 3D
         this->ThreeDInteractorStyle = vtkPVInteractorStyle::New();
     this->TwoDInteractorStyle = vtkPVInteractorStyle::New();
-
-    this->Interactor->SetRenderWindow(this->GetRenderWindow());
-    this->Interactor->SetInteractorStyle(this->ThreeDInteractorStyle);
 
     // Add some default manipulators. Applications can override them without
     // much ado.
@@ -304,7 +397,7 @@ vtkPVRenderView::vtkPVRenderView()
 
   this->OrientationWidget->SetParentRenderer(this->GetRenderer());
   this->OrientationWidget->SetViewport(0, 0, 0.25, 0.25);
-  this->OrientationWidget->SetInteractor(this->Interactor);
+//  this->OrientationWidget->SetInteractor(this->Interactor);
 
   this->GetRenderer()->AddActor(this->CenterAxes);
 
@@ -344,12 +437,8 @@ vtkPVRenderView::~vtkPVRenderView()
   this->Light->Delete();
   this->CenterAxes->Delete();
   this->OrientationWidget->Delete();
+  this->Interactor = 0;
 
-  if (this->Interactor)
-    {
-    this->Interactor->Delete();
-    this->Interactor = 0;
-    }
   if (this->InteractorStyle)
     {
     // Don't want to delete it as it is only pointing to either
@@ -479,9 +568,17 @@ void vtkPVRenderView::RemovePropFromRenderer(vtkProp* prop)
 }
 
 //----------------------------------------------------------------------------
-vtkRenderer* vtkPVRenderView::GetRenderer()
+vtkRenderer* vtkPVRenderView::GetRenderer(int rendererType)
 {
-  return this->RenderView->GetRenderer();
+  switch (rendererType)
+    {
+  case NON_COMPOSITED_RENDERER:
+    return this->GetNonCompositedRenderer();
+  case DEFAULT_RENDERER:
+    return this->RenderView->GetRenderer();
+  default:
+    return NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -501,6 +598,46 @@ vtkCamera* vtkPVRenderView::GetActiveCamera()
 vtkRenderWindow* vtkPVRenderView::GetRenderWindow()
 {
   return this->RenderView->GetRenderWindow();
+}
+
+//----------------------------------------------------------------------------
+vtkRenderWindowInteractor* vtkPVRenderView::GetInteractor()
+{
+  return this->Interactor;
+}
+
+//----------------------------------------------------------------------------
+void vtkPVRenderView::SetupInteractor(vtkRenderWindowInteractor* iren)
+{
+  if (this->GetLocalProcessSupportsInteraction() == false)
+    {
+    // We don't setup interactor on non-driver processes.
+    return;
+    }
+
+  if (this->Interactor != iren)
+    {
+    this->Interactor = iren;
+    this->OrientationWidget->SetInteractor(this->Interactor);
+    if (this->OrientationWidgetVisibility)
+      {
+      // don't ask! vtkPVAxesWidget must die!
+      this->OrientationWidget->SetEnabled(0);
+      this->OrientationWidget->SetEnabled(1);
+      }
+
+    if (this->Interactor)
+      {
+      this->Interactor->SetRenderWindow(this->GetRenderWindow());
+
+      // this will set the interactor style.
+      int mode = this->InteractionMode;
+      this->InteractionMode = -1;
+      this->SetInteractionMode(mode);
+      }
+
+    this->Modified();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -546,6 +683,35 @@ void vtkPVRenderView::SetInteractionMode(int mode)
     case INTERACTION_MODE_ZOOM:
       this->Interactor->SetInteractorStyle(this->RubberBandZoom);
       break;
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkPVRenderView::SetGridAxes3DActor(vtkPVGridAxes3DActor* gridActor)
+{
+  if (this->GridAxes3DActor != gridActor)
+    {
+    vtkPVRendererCuller* culler = vtkPVRendererCuller::SafeDownCast(this->Culler.GetPointer());
+    // we currently don't support grid axes in tile-display mode.
+    const bool in_tile_display_mode = this->InTileDisplayMode();
+    if (this->GridAxes3DActor)
+      {
+      this->GetNonCompositedRenderer()->RemoveViewProp(this->GridAxes3DActor);
+      this->GetRenderer()->RemoveViewProp(this->GridAxes3DActor);
+      culler->DoNotCullList.erase(this->GridAxes3DActor);
+      }
+    this->GridAxes3DActor = gridActor;
+    if (this->GridAxes3DActor && !in_tile_display_mode)
+      {
+      this->GetNonCompositedRenderer()->AddViewProp(this->GridAxes3DActor);
+      this->GetRenderer()->AddViewProp(this->GridAxes3DActor);
+
+      this->GridAxes3DActor->SetEnableLayerSupport(true);
+      this->GridAxes3DActor->SetBackgroundLayer(this->GetRenderer()->GetLayer());
+      this->GridAxes3DActor->SetGeometryLayer(this->GetRenderer()->GetLayer());
+      this->GridAxes3DActor->SetForegroundLayer(this->GetNonCompositedRenderer()->GetLayer());
+      culler->DoNotCullList.insert(this->GridAxes3DActor);
       }
     }
 }
@@ -633,6 +799,13 @@ bool vtkPVRenderView::PrepareSelect(int fieldAssociation)
   this->Selector->SetRenderer(this->GetRenderer());
   this->Selector->SetFieldAssociation(fieldAssociation);
   this->Selector->SetSynchronizedWindows(this->SynchronizedWindows);
+
+  // This is used when in interactive selection and changing the camera
+  if (this->RenderView->GetRenderer()->GetActiveCamera()->GetMTime() > 
+      this->Selector->GetMTime())
+    {
+    this->Selector->Modified();
+    }
   return true;
 }
 
@@ -647,7 +820,10 @@ void vtkPVRenderView::Select(int fieldAssociation, int region[4])
   if (this->SynchronizedWindows->GetEnabled() ||
     this->SynchronizedWindows->GetLocalProcessIsDriver())
     {
+    // we don't render labels for hardware selection
+    this->NonCompositedRenderer->SetDraw(false);
     sel.TakeReference(this->Selector->Select(region));
+    this->NonCompositedRenderer->SetDraw(true);
     }
   this->PostSelect(sel);
 }
@@ -758,10 +934,17 @@ void vtkPVRenderView::SynchronizeGeometryBounds()
     // nodes.
 
     this->CenterAxes->SetUseBounds(0);
+    if (this->GridAxes3DActor)
+      {
+      this->GridAxes3DActor->SetUseBounds(0);
+      }
     double prop_bounds[6];
     this->GetRenderer()->ComputeVisiblePropBounds(prop_bounds);
     this->CenterAxes->SetUseBounds(1);
-
+    if (this->GridAxes3DActor)
+      {
+      this->GridAxes3DActor->SetUseBounds(1);
+      }
 
     bbox.AddBounds(prop_bounds);
     }
@@ -799,7 +982,7 @@ bool vtkPVRenderView::GetLocalProcessDoesRendering(bool using_distributed_render
   default:
     return using_distributed_rendering ||
       this->InTileDisplayMode() ||
-      this->SynchronizedWindows->GetIsInCave();
+      this->InCaveDisplayMode();
     }
 }
 
@@ -999,7 +1182,7 @@ void vtkPVRenderView::Update()
   this->StillRenderProcesses = this->InteractiveRenderProcesses =
     vtkPVSession::CLIENT;
   bool in_tile_display_mode = this->InTileDisplayMode();
-  bool in_cave_mode = this->SynchronizedWindows->GetIsInCave();
+  bool in_cave_mode = this->InCaveDisplayMode();
   if (in_tile_display_mode || in_cave_mode ||
     this->UseDistributedRenderingForStillRender)
     {
@@ -1061,7 +1244,7 @@ void vtkPVRenderView::UpdateLOD()
 
   this->InteractiveRenderProcesses = vtkPVSession::CLIENT;
   bool in_tile_display_mode = this->InTileDisplayMode();
-  bool in_cave_mode = this->SynchronizedWindows->GetIsInCave();
+  bool in_cave_mode = this->InCaveDisplayMode();
   if (in_tile_display_mode || in_cave_mode ||
     this->UseDistributedRenderingForInteractiveRender)
     {
@@ -1100,6 +1283,8 @@ void vtkPVRenderView::InteractiveRender()
 //----------------------------------------------------------------------------
 void vtkPVRenderView::Render(bool interactive, bool skip_rendering)
 {
+  this->UpdateStereoProperties();
+
   if (this->SynchronizedWindows->GetMode() !=
     vtkPVSynchronizedRenderWindows::CLIENT ||
     (!interactive && this->UseDistributedRenderingForStillRender) ||
@@ -1124,7 +1309,7 @@ void vtkPVRenderView::Render(bool interactive, bool skip_rendering)
   this->ResetCameraClippingRange();
 
   bool in_tile_display_mode = this->InTileDisplayMode();
-  bool in_cave_mode = this->SynchronizedWindows->GetIsInCave();
+  bool in_cave_mode = this->InCaveDisplayMode();
   if (in_cave_mode && !this->RemoteRenderingAvailable)
     {
     static bool warned_once = false;
@@ -1206,9 +1391,14 @@ void vtkPVRenderView::Render(bool interactive, bool skip_rendering)
     stream
       << "Mode: " << (interactive? "interactive" : "still") << "\n"
       << "Level-of-detail: " << (use_lod_rendering? "yes" : "no") << "\n"
-      << "Remote/parallel rendering (if applicable): " << (use_distributed_rendering? "yes" : "no") << "\n";
+      << "Remote/parallel rendering: " << (use_distributed_rendering? "yes" : "no") << "\n";
     this->Annotation->SetText(stream.str().c_str());
     }
+
+  // Determine if local process is rendering data for the composited renderer.
+  vtkPVRendererCuller* culler = vtkPVRendererCuller::SafeDownCast(this->Culler.GetPointer());
+  culler->SetRenderOnLocalProcess(
+    this->IsProcessRenderingGeometriesForCompositing(use_distributed_rendering));
 
   // When in batch mode, we are using the same render window for all views. That
   // makes it impossible for vtkPVSynchronizedRenderWindows to identify which
@@ -1229,7 +1419,15 @@ void vtkPVRenderView::Render(bool interactive, bool skip_rendering)
     vtkProcessModule::GetProcessType() != vtkProcessModule::PROCESS_DATA_SERVER)
     {
     this->AboutToRenderOnLocalProcess(interactive);
+    if (!this->MakingSelection)
+      {
+      this->Timer->StartTimer();
+      }
     this->GetRenderWindow()->Render();
+    if (!this->MakingSelection)
+      {
+      this->Timer->StopTimer();
+      }
     }
 
   if (!this->MakingSelection)
@@ -1265,7 +1463,7 @@ void vtkPVRenderView::Deliver(int use_lod,
 int vtkPVRenderView::GetDataDistributionMode(bool use_remote_rendering)
 {
   bool in_tile_display_mode = this->InTileDisplayMode();
-  bool in_cave_mode = this->SynchronizedWindows->GetIsInCave();
+  bool in_cave_mode = this->InCaveDisplayMode();
   if (in_cave_mode)
     {
     return vtkMPIMoveData::CLONE;
@@ -1533,29 +1731,58 @@ bool vtkPVRenderView::ShouldUseDistributedRendering(
   const bool &nonDistributedRenderingRequired = using_lod?
     this->NonDistributedRenderingRequiredLOD :
     this->NonDistributedRenderingRequired;
-  if (distributedRenderingRequired == true && remote_rendering_available == false)
-    {
-    vtkErrorMacro("Some of the representations in this view require remote rendering "
-      "which, however, is not available. Rendering may not work as expected.");
-    }
-  else if (distributedRenderingRequired || nonDistributedRenderingRequired)
-    {
-    // implies that at least a representation requested a specific mode.
-    return distributedRenderingRequired? true : false;
-    }
 
-  if (remote_rendering_available == false)
+  try
     {
-    return false;
-    }
+    if (distributedRenderingRequired == true && remote_rendering_available == false)
+      {
+      vtkErrorMacro("Some of the representations in this view require remote rendering "
+        "which, however, is not available. Rendering may not work as expected.");
+      }
+    else if (distributedRenderingRequired || nonDistributedRenderingRequired)
+      {
+      // implies that at least a representation requested a specific mode.
+      throw (distributedRenderingRequired? true : false);
+      }
 
-  if (vtkProcessModule::GetProcessType() == vtkProcessModule::PROCESS_BATCH)
+    if (remote_rendering_available == false)
+      {
+      throw false;
+      }
+
+    if (vtkProcessModule::GetProcessType() == vtkProcessModule::PROCESS_BATCH)
+      {
+      // currently, we only support parallel rendering in batch mode.
+      throw true;
+      }
+
+    throw (this->RemoteRenderingThreshold <= geometry_size);
+    }
+  catch (bool val)
     {
-    // currently, we only support parallel rendering in batch mode.
-    return true;
+    //----------------------------------------------------------------------------
+    // This helps us further condition the "ShouldUseDistributedRendering"
+    // response based on whether distributed rendering makes sense in the current
+    // configuration e.g. it doesn't make sense in builtin mode, or in batch mode
+    // with 1 process.
+    //----------------------------------------------------------------------------
+    if (val)
+      {
+      // distributed rendering is requested. ensure that we're running in a mode
+      // where distributed rendering has any effect i.e client-server or parallel
+      // batch.
+      switch (this->SynchronizedWindows->GetMode())
+        {
+      case vtkPVSynchronizedRenderWindows::BUILTIN:
+        return false;
+      case vtkPVSynchronizedRenderWindows::BATCH:
+        return (this->SynchronizedWindows->GetParallelController()->GetNumberOfProcesses() > 1);
+      default:
+        break;
+        }
+      }
+    return val;
     }
-
-  return this->RemoteRenderingThreshold <= geometry_size;
 }
 
 //----------------------------------------------------------------------------
@@ -1566,9 +1793,38 @@ bool vtkPVRenderView::ShouldUseLODRendering(double geometry_size)
 }
 
 //----------------------------------------------------------------------------
+bool vtkPVRenderView::IsProcessRenderingGeometriesForCompositing(
+  bool using_distributed_rendering)
+{
+  if (this->InTileDisplayMode() || this->InCaveDisplayMode())
+    {
+    return true;
+    }
+
+  vtkProcessModule::ProcessTypes processType = vtkProcessModule::GetProcessType();
+
+  if (using_distributed_rendering)
+    {
+    // using distributed rendering.
+    return (processType != vtkProcessModule::PROCESS_CLIENT);
+    }
+  else
+    {
+    // **not** using distributed rendering.
+    if ( (processType == vtkProcessModule::PROCESS_CLIENT) ||
+      (processType == vtkProcessModule::PROCESS_BATCH &&
+       this->SynchronizedWindows->GetParallelController()->GetLocalProcessId() == 0))
+      {
+      return true;
+      }
+    }
+  return false;
+}
+
+//----------------------------------------------------------------------------
 bool vtkPVRenderView::GetUseOrderedCompositing()
 {
-  if (this->SynchronizedWindows->GetIsInCave())
+  if (this->InCaveDisplayMode())
     {
     return false;
     }
@@ -1659,13 +1915,20 @@ void vtkPVRenderView::UpdateCenterAxes()
   widths[1] *= 0.25;
   widths[2] *= 0.25;
   this->CenterAxes->SetScale(widths);
+
+  double bounds[6];
+  this->GeometryBounds.GetBounds(bounds);
+  if (this->GridAxes3DActor)
+    {
+    this->GridAxes3DActor->SetTransformedBounds(bounds);
+    }
 }
 
 //----------------------------------------------------------------------------
 double vtkPVRenderView::GetZbufferDataAtPoint(int x, int y)
 {
   bool in_tile_display_mode = this->InTileDisplayMode();
-  bool in_cave_mode = this->SynchronizedWindows->GetIsInCave();
+  bool in_cave_mode = this->InCaveDisplayMode();
   if (in_tile_display_mode || in_cave_mode)
     {
     return this->GetRenderWindow()->GetZbufferDataAtPoint(x, y);
@@ -1742,16 +2005,6 @@ void vtkPVRenderView::InvalidateCachedSelection()
   this->Selector->InvalidateCachedSelection();
 }
 
-//----------------------------------------------------------------------------
-void vtkPVRenderView::PrepareForScreenshot()
-{
-  if (this->Interactor && this->GetRenderWindow())
-    {
-    this->GetRenderWindow()->SetInteractor(this->Interactor);
-    }
-  this->Superclass::PrepareForScreenshot();
-}
-
 //*****************************************************************
 // Forwarded to orientation axes widget.
 
@@ -1765,6 +2018,7 @@ void vtkPVRenderView::SetOrientationAxesInteractivity(bool v)
 void vtkPVRenderView::SetOrientationAxesVisibility(bool v)
 {
   this->OrientationWidget->SetEnabled(v);
+  this->OrientationWidgetVisibility = v;
 }
 
 //----------------------------------------------------------------------------
@@ -1788,39 +2042,31 @@ void vtkPVRenderView::SetCenterAxesVisibility(bool v)
 }
 
 //*****************************************************************
-// Forward to vtkPVGenericRenderWindowInteractor.
+// Forward to vtkPVInteractorStyle instances.
 //----------------------------------------------------------------------------
 void vtkPVRenderView::SetCenterOfRotation(double x, double y, double z)
 {
   this->CenterAxes->SetPosition(x, y, z);
-  if (this->Interactor)
+  if (this->TwoDInteractorStyle)
     {
-    this->Interactor->SetCenterOfRotation(x, y, z);
+    this->TwoDInteractorStyle->SetCenterOfRotation(x, y, z);
+    }
+  if (this->ThreeDInteractorStyle)
+    {
+    this->ThreeDInteractorStyle->SetCenterOfRotation(x, y, z);
     }
 }
 
 //----------------------------------------------------------------------------
 void vtkPVRenderView::SetRotationFactor(double factor)
 {
-  if (this->Interactor)
+  if (this->TwoDInteractorStyle)
     {
-    this->Interactor->SetRotationFactor(factor);
+    this->TwoDInteractorStyle->SetRotationFactor(factor);
     }
-}
-
-//----------------------------------------------------------------------------
-void vtkPVRenderView::SetNonInteractiveRenderDelay(double seconds)
-{
-  if (this->Interactor)
+  if (this->ThreeDInteractorStyle)
     {
-    if(seconds > 0)
-      {
-      this->Interactor->SetNonInteractiveRenderDelay(static_cast<unsigned long>(seconds*1000));
-      }
-    else
-      {
-      this->Interactor->SetNonInteractiveRenderDelay(0);
-      }
+    this->ThreeDInteractorStyle->SetRotationFactor(factor);
     }
 }
 
@@ -2009,9 +2255,60 @@ void vtkPVRenderView::SetStereoRender(int val)
 }
 
 //----------------------------------------------------------------------------
-void vtkPVRenderView::SetStereoType(int val)
+inline int vtkGetNumberOfRendersPerFrame(int stereoMode)
 {
-  this->GetRenderWindow()->SetStereoType(val);
+  switch(stereoMode)
+    {
+  case VTK_STEREO_CRYSTAL_EYES:
+  case VTK_STEREO_RED_BLUE:
+  case VTK_STEREO_INTERLACED:
+  case VTK_STEREO_DRESDEN:
+  case VTK_STEREO_ANAGLYPH:
+  case VTK_STEREO_CHECKERBOARD:
+  case VTK_STEREO_SPLITVIEWPORT_HORIZONTAL:
+  case VTK_STEREO_FAKE:
+    return 2;
+
+  case VTK_STEREO_LEFT:
+  case VTK_STEREO_RIGHT:
+  default:
+    return 1;
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkPVRenderView::UpdateStereoProperties()
+{
+  if (!this->GetRenderWindow()->GetStereoRender())
+    {
+    return;
+    }
+
+  if (this->ServerStereoType != 0 &&
+    vtkGetNumberOfRendersPerFrame(this->ServerStereoType)
+    != vtkGetNumberOfRendersPerFrame(this->StereoType))
+    {
+    vtkWarningMacro("Incompatible stereo types for client and server ranks. "
+      "Forcing the server use the same type as the client.");
+    this->ServerStereoType = 0;
+    }
+
+  switch (this->SynchronizedWindows->GetMode())
+    {
+  case vtkPVSynchronizedRenderWindows::RENDER_SERVER:
+    if (this->ServerStereoType == VTK_STEREOTYPE_SAME_AS_CLIENT)
+      {
+      this->GetRenderWindow()->SetStereoType(this->StereoType);
+      }
+    else
+      {
+      this->GetRenderWindow()->SetStereoType(this->ServerStereoType);
+      }
+    break;
+
+  default:
+    this->GetRenderWindow()->SetStereoType(this->StereoType);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -2117,7 +2414,7 @@ void vtkPVRenderView::SetShowAnnotation(bool val)
 //----------------------------------------------------------------------------
 void vtkPVRenderView::UpdateAnnotationText()
 {
-  if (this->ShowAnnotation)
+  if (this->ShowAnnotation && !this->MakingSelection)
     {
     std::ostringstream stream;
     stream << this->Annotation->GetText();
@@ -2127,8 +2424,29 @@ void vtkPVRenderView::UpdateAnnotationText()
 }
 
 //----------------------------------------------------------------------------
+void vtkPVRenderView::SetSize(int dx, int dy)
+{
+  if (this->Size[0] != dx || this->Size[1] != dy)
+    {
+    this->InvalidateCachedSelection();
+    }
+  this->Superclass::SetSize(dx, dy);
+}
+
+//----------------------------------------------------------------------------
+void vtkPVRenderView::SetPosition(int x, int y)
+{
+  if (this->Position[0] != x || this->Position[1] != y)
+    {
+    this->InvalidateCachedSelection();
+    }
+  this->Superclass::SetPosition(x, y);
+}
+
+//----------------------------------------------------------------------------
 void vtkPVRenderView::BuildAnnotationText(ostream& str)
 {
-  double time = this->RenderView->GetRenderer()->GetLastRenderTimeInSeconds();
-  str << "Frame rate: " << (time > 0.0? 1.0/time : 100000.0) << " fps\n";
+  this->Timer->StopTimer();
+  double time = this->Timer->GetElapsedTime();
+  str << "Frame rate (approx): " << (time > 0.0? 1.0/time : 100000.0) << " fps\n";
 }

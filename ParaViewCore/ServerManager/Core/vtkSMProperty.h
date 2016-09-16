@@ -336,7 +336,9 @@ public:
   // the first one returns true i.e. indicate that it can set a default value
   // and did so. Returns true if any domain can setup a default value for this
   // property. Otherwise false.
-  bool ResetToDomainDefaults(bool use_unchecked_values=false);
+  // vtkSMVectorProperty overrides this method to add support for settting
+  // default values using information_property.
+  virtual bool ResetToDomainDefaults(bool use_unchecked_values=false);
 
   // Description:
   // The label assigned by the xml parser.
@@ -395,6 +397,12 @@ public:
   // This is used as a hint by the state saving code to determine if the value
   // should be written to the file or if the defaults are sufficient.
   virtual bool IsValueDefault() { return false; }
+
+  // Description:
+  // Returns true if the property has a domain with required properties. This
+  // typically indicates that the property has a domain whose values change at
+  // runtime based on input dataset or file being processed.
+  bool HasDomainsWithRequiredProperties();
 
 //BTX
 protected:
@@ -563,5 +571,18 @@ private:
   bool BlockModifiedEvents;
 //ETX
 };
+
+#define vtkSMPropertyTemplateMacroCase(typeSMProperty, type, prop, call) \
+  if (typeSMProperty* SM_PROPERTY = typeSMProperty::SafeDownCast(prop)) \
+    { \
+    (void) SM_PROPERTY; \
+    typedef type SM_TT; \
+    call; \
+    }
+#define vtkSMVectorPropertyTemplateMacro(prop, call) \
+  vtkSMPropertyTemplateMacroCase(vtkSMDoubleVectorProperty, double, prop, call)       \
+  vtkSMPropertyTemplateMacroCase(vtkSMIntVectorProperty, int, prop, call)             \
+  vtkSMPropertyTemplateMacroCase(vtkSMIdTypeVectorProperty, vtkIdType, prop, call)    \
+  vtkSMPropertyTemplateMacroCase(vtkSMStringVectorProperty, vtkStdString, prop, call) \
 
 #endif

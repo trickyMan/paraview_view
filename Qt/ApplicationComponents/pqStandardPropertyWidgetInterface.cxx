@@ -46,14 +46,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pqDisplayRepresentationWidget.h"
 #include "pqDoubleRangeSliderPropertyWidget.h"
 #include "pqEnableWidgetDecorator.h"
+#include "pqFileNamePropertyWidget.h"
 #include "pqFontPropertyWidget.h"
 #include "pqGenericPropertyWidgetDecorator.h"
 #include "pqGlyphScaleFactorPropertyWidget.h"
 #include "pqImageCompressorWidget.h"
 #include "pqInputDataTypeDecorator.h"
+#include "pqIntMaskPropertyWidget.h"
 #include "pqLightsEditor.h"
 #include "pqListPropertyWidget.h"
 #include "pqPropertyGroupButton.h"
+#include "pqProxyEditorPropertyWidget.h"
 #include "pqSeriesEditorPropertyWidget.h"
 #include "pqShowWidgetDecorator.h"
 #include "pqTextLocationWidget.h"
@@ -148,6 +151,18 @@ pqStandardPropertyWidgetInterface::createWidgetForProperty(vtkSMProxy *smProxy,
   else if (name == "glyph_scale_factor")
     {
     return new pqGlyphScaleFactorPropertyWidget(smProxy, smProperty);
+    }
+  else if (name == "proxy_editor")
+    {
+    return new pqProxyEditorPropertyWidget(smProxy, smProperty);
+    }
+  else if (name == "int_mask")
+    {
+    return new pqIntMaskPropertyWidget(smProxy, smProperty);
+    }
+  else if (name == "filename_widget")
+    {
+    return new pqFileNamePropertyWidget(smProxy, smProperty);
     }
   // *** NOTE: When adding new types, please update the header documentation ***
   return NULL;

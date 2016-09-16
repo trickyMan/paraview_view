@@ -9,7 +9,7 @@
 #include "vtkUnsignedCharArray.h"
 #include "vtkByteSwap.h"
 #include <vector>
-#include <vtksys/ios/sstream>
+#include <sstream>
 #include <vtksys/RegularExpression.hxx>
 
 //=============================================================================
@@ -339,7 +339,7 @@ int vtkSpyPlotUniReader::MakeCurrent()
       blocksExists = 1;
       }
     // Did we create data blocks that we do not need any more
-    if ( (!needMarkers && !this->CellArraySelection->ArrayIsEnabled(var->Name)) ||
+    if ( (!this->CellArraySelection->ArrayIsEnabled(var->Name)) ||
          (this->DataTypeChanged && this->IsVolumeFraction(var) ) )
       {
       if ( var->DataBlocks )
@@ -1653,7 +1653,7 @@ int vtkSpyPlotUniReader::ReadDataDumps(vtkSpyPlotIStream *spis)
         }
       if ( variable->Index >= 0 )
         {
-        vtksys_ios::ostringstream ostr;
+        std::ostringstream ostr;
         ostr << this->MaterialFields[variable->Material].Comment << " - " 
              << variable->Index+1 << ends;
         variable->Name = new char[ostr.str().size() + 1];

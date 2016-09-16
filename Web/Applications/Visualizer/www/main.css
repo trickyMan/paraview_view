@@ -4,6 +4,21 @@
 .fix-height { position: relative; top: 0; left: 0; }
 .pv-time-input { position: relative; top: 2px; width: 80px; border: solid 1px white; background: none; padding: 2px 10px; }
 
+.active-data-type-label { font-style: italic; }
+
+/* ---- Sources/Filters Icons ---- */
+
+.pv-source-list ul, .pv-filter-list ul {
+    margin-bottom: 0;
+}
+.pvActionList li:before {
+  font-family: "fontello";
+  width: 16px;
+  display: inline-block;
+}
+.pv-source-list li:before { content: '\e94e'; }
+.pv-filter-list li:before { content: '\e81c'; }
+
 /* ---- Font - colors - Cursor ----- */
 
 .clickable { cursor: pointer; -moz-user-select: none; -webkit-user-select: none; -ms-user-select: none; user-select: none; }
@@ -58,6 +73,10 @@ select.pv-form-height  { font-size: 12px; }
 .dl-horizontal dd { margin-left: 80px; }
 .dl-horizontal dt { width: 60px; }
 
+/* ---- Save Data Panel ---- */
+.inspector-container .active-panel-btn  { border-radius: 15px; }
+.label-spacing     { margin-top: 15px; margin-bottom: 5px;}
+
 /* ---- Information Tab ---- */
 
 .pv-data-info dl { margin-bottom: 0; }
@@ -87,3 +106,51 @@ select.pv-form-height  { font-size: 12px; }
 .hide-on-start { display: none; }
 .start-page-image { display: block; margin-left: auto; margin-right: auto }
 .start-page-busy-icon { font-size: 48px; margin-left: auto; margin-right: auto; display: block; width: 68px; }
+
+.download-progressbar-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    height: 80px;
+    z-index: 1000;
+    background-color: #222222;
+    border-radius: 3px;
+    box-shadow: 5px 5px 5px #333333;
+    text-align: center;
+}
+
+.progressbar-content-container {
+    position: absolute;
+    top: 25px;
+    right: 0px;
+    bottom: 0px;
+    left: 0px;
+    border-radius: 0px 0px 3px 3px;
+    background-color: #dddddd;
+    text-align: center;
+}
+
+.progressbar-title {
+    color: whitesmoke;
+    line-height: 25px;
+}
+
+.progress-message-span {
+    position: absolute;
+    left: 4px;
+    top: 6px;
+}
+
+.progress-meter-container {
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    top: 30px;
+}
+
+.local-only { display: none; }
+
+table.viewport-stat                     { table-layout: fixed; overflow: hidden; }
+table.viewport-stat > tbody > tr > td   { width: 60px; text-align: right; }

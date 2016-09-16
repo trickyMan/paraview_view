@@ -20,15 +20,16 @@
 #define __vtkPVExtractBagPlots_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
-#include "vtkTransposeTable.h"
+#include "vtkMultiBlockDataSetAlgorithm.h"
 
 class PVExtractBagPlotsInternal;
 
-class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPVExtractBagPlots : public vtkTransposeTable
+class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPVExtractBagPlots
+  : public vtkMultiBlockDataSetAlgorithm
 {
 public:
   static vtkPVExtractBagPlots* New();
-  vtkTypeMacro(vtkPVExtractBagPlots, vtkTransposeTable);
+  vtkTypeMacro(vtkPVExtractBagPlots, vtkMultiBlockDataSetAlgorithm);
   virtual void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -52,9 +53,17 @@ public:
   vtkGetMacro(Sigma, double);
   vtkSetMacro(Sigma, double);
 
+  // Description:
+  // Set/get the size of the grid to compute the PCA on.
+  // 100 by default.
+  vtkGetMacro(GridSize, int);
+  vtkSetMacro(GridSize, int);
+
 protected:
   vtkPVExtractBagPlots();
   virtual ~vtkPVExtractBagPlots();
+
+  virtual int FillInputPortInformation( int port, vtkInformation *info );
 
   int RequestData(vtkInformation*,
     vtkInformationVector**,
@@ -65,6 +74,7 @@ protected:
   bool TransposeTable;
   bool RobustPCA;
   double Sigma;
+  int GridSize;
 
 private:
   vtkPVExtractBagPlots( const vtkPVExtractBagPlots& ); // Not implemented.

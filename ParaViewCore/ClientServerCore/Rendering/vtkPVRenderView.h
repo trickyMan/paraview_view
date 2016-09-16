@@ -27,34 +27,38 @@
 #include "vtkPVView.h"
 #include "vtkBoundingBox.h" // needed for iVar
 #include "vtkNew.h" // needed for iVar
+#include "vtkSmartPointer.h" // needed for iVar
 
 
 class vtkAlgorithmOutput;
 class vtkCamera;
+class vtkCuller;
 class vtkExtentTranslator;
+class vtkPVGridAxes3DActor;
 class vtkInformationDoubleKey;
 class vtkInformationDoubleVectorKey;
 class vtkInformationIntegerKey;
+class vtkInteractorStyleDrawPolygon;
 class vtkInteractorStyleRubberBand3D;
 class vtkInteractorStyleRubberBandZoom;
-class vtkInteractorStyleDrawPolygon;
 class vtkLight;
 class vtkLightKit;
 class vtkMatrix4x4;
-class vtkProp;
 class vtkPVAxesWidget;
 class vtkPVCenterAxesActor;
 class vtkPVDataDeliveryManager;
 class vtkPVDataRepresentation;
-class vtkPVGenericRenderWindowInteractor;
 class vtkPVHardwareSelector;
 class vtkPVInteractorStyle;
 class vtkPVSynchronizedRenderer;
-class vtkRenderer;
+class vtkProp;
 class vtkRenderViewBase;
 class vtkRenderWindow;
+class vtkRenderWindowInteractor;
+class vtkRenderer;
 class vtkTextRepresentation;
 class vtkTexture;
+class vtkTimerLog;
 
 class VTKPVCLIENTSERVERCORERENDERING_EXPORT vtkPVRenderView : public vtkPVView
 {
@@ -91,12 +95,32 @@ public:
   // @CallOnAllProcessess
   virtual void Initialize(unsigned int id);
 
+
+  // Description:
+  // Overridden to call InvalidateCachedSelection() whenever the render window
+  // parameters change.
+  virtual void SetSize(int, int);
+  virtual void SetPosition(int, int);
+
   // Description:
   // Gets the non-composited renderer for this view. This is typically used for
   // labels, 2D annotations etc.
   // @CallOnAllProcessess
   vtkGetObjectMacro(NonCompositedRenderer, vtkRenderer);
-  vtkRenderer* GetRenderer();
+
+  // Description:
+  // Defines various renderer types.
+  enum
+    {
+    DEFAULT_RENDERER = 0,
+    NON_COMPOSITED_RENDERER = 1,
+    };
+
+  // Description:
+  // Returns the renderer given an int identifying its type.
+  // \li DEFAULT_RENDERER: returns the 3D renderer.
+  // \li NON_COMPOSITED_RENDERER: returns the NonCompositedRenderer.
+  virtual vtkRenderer* GetRenderer(int rendererType=DEFAULT_RENDERER);
 
   // Description:
   // Get/Set the active camera. The active camera is set on both the composited
@@ -110,7 +134,13 @@ public:
 
   // Description:
   // Returns the interactor. .
-  vtkGetObjectMacro(Interactor, vtkPVGenericRenderWindowInteractor);
+  vtkRenderWindowInteractor* GetInteractor();
+
+  // Description:
+  // Set the interactor. Client applications must set the interactor to enable
+  // interactivity. Note this method will also change the interactor styles set
+  // on the interactor.
+  virtual void SetupInteractor(vtkRenderWindowInteractor*);
 
   // Description:
   // Returns the interactor style.
@@ -407,6 +437,10 @@ public:
   // Enable/disable showing of annotation for developers.
   void SetShowAnnotation(bool val);
 
+  // Description:
+  // Set the vtkPVGridAxes3DActor to use for the view.
+  virtual void SetGridAxes3DActor(vtkPVGridAxes3DActor*);
+
   //*****************************************************************
   // Forwarded to orientation axes widget.
   virtual void SetOrientationAxesInteractivity(bool);
@@ -419,10 +453,9 @@ public:
   virtual void SetCenterAxesVisibility(bool);
 
   //*****************************************************************
-  // Forward to vtkPVGenericRenderWindowInteractor.
-  void SetCenterOfRotation(double x, double y, double z);
-  void SetRotationFactor(double factor);
-  void SetNonInteractiveRenderDelay(double seconds);
+  // Forward to vtkPVInteractorStyle instances.
+  virtual void SetCenterOfRotation(double x, double y, double z);
+  virtual void SetRotationFactor(double factor);
 
   //*****************************************************************
   // Forward to vtkLightKit.
@@ -464,7 +497,8 @@ public:
   // Forward to vtkRenderWindow.
   void SetStereoCapableWindow(int val);
   void SetStereoRender(int val);
-  void SetStereoType(int val);
+  vtkSetMacro(StereoType, int);
+  vtkSetMacro(ServerStereoType, int);
   void SetMultiSamples(int val);
   void SetAlphaBitPlanes(int val);
   void SetStencilCapable(int val);
@@ -579,13 +613,6 @@ protected:
   virtual void RemoveRepresentationInternal(vtkDataRepresentation* rep);
 
   // Description:
-  // These methods are used to setup the view for capturing screen shots.
-  // In batch mode, since the server-side has just 1 render window, we need to
-  // make sure that the right interactor is activated, otherwise, we end up
-  // capturing images from the wrong view.
-  virtual void PrepareForScreenshot();
-
-  // Description:
   // Actual render method.
   virtual void Render(bool interactive, bool skip_rendering);
 
@@ -605,6 +632,11 @@ protected:
   // Description:
   // Returns true if LOD rendering should be used based on the geometry size.
   bool ShouldUseLODRendering(double geometry);
+
+  // Description:
+  // Returns true if the local process is invovled in rendering composited
+  // geometry i.e. geometry rendered in view that is composited together.
+  bool IsProcessRenderingGeometriesForCompositing(bool using_distributed_rendering);
 
   // Description:
   // Synchronizes bounds information on all nodes.
@@ -663,7 +695,7 @@ protected:
   vtkRenderViewBase* RenderView;
   vtkRenderer* NonCompositedRenderer;
   vtkPVSynchronizedRenderer* SynchronizedRenderers;
-  vtkPVGenericRenderWindowInteractor* Interactor;
+  vtkSmartPointer<vtkRenderWindowInteractor> Interactor;
   vtkInteractorStyleRubberBand3D* RubberBandStyle;
   vtkInteractorStyleRubberBandZoom* RubberBandZoom;
   vtkInteractorStyleDrawPolygon* PolygonStyle;
@@ -671,6 +703,7 @@ protected:
   vtkPVAxesWidget* OrientationWidget;
   vtkPVHardwareSelector* Selector;
   vtkSelection* LastSelection;
+  vtkSmartPointer<vtkPVGridAxes3DActor> GridAxes3DActor;
 
   int StillRenderImageReductionFactor;
   int InteractiveRenderImageReductionFactor;
@@ -745,6 +778,14 @@ private:
 
   vtkNew<vtkTextRepresentation> Annotation;
   void UpdateAnnotationText();
+
+  bool OrientationWidgetVisibility;
+
+  int StereoType;
+  int ServerStereoType;
+  void UpdateStereoProperties();
+  vtkSmartPointer<vtkCuller> Culler;
+  vtkNew<vtkTimerLog> Timer;
 //ETX
 };
 

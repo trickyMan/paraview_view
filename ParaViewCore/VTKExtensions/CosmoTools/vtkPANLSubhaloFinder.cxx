@@ -17,19 +17,22 @@
 #include "vtkCellType.h"
 #include "vtkFloatArray.h"
 #include "vtkIdList.h"
+#include "vtkInformation.h"
 #include "vtkIntArray.h"
-#include "vtkLongLongArray.h"
+#include "vtkMultiBlockDataSet.h"
 #include "vtkMultiProcessController.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkPoints.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkTypeInt64Array.h"
 
 #include "SubHaloFinder.h"
 #include "FOFHaloProperties.h"
 
 #include <map>
+#include <set>
 #include <vector>
 
 namespace {
@@ -116,8 +119,10 @@ vtkPANLSubhaloFinder::vtkPANLSubhaloFinder()
 {
   this->Controller = vtkMultiProcessController::GetGlobalController();
   this->Internal = new vtkPANLSubhaloFinder::vtkInternals;
-  this->HalosToProcess = vtkIdList::New();
   this->SetNumberOfOutputPorts(2);
+
+  this->Mode = ALL_HALOS;
+  this->SizeThreshold = 1000;
 
   this->RL = 256;
   this->DeadSize = 8;
@@ -133,7 +138,6 @@ vtkPANLSubhaloFinder::vtkPANLSubhaloFinder()
 vtkPANLSubhaloFinder::~vtkPANLSubhaloFinder()
 {
   delete this->Internal;
-  this->HalosToProcess->Delete();
 }
 
 vtkStandardNewMacro(vtkPANLSubhaloFinder)
@@ -141,6 +145,13 @@ vtkStandardNewMacro(vtkPANLSubhaloFinder)
 void vtkPANLSubhaloFinder::PrintSelf(ostream &os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+}
+
+int vtkPANLSubhaloFinder::FillInputPortInformation(int vtkNotUsed(port), vtkInformation *info)
+{
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+  info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
+  return 1;
 }
 
 int vtkPANLSubhaloFinder::RequestInformation(vtkInformation *, vtkInformationVector **, vtkInformationVector *)
@@ -151,26 +162,94 @@ int vtkPANLSubhaloFinder::RequestInformation(vtkInformation *, vtkInformationVec
 int vtkPANLSubhaloFinder::RequestData(
     vtkInformation *vtkNotUsed(request), vtkInformationVector **inputVector,
     vtkInformationVector *outputVector)
-{
-  vtkUnstructuredGrid* input = vtkUnstructuredGrid::GetData(inputVector[0],0);
-  assert(input);
+ {
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::GetData(inputVector[0],0);
+  vtkMultiBlockDataSet* multiBlockIn = vtkMultiBlockDataSet::GetData(inputVector[0],0);
   vtkUnstructuredGrid* allParticlesOutput = vtkUnstructuredGrid::GetData(outputVector,0);
-  assert(allParticlesOutput);
-  allParticlesOutput->ShallowCopy(input);
+  vtkMultiBlockDataSet* multiBlockAllParticles = vtkMultiBlockDataSet::GetData(outputVector,0);
   vtkUnstructuredGrid* subFofProperties = vtkUnstructuredGrid::GetData(outputVector,1);
-  assert(subFofProperties);
-  this->ExecuteSubHaloFinder(input,allParticlesOutput,subFofProperties);
+  vtkMultiBlockDataSet* multiBlockSubProperties = vtkMultiBlockDataSet::GetData(outputVector,1);
+
+  if (grid != NULL)
+    {
+    assert(allParticlesOutput);
+    assert(subFofProperties);
+    allParticlesOutput->ShallowCopy(grid);
+    this->ExecuteSubHaloFinder(grid,allParticlesOutput,subFofProperties);
+    }
+  else if (multiBlockIn)
+    {
+    assert(multiBlockAllParticles);
+    assert(multiBlockSubProperties);
+    vtkIdType numberOfInputBlocks = multiBlockIn->GetNumberOfBlocks();
+    multiBlockAllParticles->SetNumberOfBlocks(numberOfInputBlocks);
+    multiBlockSubProperties->SetNumberOfBlocks(numberOfInputBlocks);
+    for (vtkIdType i = 0; i < numberOfInputBlocks; ++i)
+      {
+      vtkUnstructuredGrid* block = vtkUnstructuredGrid::SafeDownCast(
+                                     multiBlockIn->GetBlock(i));
+      if (block != NULL)
+        {
+        vtkNew< vtkUnstructuredGrid > blockAllParticles;
+        vtkNew< vtkUnstructuredGrid > blockSubProperties;
+        blockAllParticles->ShallowCopy(block);
+        this->ExecuteSubHaloFinder(block,blockAllParticles.GetPointer(),blockSubProperties.GetPointer());
+        multiBlockAllParticles->SetBlock(i,blockAllParticles.GetPointer());
+        multiBlockSubProperties->SetBlock(i,blockSubProperties.GetPointer());
+        }
+      }
+    }
+  else
+    {
+    vtkErrorMacro("No Input!");
+    return 0;
+    }
   return 1;
+}
+
+vtkIdType vtkPANLSubhaloFinder::GetHaloToProcess(vtkIdType idx)
+{
+  assert(idx >= 0 && idx < this->HalosToProcess->GetNumberOfIds());
+  return this->HalosToProcess->GetId(idx);
 }
 
 void vtkPANLSubhaloFinder::AddHaloToProcess(vtkIdType haloId)
 {
   this->HalosToProcess->InsertNextId(haloId);
+  this->Modified();
+}
+
+void vtkPANLSubhaloFinder::SetHaloToProcess(vtkIdType idx, vtkIdType haloId)
+{
+  assert(idx >= 0 && idx < this->HalosToProcess->GetNumberOfIds());
+  if (this->HalosToProcess->GetId(idx) != haloId)
+    {
+    this->HalosToProcess->SetId(idx,haloId);
+    this->Modified();
+    }
+}
+
+void vtkPANLSubhaloFinder::SetNumberOfHalosToProcess(vtkIdType num)
+{
+  if (num != this->HalosToProcess->GetNumberOfIds())
+    {
+    this->HalosToProcess->SetNumberOfIds(num);
+    this->Modified();
+    }
+}
+
+vtkIdType vtkPANLSubhaloFinder::GetNumberOfHalosToProcess()
+{
+  return this->HalosToProcess->GetNumberOfIds();
 }
 
 void vtkPANLSubhaloFinder::ClearHalosToProcess()
 {
-  this->HalosToProcess->Reset();
+  if (this->HalosToProcess->GetNumberOfIds() > 0)
+    {
+    this->HalosToProcess->Reset();
+    this->Modified();
+    }
 }
 
 
@@ -186,16 +265,53 @@ void vtkPANLSubhaloFinder::ExecuteSubHaloFinder(vtkUnstructuredGrid* input,
   std::vector< POSVEL_T > shX, shY, shZ, shVX, shVY, shVZ;
   std::vector< ID_T > shTag, shHID, shID;
 
-  vtkNew< vtkLongLongArray > subhaloId;
+  vtkNew< vtkTypeInt64Array > subhaloId;
   subhaloId->SetName("subhalo_tag");
   subhaloId->SetNumberOfTuples(input->GetNumberOfPoints());
   subhaloId->FillComponent(0,-1);
 
-  this->Internal->ReadHalos(input->GetPointData()->GetArray("fof_halo_tag"),this->HalosToProcess);
-
-  for (int i = 0; i < this->HalosToProcess->GetNumberOfIds(); ++i)
+  vtkDataArray* haloTagArray = input->GetPointData()->GetArray("fof_halo_tag");
+  std::set< vtkIdType > uniqueIds;
+  for (vtkIdType i = 0; i < haloTagArray->GetNumberOfTuples(); ++i)
     {
-    vtkIdType haloId = this->HalosToProcess->GetId(i);
+    vtkIdType halo =
+        static_cast< vtkIdType >(haloTagArray->GetTuple1(i));
+    if (halo >= 0)
+      {
+      uniqueIds.insert(halo);
+      }
+    }
+  vtkNew< vtkIdList > allHaloIds;
+  for (std::set< vtkIdType >::iterator itr = uniqueIds.begin();
+       itr != uniqueIds.end(); ++itr)
+    {
+    allHaloIds->InsertNextId(*itr);
+    }
+
+  vtkNew< vtkIdList > finalHalosToProcess;
+  finalHalosToProcess->DeepCopy(
+        this->Mode == ONLY_SELECTED_HALOS ? this->HalosToProcess.GetPointer() :
+                                            allHaloIds.GetPointer());
+
+  this->Internal->ReadHalos(haloTagArray,finalHalosToProcess.GetPointer());
+
+  if (this->Mode == HALOS_LARGER_THAN_THRESHOLD)
+    {
+    for (vtkIdType i = finalHalosToProcess->GetNumberOfIds() - 1; i >= 0; --i)
+      {
+        if (this->Internal->haloIndices[finalHalosToProcess->GetId(i)].size() <
+            static_cast<size_t>(this->SizeThreshold))
+          {
+          finalHalosToProcess->DeleteId(finalHalosToProcess->GetId(i));
+          i = std::min(i,finalHalosToProcess->GetNumberOfIds());
+          }
+      }
+    }
+
+  for (int i = 0; i < finalHalosToProcess->GetNumberOfIds(); ++i)
+    {
+    vtkIdType haloId = finalHalosToProcess->GetId(i);
+    vtkDebugMacro(<<"Processing halo: " << haloId);
     this->Internal->LoadHalo(haloId,this->ParticleMass,input);
     long particleCount = this->Internal->xx.size();
     if (particleCount == 0)
@@ -318,11 +434,11 @@ void vtkPANLSubhaloFinder::ExecuteSubHaloFinder(vtkUnstructuredGrid* input,
   subhaloCount->SetName("subhalo_count");
   subhaloCount->SetNumberOfTuples(subMass.size());
   pointData->AddArray(subhaloCount.GetPointer());
-  vtkNew< vtkLongLongArray > tag;
+  vtkNew< vtkTypeInt64Array > tag;
   tag->SetName("fof_halo_tag");
   tag->SetNumberOfTuples(subMass.size());
   pointData->AddArray(tag.GetPointer());
-  vtkNew< vtkLongLongArray > subtag;
+  vtkNew< vtkTypeInt64Array > subtag;
   subtag->SetName("subhalo_tag");
   subtag->SetNumberOfTuples(subMass.size());
   pointData->AddArray(subtag.GetPointer());

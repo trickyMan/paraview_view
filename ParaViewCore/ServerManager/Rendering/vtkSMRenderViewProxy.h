@@ -23,14 +23,15 @@
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMViewProxy.h"
-
+#include "vtkNew.h" // needed for vtkInteractorObserver.
 class vtkCamera;
 class vtkCollection;
 class vtkIntArray;
-class vtkPVGenericRenderWindowInteractor;
 class vtkRenderer;
 class vtkRenderWindow;
+class vtkRenderWindowInteractor;
 class vtkSMDataDeliveryManager;
+class vtkSMViewProxyInteractorHelper;
 
 class VTKPVSERVERMANAGERRENDERING_EXPORT vtkSMRenderViewProxy : public vtkSMViewProxy
 {
@@ -90,8 +91,9 @@ public:
   // Given a location is display coordinates (pixels), tries to compute and
   // return the world location on a surface, if possible. Returns true if the
   // conversion was successful, else returns false.
+  // If Snap on mesh point is true, it will return a point from the mesh only
   bool ConvertDisplayToPointOnSurface(
-    const int display_position[2], double world_position[3]);
+    const int display_position[2], double world_position[3], bool snapOnMeshPoint = false);
 
   // Description:
   // Checks if color depth is sufficient to support selection.
@@ -119,8 +121,15 @@ public:
   virtual const char* IsSelectVisiblePointsAvailable();
 
   // Description:
+  // A client process need to set the interactor to enable interactivity. Use
+  // this method to set the interactor and initialize it as needed by the
+  // RenderView. This include changing the interactor style as well as
+  // overriding VTK rendering to use the Proxy/ViewProxy API instead.
+  virtual void SetupInteractor(vtkRenderWindowInteractor* iren);
+
+  // Description:
   // Returns the interactor.
-  vtkPVGenericRenderWindowInteractor* GetInteractor();
+  virtual vtkRenderWindowInteractor* GetInteractor();
 
   // Description:
   // Returns the client-side renderer (composited or 3D).
@@ -171,6 +180,12 @@ public:
   // Returns the render window used by this view.
   virtual vtkRenderWindow* GetRenderWindow();
 
+  // Description:
+  // Provides access to the vtkSMViewProxyInteractorHelper object that handles
+  // the interaction/view sync. We provide access to it for applications to
+  // monitor timer events etc.
+  vtkSMViewProxyInteractorHelper* GetInteractorHelper();
+
 //BTX
 protected:
   vtkSMRenderViewProxy();
@@ -216,6 +231,12 @@ protected:
   // Called at the end of CreateVTKObjects().
   virtual void CreateVTKObjects();
 
+  // Description:
+  // Returns true if the proxy is in interaction mode that corresponds to making
+  // a selection i.e. vtkPVRenderView::INTERACTION_MODE_POLYGON or
+  // vtkPVRenderView::INTERACTION_MODE_SELECTION.
+  bool IsInSelectionMode();
+
   bool IsSelectionCached;
   void ClearSelectionCache(bool force = false);
 
@@ -230,6 +251,8 @@ protected:
 private:
   vtkSMRenderViewProxy(const vtkSMRenderViewProxy&); // Not implemented
   void operator=(const vtkSMRenderViewProxy&); // Not implemented
+
+  vtkNew<vtkSMViewProxyInteractorHelper> InteractorHelper;
 //ETX
 };
 

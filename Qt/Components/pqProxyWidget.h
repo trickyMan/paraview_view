@@ -83,8 +83,31 @@ public:
   /// the same purpose, as needed.
   static QWidget* newGroupLabelWidget(const QString& label, QWidget* parentWidget);
 
+  /// Returns true of the proxy provided has XML hints indicating that labels
+  /// should use documentation instead of the XML label for the widgets in the
+  /// UI.
   static bool useDocumentationForLabels(vtkSMProxy* proxy);
-  static QString documentationText(vtkSMProperty* property);
+
+  enum DocumentationType
+    {
+    NONE,
+    USE_DESCRIPTION,
+    USE_SHORT_HELP,
+    USE_LONG_HELP
+    };
+
+  /// Returns formatted (HTML or plainText) documentation for the property.
+  /// \c type cannot be NONE.
+  static QString documentationText(vtkSMProperty* property, DocumentationType type=USE_DESCRIPTION);
+
+  /// Returns formatted (HTML or plainText) documentation for the proxy.
+  /// \c type cannot be NONE.
+  static QString documentationText(vtkSMProxy* property, DocumentationType type=USE_DESCRIPTION);
+
+  /// Returns true if the proxy has XML hints indicating that the panel should
+  /// show a header label for the documentation. pqProxyWidget uses the
+  /// <ShowProxyDocumentationInPanel /> hint for this purpose.
+  static DocumentationType showProxyDocumentationInPanel(vtkSMProxy* proxy);
 
 signals:
   /// This signal is fired as soon as the user starts editing in the widget. The
@@ -120,11 +143,12 @@ public slots:
   /// recent call to filterWidgets().
   void updatePanel();
 
-  /// restores application default proxy settings
-  virtual void onRestoreDefaults();
+  /// Restores application default proxy settings.
+  /// Returns true if any properties were modified.
+  virtual bool restoreDefaults();
 
-  /// saves settings as defaults for proxy
-  void onSaveAsDefaults();
+  /// Saves settings as defaults for proxy
+  void saveAsDefaults();
 
 protected:
   void showEvent(QShowEvent *event);

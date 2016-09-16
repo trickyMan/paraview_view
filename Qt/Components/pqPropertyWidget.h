@@ -114,6 +114,10 @@ public:
   /// any other logic here.
   bool setProperty (const char *name, const QVariant &value)
     { return this->Superclass::setProperty(name, value); }
+
+  /// Returns the tooltip to use for the property. May return an empty string.
+  static QString getTooltip(vtkSMProperty* property);
+
 signals:
   /// This signal is emitted when the current view changes.
   void viewChanged(pqView *view);
@@ -146,6 +150,17 @@ protected:
                        vtkSMProxy *smproxy,
                        vtkSMProperty *smproperty,
                        int smindex = -1);
+  void removePropertyLink(QObject *qobject,
+                       const char *qproperty,
+                       const char *qsignal,
+                       vtkSMProperty *smproperty,
+                       int smindex = -1);
+  void removePropertyLink(QObject *qobject,
+                       const char *qproperty,
+                       const char *qsignal,
+                       vtkSMProxy *smproxy,
+                       vtkSMProperty *smproperty,
+                       int smindex = -1);
   void setShowLabel(bool show);
 
   /// For most pqPropertyWidget subclasses a changeAvailable() signal,
@@ -166,8 +181,10 @@ protected:
   pqPropertyLinks& links()
     { return this->Links; }
 
-private:
+public:
   void setProperty(vtkSMProperty *property);
+
+private:
 
   friend class pqPropertyWidgetDecorator;
   friend class pqProxyWidget;

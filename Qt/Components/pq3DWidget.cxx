@@ -36,8 +36,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtkEventQtSlotConnect.h"
 #include "vtkMemberFunctionCommand.h"
 #include "vtkPVDataInformation.h"
-#include "vtkPVGenericRenderWindowInteractor.h"
 #include "vtkPVXMLElement.h"
+#include "vtkRenderWindowInteractor.h"
 #include "vtkSmartPointer.h"
 #include "vtkSMInputProperty.h"
 #include "vtkSMIntVectorProperty.h"
@@ -71,6 +71,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pqPipelineFilter.h"
 #include "pqPipelineSource.h"
 #include "pqPointSourceWidget.h"
+#include "pqPolyLineWidget.h"
 #include "pqRenderView.h"
 #include "pqServer.h"
 #include "pqSMAdaptor.h"
@@ -120,6 +121,10 @@ public:
       {
       widget = new pqLineWidget(referenceProxy, controlledProxy, 0);
       }
+    else if (name == "PolyLineSource")
+      {
+      widget = new pqPolyLineWidget(referenceProxy, controlledProxy, 0);
+      }
     else if (name == "Distance")
       {
       widget = new pqDistanceWidget(referenceProxy, controlledProxy, 0);
@@ -145,7 +150,8 @@ public:
     WidgetVisible(true),
     Selected(false),
     LastWidgetVisibilityGoal(true),
-    InDeleteCall(false)
+    InDeleteCall(false),
+    PickOnMeshPoint(false)
   {
   this->VTKConnect = vtkSmartPointer<vtkEventQtSlotConnect>::New();
   this->IsMaster = pqApplicationCore::instance()->getActiveServer()->isMaster();
@@ -171,6 +177,7 @@ public:
   bool IsMaster;
   bool LastWidgetVisibilityGoal;
   bool InDeleteCall;
+  bool PickOnMeshPoint;
 };
 
 //-----------------------------------------------------------------------------
@@ -316,7 +323,7 @@ void pq3DWidget::setView(pqView* pqview)
   if (rview && !this->Internal->PickSequence.isEmpty())
     {
     this->Internal->PickShortcut = new QShortcut(
-      this->Internal->PickSequence, pqview->getWidget());
+      this->Internal->PickSequence, pqview->widget());
     QObject::connect(this->Internal->PickShortcut, SIGNAL(activated()),
       this, SLOT(pickPoint()));
     }
@@ -349,6 +356,12 @@ void pq3DWidget::render()
 }
 
 //-----------------------------------------------------------------------------
+void pq3DWidget::setPickOnMeshPoint(bool enable)
+{
+  this->Internal->PickOnMeshPoint = enable;
+}
+
+//-----------------------------------------------------------------------------
 void pq3DWidget::pickPoint()
 {
   pqRenderView* rview = qobject_cast<pqRenderView*>(this->renderView());
@@ -364,7 +377,7 @@ void pq3DWidget::pickPoint()
     const int* eventpos = rwi->GetEventPosition();
     double position[3];
     if (rview->getRenderViewProxy()->ConvertDisplayToPointOnSurface(eventpos,
-      position))
+      position, this->Internal->PickOnMeshPoint))
       {
       this->pick(position[0], position[1], position[2]);
       }
@@ -491,6 +504,12 @@ void pq3DWidget::setHints(vtkPVXMLElement* hints)
       pxy->GetProperty(propElem->GetAttribute("name")));
     }
 }
+
+//-----------------------------------------------------------------------------
+bool pq3DWidget::pickOnMeshPoint() const
+{
+  return this->Internal->PickOnMeshPoint;
+} 
 
 //-----------------------------------------------------------------------------
 void pq3DWidget::setControlledProperty(const char* function,
