@@ -21,6 +21,19 @@
         </Hints>
       </IntVectorProperty>
 
+      <IntVectorProperty name="ShowWelcomeDialog"
+        number_of_elements="1"
+        default_values="1"
+        panel_visibility="advanced">
+        <Documentation>
+          Show welcome screen at startup.
+        </Documentation>
+        <BooleanDomain name="bool" />
+        <Hints>
+          <SaveInQSettings />
+        </Hints>
+      </IntVectorProperty>
+
       <IntVectorProperty name="CrashRecovery"
         number_of_elements="1"
         default_values="0"
@@ -286,6 +299,7 @@
 
       <PropertyGroup label="General Options">
         <Property name="ShowSplashScreen" />
+        <Property name="ShowWelcomeDialog" />
         <Property name="CrashRecovery" />
       </PropertyGroup>
 
@@ -349,7 +363,8 @@
         default_values="1">
         <BooleanDomain name="bool" />
         <Documentation>
-          Enable use of display lists when rendering surface meshes.
+          Enable use of display lists when rendering surface meshes
+          (only applicable for builds with legacy rendering backend).
         </Documentation>
         <Hints>
           <RestartRequired />
@@ -522,7 +537,7 @@
       </IntVectorProperty>
 
       <StringVectorProperty name="CompressorConfig"
-        default_values="vtkSquirtCompressor 0 3"
+        default_values="vtkLZ4Compressor 0 3"
         number_of_elements="1"
         panel_visibility="advanced"
         panel_widget="image_compressor_config">
@@ -530,6 +545,9 @@
           Set the compression method used when transferring rendered images from
           the server to the client.
         </Documentation>
+        <Hints>
+          <SupportsLZ4/>
+        </Hints>
       </StringVectorProperty>
 
       <IntVectorProperty name="OutlineThreshold"
@@ -578,6 +596,22 @@
         </Documentation>
       </IntVectorProperty>
 
+      <IntVectorProperty name="DisableIceT"
+                         label="Disable IceT"
+                         command="SetDisableIceT"
+                         default_values="0"
+                         number_of_elements="1"
+                         panel_visibility="advanced">
+        <BooleanDomain name="bool" />
+        <Documentation>
+          Set to disable IceT (default is unchecked). This is not common and only provided
+          for special rendering modes/mappers.
+        </Documentation>
+        <Hints>
+          <RestartRequired />
+        </Hints>
+      </IntVectorProperty>
+
       <PropertyGroup label="Geometry Mapper Options">
         <Property name="UseDisplayLists" />
         <Property name="ResolveCoincidentTopology" />
@@ -611,6 +645,7 @@
         <Property name="OutlineThreshold" />
         <Property name="UseOffscreenRenderingForScreenshots" />
         <Property name="ShowAnnotation" />
+        <Property name="DisableIceT" />
       </PropertyGroup>
       <Hints>
         <UseDocumentationForLabels />
@@ -622,7 +657,7 @@
       processes="client|dataserver|renderserver">
       <IntVectorProperty name="Camera3DManipulators"
         number_of_elements="9"
-        default_values="4 1 2 3 4 1 2 4 2"
+        default_values="4 1 2 3 4 1 2 4 6"
         panel_widget="camera_manipulator">
         <!-- For now, we are marking this property is_internal so that it won't
         get saved in state files. -->
@@ -636,11 +671,12 @@
           <Entry text="Roll" value="3" />
           <Entry text="Rotate" value="4" />
           <Entry text="Multi-Rotate" value="5" />
+          <Entry text="ZoomToMouse" value="6" />
         </EnumerationDomain>
       </IntVectorProperty>
       <IntVectorProperty name="Camera2DManipulators"
         number_of_elements="9"
-        default_values="1 3 2 2 2 2 3 1 4"
+        default_values="1 3 2 2 2 6 3 1 4"
         panel_widget="camera_manipulator">
         <!-- For now, we are marking this property is_internal so that it won't
         get saved in state files. -->
@@ -653,6 +689,7 @@
           <Entry text="Zoom" value="2" />
           <Entry text="Roll" value="3" />
           <Entry text="Rotate" value="4" />
+          <Entry text="ZoomToMouse" value="6" />
         </EnumerationDomain>
       </IntVectorProperty>
       <PropertyGroup label="2D Interaction Options">

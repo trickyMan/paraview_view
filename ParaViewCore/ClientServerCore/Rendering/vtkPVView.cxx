@@ -202,9 +202,12 @@ bool vtkPVView::InCaveDisplayMode()
 //----------------------------------------------------------------------------
 bool vtkPVView::GetLocalProcessSupportsInteraction()
 {
-  return this->SynchronizedWindows->GetLocalProcessIsDriver();
-//  return (this->SynchronizedWindows->GetMode() == vtkPVSynchronizedRenderWindows::CLIENT ||
-//    this->SynchronizedWindows->GetMode() == vtkPVSynchronizedRenderWindows::BUILTIN)
+  // Remember that in batch mode, we should not create interaction on any of the
+  // ranks since all views share the same render window. Setting up interactor
+  // on even the root node will have unintended side effects since all views
+  // share the render window.
+  return this->SynchronizedWindows->GetLocalProcessIsDriver() &&
+    this->SynchronizedWindows->GetMode() != vtkPVSynchronizedRenderWindows::BATCH;
 }
 
 //----------------------------------------------------------------------------
@@ -300,9 +303,6 @@ void vtkPVView::CallProcessViewRequest(
           {
           pvrepr->SetUpdateTime(this->GetViewTime());
           }
-
-        pvrepr->SetUseCache(this->GetUseCache());
-        pvrepr->SetCacheKey(this->GetCacheKey());
         }
       }
     }
@@ -331,4 +331,21 @@ void vtkPVView::CallProcessViewRequest(
   // Clear input information since we are done with the pass. This avoids any
   // need for garbage collection.
   inInfo->Clear();
+}
+
+//-----------------------------------------------------------------------------
+void vtkPVView::AddRepresentationInternal(vtkDataRepresentation* rep)
+{
+  if (vtkPVDataRepresentation* drep = vtkPVDataRepresentation::SafeDownCast(rep))
+    {
+    if (drep->GetView() != this)
+      {
+      vtkErrorMacro(
+        << drep->GetClassName()
+        << " may not be calling this->Superclass::AddToView(...) in its "
+        << "AddToView implementation. Please fix that. "
+        << "Also check the same for RemoveFromView(..).");
+      }
+    }
+  this->Superclass::AddRepresentationInternal(rep);
 }

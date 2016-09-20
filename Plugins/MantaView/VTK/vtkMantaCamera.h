@@ -63,17 +63,15 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // vtkMantaCamera is a concrete implementation of the abstract class
 // vtkCamera.  vtkMantaCamera interfaces to the Manta Raytracer library.
 
-#ifndef __vtkMantaCamera_h
-#define __vtkMantaCamera_h
+#ifndef vtkMantaCamera_h
+#define vtkMantaCamera_h
 
 #include "vtkMantaModule.h"
 #include "vtkCamera.h"
 
-//BTX
 namespace Manta {
 class Camera;
 }
-//ETX
 
 class vtkTimeStamp;
 class vtkMantaManager;
@@ -97,10 +95,9 @@ private:
   void OrientMantaCamera(vtkRenderer *);
   
   vtkTimeStamp LastRenderTime;
-  //BTX
+
   // a singleton, created and deleted by vtkMantaRenderer
   Manta::Camera *MantaCamera;
-  //ETX
 
   vtkMantaManager *MantaManager;
 };

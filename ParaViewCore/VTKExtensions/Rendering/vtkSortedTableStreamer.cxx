@@ -1194,7 +1194,7 @@ public:
       int* dimensions = new int[3 * this->NumProcs];
       vtkIntArray::SafeDownCast(
           input->GetFieldData()->GetArray("STRUCTURED_DIMENSIONS"))->
-          GetTupleValue(0, localDimensions);
+          GetTypedTuple(0, localDimensions);
 
       this->MPI->Gather(localDimensions, dimensions, 3, mergePid);
 
@@ -1425,6 +1425,7 @@ vtkSortedTableStreamer::vtkSortedTableStreamer()
   this->Controller = 0;
   this->SetNumberOfInputPorts(1);
   this->ColumnToSort = 0;
+  this->SetColumnToSort("");
   this->Block = 0;
   this->BlockSize = 1024;
   this->Internal = 0;

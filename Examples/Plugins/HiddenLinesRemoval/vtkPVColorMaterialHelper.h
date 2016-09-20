@@ -19,8 +19,8 @@
 // ColorMaterial behaviour of the default OpenGL pipeline. Look at
 // vtkPVColorMaterialHelper_s for available GLSL functions.
 
-#ifndef __vtkPVColorMaterialHelper_h
-#define __vtkPVColorMaterialHelper_h
+#ifndef vtkPVColorMaterialHelper_h
+#define vtkPVColorMaterialHelper_h
 
 #include "vtkObject.h"
 
@@ -46,7 +46,6 @@ public:
   // after the shader has been bound, but before rendering the geometry.
   void Render();
 
-//BTX
 protected:
   vtkPVColorMaterialHelper();
   ~vtkPVColorMaterialHelper();
@@ -68,7 +67,7 @@ protected:
 private:
   vtkPVColorMaterialHelper(const vtkPVColorMaterialHelper&); // Not implemented.
   void operator=(const vtkPVColorMaterialHelper&); // Not implemented.
-//ETX
+
 };
 
 #endif

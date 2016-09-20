@@ -16,8 +16,8 @@
 // .SECTION Description
 // ServerImplementation for WriterProxy
 
-#ifndef __vtkSIWriterProxy_h
-#define __vtkSIWriterProxy_h
+#ifndef vtkSIWriterProxy_h
+#define vtkSIWriterProxy_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSISourceProxy.h"
@@ -44,7 +44,6 @@ public:
   // ports to do this on.
   virtual void UpdatePipelineTime(double time);
 
-//BTX
 protected:
   vtkSIWriterProxy();
   ~vtkSIWriterProxy();
@@ -63,7 +62,7 @@ protected:
 private:
   vtkSIWriterProxy(const vtkSIWriterProxy&); // Not implemented
   void operator=(const vtkSIWriterProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -34,8 +34,8 @@
 // call are defined as Python variables inside both scripts. This allows
 // the developer to keep the scripts the same but change their behaviour
 // using parameters.
-#ifndef __vtkPythonProgrammableFilter_h
-#define __vtkPythonProgrammableFilter_h
+#ifndef vtkPythonProgrammableFilter_h
+#define vtkPythonProgrammableFilter_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkProgrammableFilter.h"
@@ -73,6 +73,11 @@ public:
   void SetParameter(const char *name, double value);
   void SetParameter(const char *name, double value1, double value2);
   void SetParameter(const char *name, double value1, double value2, double value3);
+
+  // Description:
+  // To support repeatable-parameters.
+  void AddParameter(const char* name, const char* value);
+  void ClearParameter(const char* name);
 
   // Description:
   // Clear all name-value parameters
@@ -145,9 +150,8 @@ private:
   // and removed at the end of that method.
   vtkInformation* Request;
 
-//BTX
   vtkPythonProgrammableFilterImplementation* const Implementation;
-//ETX
+
 };
 
 #endif

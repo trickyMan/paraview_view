@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkSIVectorPropertyTemplate_h
-#define __vtkSIVectorPropertyTemplate_h
+#ifndef vtkSIVectorPropertyTemplate_h
+#define vtkSIVectorPropertyTemplate_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIVectorProperty.h"
@@ -42,7 +42,6 @@ public:
   // @endverbatim
   vtkGetMacro(ArgumentIsArray, bool);
 
-//BTX
 protected:
   vtkSIVectorPropertyTemplate();
   ~vtkSIVectorPropertyTemplate();
@@ -68,7 +67,7 @@ protected:
 private:
   vtkSIVectorPropertyTemplate(const vtkSIVectorPropertyTemplate&); // Not implemented
   void operator=(const vtkSIVectorPropertyTemplate&); // Not implemented
-//ETX
+
 };
 
 #endif

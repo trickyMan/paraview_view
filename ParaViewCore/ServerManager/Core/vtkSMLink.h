@@ -18,18 +18,17 @@
 // to connect two properies(or proxies) together, thus when one is updated,
 // the dependent one is also updated accordingly.
 
-#ifndef __vtkSMLink_h
-#define __vtkSMLink_h
+#ifndef vtkSMLink_h
+#define vtkSMLink_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMRemoteObject.h"
 #include "vtkSMMessageMinimal.h" // Needed
-//BTX
+
 class vtkCommand;
 class vtkPVXMLElement;
 class vtkSMProxy;
 class vtkSMProxyLocator;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMLink : public vtkSMRemoteObject
 {
@@ -37,14 +36,12 @@ public:
   vtkTypeMacro(vtkSMLink, vtkSMRemoteObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
   enum UpdateDirections
     {
     NONE = 0,
     INPUT = 1,
     OUTPUT = 2
     };
-//ETX
 
   // Description:
   // This flag determines if UpdateVTKObjects calls are to be propagated.
@@ -63,8 +60,6 @@ public:
   // Remove all links.
   virtual void RemoveAllLinks() = 0;
 
-//BTX
-
   // Description:
   // This method returns the full object state that can be used to create the
   // object from scratch.
@@ -80,6 +75,23 @@ public:
   // invalid state when a property refers to a sub-proxy that does not exist yet.
   virtual void LoadState( const vtkSMMessage* msg, vtkSMProxyLocator* locator);
 
+  // Description:
+  // Update the internal protobuf state
+  virtual void UpdateState() = 0;
+
+  // Description:
+  // Get the number of object that are involved in this link.
+  virtual unsigned int GetNumberOfLinkedObjects() = 0;
+
+  // Description:
+  // Get the direction of a object involved in this link
+  // (see vtkSMLink::UpdateDirections)
+  virtual int GetLinkedObjectDirection(int index) = 0;
+
+  // Description:
+  // Get a proxy involved in this link.
+  virtual vtkSMProxy* GetLinkedProxy(int index) = 0;
+ 
 protected:
   vtkSMLink();
   ~vtkSMLink();
@@ -121,7 +133,7 @@ protected:
   friend class vtkSMLinkObserver;
   friend class vtkSMStateLoader;
   friend class vtkSMSessionProxyManager;
-//ETX
+
   vtkCommand* Observer;
   // Set by default. In a link P1->P2, if this flag is set, when ever Proxy with P1
   // is updated i.e. UpdateVTKObjects() is called, this class calls
@@ -136,7 +148,6 @@ private:
   vtkSMLink(const vtkSMLink&); // Not implemented.
   void operator=(const vtkSMLink&); // Not implemented.
 
-//ETX
 };
 
 #endif

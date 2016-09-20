@@ -31,8 +31,8 @@
 // .SECTION See Also
 // vtkPVAnimationCue vtkPVCueManipulator
 
-#ifndef __vtkPVKeyFrameCueManipulator_h
-#define __vtkPVKeyFrameCueManipulator_h
+#ifndef vtkPVKeyFrameCueManipulator_h
+#define vtkPVKeyFrameCueManipulator_h
 
 #include "vtkPVCueManipulator.h"
 
@@ -139,11 +139,10 @@ protected:
   int AddKeyFrameInternal(vtkPVKeyFrame* keyframe);
   int RemoveKeyFrameInternal(vtkPVKeyFrame* keyframe);
 
-  //BTX
   friend class vtkPVKeyFrameCueManipulatorObserver;
   vtkPVKeyFrameCueManipulatorObserver* Observer;
   void ExecuteEvent(vtkObject* obj, unsigned long event, void* );
-  //ETX
+
   int SendEndEvent;
   int LastAddedKeyFrameIndex;
 

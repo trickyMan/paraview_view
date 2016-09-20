@@ -18,8 +18,8 @@
 // vtkPolyLine paraview blocks all data information from this source resulting
 // in it being treated as a null source.
 
-#ifndef __vtkPVNullSource_h
-#define __vtkPVNullSource_h
+#ifndef vtkPVNullSource_h
+#define vtkPVNullSource_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkLineSource.h"
@@ -31,7 +31,6 @@ public:
   vtkTypeMacro(vtkPVNullSource, vtkLineSource);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkPVNullSource();
   ~vtkPVNullSource();
@@ -39,7 +38,7 @@ protected:
 private:
   vtkPVNullSource(const vtkPVNullSource&); // Not implemented
   void operator=(const vtkPVNullSource&); // Not implemented
-//ETX
+
 };
 
 #endif

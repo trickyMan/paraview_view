@@ -21,8 +21,8 @@
 // dynamically. For statically importing plugins, one directly uses
 // PV_PLUGIN_IMPORT() macro defined in vtkPVPlugin.h.
 
-#ifndef __vtkPVPluginLoader_h
-#define __vtkPVPluginLoader_h
+#ifndef vtkPVPluginLoader_h
+#define vtkPVPluginLoader_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -57,6 +57,19 @@ public:
   // Description:
   // Loads all plugins under the directories mentioned in the SearchPaths.
   void LoadPluginsFromPluginSearchPath();
+
+  // Description:
+  // Use PV_PLUGIN_CONFILE_FILE xml file to load specified plugins
+  // It can contain path to multiples xml pluginc config files
+  // sperated by env separator.
+  // It allow user to fine pick which plugins to load, instead of using PV_PLUGIN_PATH
+  // the format a xml plugin file should be the following :
+  // <?xml version="1.0"?>
+  //  <Plugins>
+  //    <Plugin name="MyPlugin" filename="absolute/path/to/libMyPlugin.so"/>
+  //    ...
+  //  </Plugins>
+  void LoadPluginsFromPluginConfigFile();
 
   // Description:
   // Loads all plugin libraries at a path.
@@ -96,6 +109,12 @@ public:
   // Sets the function used to load static plugins.
   static void SetStaticPluginLoadFunction(vtkPluginLoadFunction function);
 
+  // Description:
+  // Internal method used in pqParaViewPlugin.cxx.in to tell the
+  // vtkPVPluginLoader that a library was unloaded so it doesn't try to unload
+  // it again.
+  static void PluginLibraryUnloaded(const char* pluginname);
+
 protected:
   vtkPVPluginLoader();
   ~vtkPVPluginLoader();
@@ -127,7 +146,6 @@ private:
   static vtkPluginLoadFunction StaticPluginLoadFunction;
 };
 
-//BTX
 // Implementation of Schwartz counter idiom to ensure that the plugin library
 // unloading doesn't happen before the ParaView application is finalized.
 static class VTKPVCLIENTSERVERCORECORE_EXPORT vtkPVPluginLoaderCleanerInitializer
@@ -136,5 +154,5 @@ public:
   vtkPVPluginLoaderCleanerInitializer();
   ~vtkPVPluginLoaderCleanerInitializer();
 } vtkPVPluginLoaderCleanerInitializerInstance; // object here in header.
-//ETX
+
 #endif

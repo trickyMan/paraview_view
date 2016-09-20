@@ -61,6 +61,7 @@ public:
   /// \li \c display_representation_selector : pqDisplayRepresentationPropertyWidget
   /// \li \c double_range : pqDoubleRangeSliderPropertyWidget
   /// \li \c image_compressor_config : pqImageCompressorWidget
+  /// \li \c index_selection : pqIndexSelectionWidget
   /// \li \c list : pqListPropertyWidget
   /// \li \c texture_selector : pqTextureSelectorPropertyWidget
   /// \li \c transfer_function_editor : pqTransferFunctionWidgetPropertyWidget
@@ -81,10 +82,19 @@ public:
   /// \li \c BackgroundEditor : pqBackgroundPropertyWidget
   /// \li \c ColorEditor : pqColorEditorPropertyWidget
   /// \li \c ColorOpacityEditor : pqColorOpacityEditorWidget
-  /// \li \c CubeAxes : pqCubeAxesPropertyWidget
   /// \li \c FontEditor : pqFontPropertyWidget
   /// \li \c LightsEditor : pqLightsPropertyGroup
   /// \li \c SeriesEditor : pqSeriesEditorPropertyWidget
+  /// \li \c InteractivePlane : pqImplicitPlanePropertyWidget
+  /// \li \c InteractiveBox: pqBoxPropertyWidget
+  /// \li \c InteractiveHandle: pqHandlePropertyWidget
+  /// \li \c InteractiveLine: pqLinePropertyWidget
+  /// \li \c InteractiveSpline: pqSplinePropertyWidget
+  /// \li \c InteractiveSphere: pqSpherePropertyWidget
+  /// \li \c InteractivePolyLine: pqSplinePropertyWidget (with mode==POLYLINE)
+  /// \li \c InteractiveCylinder: pqCylinderPropertyWidget
+  /// \li \c YoungsMaterial: pqYoungsMaterialPropertyWidget
+  /// \li \c cinema_export_selector : pqCinemaConfiguration
   virtual pqPropertyWidget* createWidgetForPropertyGroup(
     vtkSMProxy *proxy, vtkSMPropertyGroup *group);
 
@@ -98,6 +108,7 @@ public:
   /// \li \c ShowWidgetDecorator : pqShowWidgetDecorator
   /// \li \c InputDataTypeDecorator : pqInputDataTypeDecorator
   /// \li \c GenericDecorator: pqGenericPropertyWidgetDecorator
+  /// \li \c OSPRayHidingDecorator: pqOSPRayHidingDecorator
   virtual pqPropertyWidgetDecorator* createWidgetDecorator(
     const QString& type, vtkPVXMLElement* config, pqPropertyWidget* widget);
 };

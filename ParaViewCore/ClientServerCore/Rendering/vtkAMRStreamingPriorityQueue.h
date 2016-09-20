@@ -25,8 +25,8 @@
 // .SECTION See Also
 // vtkAMROutlineRepresentation, vtkAMRStreamingVolumeRepresentation.
 
-#ifndef __vtkAMRStreamingPriorityQueue_h
-#define __vtkAMRStreamingPriorityQueue_h
+#ifndef vtkAMRStreamingPriorityQueue_h
+#define vtkAMRStreamingPriorityQueue_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" // for export macros
 #include "vtkObject.h"
@@ -77,7 +77,6 @@ public:
   // Test if the queue is empty before calling this method.
   unsigned int Pop();
 
-//BTX
 protected:
   vtkAMRStreamingPriorityQueue();
   ~vtkAMRStreamingPriorityQueue();
@@ -90,7 +89,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

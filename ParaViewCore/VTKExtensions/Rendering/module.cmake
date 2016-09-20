@@ -25,6 +25,10 @@ else()
     set(opengl2_private_depends vtkglew)
 endif()
 
+if(PARAVIEW_USE_OSPRAY)
+  list(APPEND __dependencies vtkRenderingOSPRay)
+endif()
+
 vtk_module(vtkPVVTKExtensionsRendering
   GROUPS
     Qt
@@ -47,10 +51,12 @@ vtk_module(vtkPVVTKExtensionsRendering
     vtkRendering${VTK_RENDERING_BACKEND}
     vtkRenderingParallel
     vtkIOExport
+    vtkIOExport${VTK_RENDERING_BACKEND}
     ${__dependencies}
     vtkRenderingVolumeAMR
   PRIVATE_DEPENDS
     vtkzlib
+    vtklz4
   COMPILE_DEPENDS
     vtkUtilitiesEncodeString
 

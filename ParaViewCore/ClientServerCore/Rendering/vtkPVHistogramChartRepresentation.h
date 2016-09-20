@@ -15,8 +15,8 @@
 // .NAME vtkPVHistogramChartRepresentation
 // .SECTION Description
 
-#ifndef __vtkPVHistogramChartRepresentation_h
-#define __vtkPVHistogramChartRepresentation_h
+#ifndef vtkPVHistogramChartRepresentation_h
+#define vtkPVHistogramChartRepresentation_h
 
 #include "vtkXYChartRepresentation.h"
 
@@ -91,7 +91,6 @@ public:
   // Inverse of MapSelectionToInput().
   virtual bool MapSelectionToView(vtkSelection* sel);
 
-//BTX
 protected:
   vtkPVHistogramChartRepresentation();
   ~vtkPVHistogramChartRepresentation();
@@ -107,7 +106,7 @@ private:
 
   std::string ArrayName;
   int AttributeType;
-//ETX
+
 };
 
 #endif

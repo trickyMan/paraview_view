@@ -17,8 +17,8 @@
 // A vtkClientServerStream serializable conatiner of information describing
 // memory configuration of the host of a single process.
 
-#ifndef __vtkPVSystemConfigInformation_h
-#define __vtkPVSystemConfigInformation_h
+#ifndef vtkPVSystemConfigInformation_h
+#define vtkPVSystemConfigInformation_h
 
 #include "vtkPVInformation.h"
 
@@ -84,8 +84,6 @@ public:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream *css);
   virtual void CopyFromStream(const vtkClientServerStream *css);
-  //BTX
-  //ETX
 
   // Description:
   // Access managed information
@@ -112,9 +110,8 @@ protected:
   ~vtkPVSystemConfigInformation();
 
 private:
-  //BTX
+
   vector<ConfigInfo> Configs;
-  //ETX
 
 private:
   vtkPVSystemConfigInformation(const vtkPVSystemConfigInformation&); // Not implemented

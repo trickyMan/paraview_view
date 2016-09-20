@@ -33,7 +33,7 @@
 // .SECTION Inputs and Outputs
 // The input to the filter must be a triangle mesh. The output is the same mesh
 // with a point data attribute capturing the distance field from the user
-// specified seed(s) via SetSeedList.
+// specified seed(s) via SetSeedList or SetSeedsFromNonZeroField.
 //
 // .SECTION Termination Criteria
 // The fast marching may be prematurely terminated via any of the optional
@@ -70,8 +70,8 @@
 //    Remeshing and Parameterization", Progress in Nonlinear Differential
 //    Equations and Their Applications, 2005.
 
-#ifndef __vtkFastMarchingGeodesicDistance_h
-#define __vtkFastMarchingGeodesicDistance_h
+#ifndef vtkFastMarchingGeodesicDistance_h
+#define vtkFastMarchingGeodesicDistance_h
 
 #include "vtkPolyDataGeodesicDistance.h"
 
@@ -140,9 +140,8 @@ public:
 
   // Description:
   // Events invoked by the filter
-  //BTX
+
   enum { IterationEvent = 10590 };
-  //ETX
 
 protected:
   vtkFastMarchingGeodesicDistance();
@@ -161,7 +160,10 @@ protected:
   virtual int Compute();
 
   // Add the seeds
-  virtual void AddSeeds();
+  virtual void AddSeedsInternal();
+
+  // Add the seeds based on the non-zero values of a nonZeroField
+  void SetSeedsFromNonZeroField( vtkDataArray* nonZeroField );
 
   // Copy the resulting distance field from GeoMesh into the float array
   void CopyDistanceField( vtkPolyData *pd );
@@ -193,11 +195,9 @@ protected:
   // Propagation, ie speed function weights
   vtkDataArray * PropagationWeights;
 
-  //BTX
   friend class vtkFastMarchingGeodesicPath;
   friend class vtkGeodesicMeshInternals;
   void *GetGeodesicMesh();
-  //ETX
 
   // Counter to invoke iteration events every N fast marching steps
   unsigned long FastMarchingIterationEventResolution;

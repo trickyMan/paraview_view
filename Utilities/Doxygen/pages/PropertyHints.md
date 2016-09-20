@@ -24,6 +24,24 @@ In that case, use this property hint as follows.
       </Hints>
     </IntVectorProperty>
 
+ComponentLabels
+-----------------
+Show vector component labels for double vector properties.
+
+A multi-component double vector property may represent several different types
+of coordinates.  It may be useful to provide labels for each component's input
+to designate which type of vector is being represented.
+
+    <DoubleVectorProperty ...>
+      ...
+      <Hints>
+        <ShowComponentLabels>
+          <Label component="0" label="X:"/>
+          ...
+        </ShowComponentLabels>
+      </Hints>
+    </DoubleVectorProperty>
+
 PlaceholderText
 ---------------
 Put a PlaceHolder text in the Text entry widget.
@@ -112,3 +130,26 @@ tabular/tree widget.
         <WidgetHeight number_of_rows="20" />
       </Hints>
     </IntVectorProperty>
+
+FileChooser
+------------
+Specify supported extensions to list for `pqFileChooserWidget` dialog.
+
+For properties using FileListDomain to show a file chooser widget on the
+Properties panel, sometimes we want to provide a list of extensions expected. In
+that case, one can use this hint. Note, this is not intended for specifying
+extensions that a reader supports. For that one uses the `<ReaderFactory>` hint
+descriped in [ProxyHints](@ref ProxyHints).
+
+    <StringVectorProperty animateable="0"
+                          command="SetQFileName"
+                          name="QFileName"
+                          number_of_elements="1"
+                          panel_visibility="default">
+      <FileListDomain name="files" />
+      <Documentation>This property specifies the .q (solution) file name for
+        the PLOT3D reader.</Documentation>
+      <Hints>
+        <FileChooser extensions="q" file_description="Solution files" />
+      </Hints>
+    </StringVectorProperty>

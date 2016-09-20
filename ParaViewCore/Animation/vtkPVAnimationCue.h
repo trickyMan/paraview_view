@@ -22,8 +22,8 @@
 // vtkAnimationCue vtkSMAnimationSceneProxy
 //
 
-#ifndef __vtkPVAnimationCue_h
-#define __vtkPVAnimationCue_h
+#ifndef vtkPVAnimationCue_h
+#define vtkPVAnimationCue_h
 
 #include "vtkAnimationCue.h"
 #include "vtkPVAnimationModule.h" // needed for export macro
@@ -90,9 +90,7 @@ protected:
     double clocktime);
   virtual void EndCueInternal();
 
-//BTX
   friend class vtkSMAnimationSceneProxy;
-//ETX
 
   unsigned long ObserverID;
   bool UseAnimationTime;

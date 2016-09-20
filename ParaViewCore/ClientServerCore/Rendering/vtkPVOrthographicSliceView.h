@@ -28,8 +28,8 @@
 // plane (in which case the \c SliceIncrements are used to update the slice
 // position). Additionally, users can double click in any of the orthographic
 // views to move the slice position to that location.
-#ifndef __vtkPVOrthographicSliceView_h
-#define __vtkPVOrthographicSliceView_h
+#ifndef vtkPVOrthographicSliceView_h
+#define vtkPVOrthographicSliceView_h
 
 #include "vtkPVMultiSliceView.h"
 
@@ -95,8 +95,6 @@ public:
   virtual void SetGradientBackground(int val);
   virtual void SetTexturedBackground(int val);
 
-
-//BTX
 protected:
   vtkPVOrthographicSliceView();
   ~vtkPVOrthographicSliceView();
@@ -156,7 +154,7 @@ private:
   bool GridAxes3DActorsNeedShallowCopy;
   unsigned long GridAxes3DActorObserverId;
   void OnGridAxes3DActorModified();
-//ETX
+
 };
 
 #endif

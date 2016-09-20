@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkSIPVRepresentationProxy is the helper for vtkSMPVRepresentationProxy.
 
-#ifndef __vtkSIPVRepresentationProxy_h
-#define __vtkSIPVRepresentationProxy_h
+#ifndef vtkSIPVRepresentationProxy_h
+#define vtkSIPVRepresentationProxy_h
 
 #include "vtkPVServerImplementationRenderingModule.h" //needed for exports
 #include "vtkSIProxy.h"
@@ -31,7 +31,6 @@ public:
 
   virtual void AboutToDelete();
 
-//BTX
 protected:
   vtkSIPVRepresentationProxy();
   ~vtkSIPVRepresentationProxy();
@@ -49,7 +48,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqServerManagerModel_h 
-#define __pqServerManagerModel_h
+#ifndef pqServerManagerModel_h
+#define pqServerManagerModel_h
 
 #include <QObject>
 #include <QList>
@@ -51,7 +51,6 @@ class vtkSMProxy;
 class vtkSMProxyLocator;
 class vtkSMSession;
 
-//BTX
 class pqServerManagerModel;
 
 template <class T> inline QList<T> pqFindItems(
@@ -68,7 +67,6 @@ template <class T> inline int pqGetNumberOfItems(
   const pqServerManagerModel* const model);
 template <class T> inline T pqGetItemAtIndex(
   const pqServerManagerModel* const model, int index);
-//ETX
 
 /// pqServerManagerModel is the model for the Server Manager.
 /// All the pipelines in the Server Manager need a GUI representation
@@ -289,6 +287,10 @@ protected slots:
 private:
   pqServerManagerModel(const pqServerManagerModel&); // Not implemented.
   void operator=(const pqServerManagerModel&); // Not implemented.
+
+  /// Process the QSettings-only settings, setting the values in the
+  /// various settings proxies.
+  void updateSettingsFromQSettings(pqServer* server);
 
   class pqInternal;
   pqInternal* Internal;

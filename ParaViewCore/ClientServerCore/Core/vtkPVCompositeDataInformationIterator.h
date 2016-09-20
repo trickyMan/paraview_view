@@ -18,8 +18,8 @@
 // vtkPVCompositeDataInformationIterator is an iterator used to iterate over
 // data information for a composite data set.
 
-#ifndef __vtkPVCompositeDataInformationIterator_h
-#define __vtkPVCompositeDataInformationIterator_h
+#ifndef vtkPVCompositeDataInformationIterator_h
+#define vtkPVCompositeDataInformationIterator_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -65,7 +65,7 @@ public:
   // Returns the current flat index/composite index.
   // This is only valid is IsDoneWithTraversal() returns false.
   vtkGetMacro(CurrentFlatIndex, unsigned int);
-//BTX
+
 protected:
   vtkPVCompositeDataInformationIterator();
   ~vtkPVCompositeDataInformationIterator();
@@ -79,7 +79,7 @@ private:
 
   class vtkInternal;
   vtkInternal* Internal;
-//ETX
+
 };
 
 #endif

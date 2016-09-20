@@ -12,11 +12,12 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkPVDisplayInformation -
+// .NAME vtkPVDisplayInformation - provides information about the rendering
+// display and OpenGL context.
 // .SECTION Description
 
-#ifndef __vtkPVDisplayInformation_h
-#define __vtkPVDisplayInformation_h
+#ifndef vtkPVDisplayInformation_h
+#define vtkPVDisplayInformation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -30,6 +31,11 @@ public:
   // Description:
   // Returns if the display can be opened up on the current processes.
   static bool CanOpenDisplayLocally();
+
+  // Description:
+  // Returns true if OpenGL context supports core features required for
+  // rendering.
+  static bool SupportsOpenGLLocally();
 
   // Description:
   // Transfer information about a single object into this object.
@@ -49,15 +55,24 @@ public:
   // the display.
   vtkGetMacro(CanOpenDisplay, int);
 
+  // Description:
+  // SupportsOpenGL is set to 1 if the OpenGL context available supports core
+  // features needed for rendering.
+  vtkGetMacro(SupportsOpenGL, int);
+
 protected:
   vtkPVDisplayInformation();
   ~vtkPVDisplayInformation();
 
   int CanOpenDisplay;
+  int SupportsOpenGL;
 
 private:
   vtkPVDisplayInformation(const vtkPVDisplayInformation&); // Not implemented
   void operator=(const vtkPVDisplayInformation&); // Not implemented
+
+  static int GlobalCanOpenDisplayLocally;
+  static int GlobalSupportsOpenGL;
 };
 
 #endif

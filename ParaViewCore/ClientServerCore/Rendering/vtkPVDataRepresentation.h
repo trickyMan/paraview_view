@@ -19,12 +19,12 @@
 // .SECTION See Also
 // vtkPVDataRepresentationPipeline
 
-#ifndef __vtkPVDataRepresentation_h
-#define __vtkPVDataRepresentation_h
+#ifndef vtkPVDataRepresentation_h
+#define vtkPVDataRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkDataRepresentation.h"
-
+#include "vtkWeakPointer.h" // needed for vtkWeakPointer
 class vtkInformationRequestKey;
 
 class VTKPVCLIENTSERVERCORERENDERING_EXPORT vtkPVDataRepresentation : public vtkDataRepresentation
@@ -104,19 +104,15 @@ public:
   vtkGetMacro(UpdateTimeValid, bool);
 
   // Description:
-  // This controls when to use cache and when using cache, what cached value to
-  // use for the next update. This class using a special executive so that is a
-  // data is cached, then it does not propagate any pipeline requests upstream.
-  // These ivars are updated by vtkPVView::Update() based on the corresponding
-  // variable values on the vtkPVView itself.
-  virtual void SetUseCache(bool use)
-    { this->UseCache = use; }
-  virtual void SetCacheKey(double val)
-    { this->CacheKey = val; }
+  // @deprecated No longer needed. Simply remove these methods from your
+  // subclass implementation.
+  VTK_LEGACY(virtual void SetUseCache(bool));
+  VTK_LEGACY(virtual void SetCacheKey(double val));
 
   // Description:
-  // Typically UseCache and CacheKey are updated by the View and representations
-  // cache based on what the view tells it. However in some cases we may want to
+  // Typically a representation decides whether to use cache based on the view's
+  // values for UseCache and CacheKey.
+  // However in some cases we may want to
   // force a representation to cache irrespective of the view (e.g. comparative
   // views). In which case these ivars can up set. If ForcedCacheKey is true, it
   // overrides UseCache and CacheKey. Instead, ForcedCacheKey is used.
@@ -128,10 +124,8 @@ public:
   // Description:
   // Returns whether caching is used and what key to use when caching is
   // enabled.
-  virtual double GetCacheKey()
-    { return this->ForceUseCache? this->ForcedCacheKey : this->CacheKey; }
-  virtual bool GetUseCache()
-    { return this->ForceUseCache || this->UseCache; }
+  virtual double GetCacheKey();
+  virtual bool GetUseCache();
 
   // Description:
   // Called by vtkPVDataRepresentationPipeline to see if using cache is valid
@@ -145,10 +139,8 @@ public:
   // Description:
   // Making these methods public. When constructing composite representations,
   // we need to call these methods directly on internal representations.
-  virtual bool AddToView(vtkView* view)
-    { return this->Superclass::AddToView(view); }
-  virtual bool RemoveFromView(vtkView* view)
-    { return this->Superclass::RemoveFromView(view); }
+  virtual bool AddToView(vtkView* view);
+  virtual bool RemoveFromView(vtkView* view);
 
   // Description:
   // Retrieves an output port for the input data object at the specified port
@@ -161,7 +153,10 @@ public:
     { return this->GetInternalOutputPort(port, 0); }
   virtual vtkAlgorithmOutput* GetInternalOutputPort(int port, int conn);
 
-//BTX
+  // Description:
+  // Provides access to the view.
+  vtkView* GetView() const;
+
 protected:
   vtkPVDataRepresentation();
   ~vtkPVDataRepresentation();
@@ -197,16 +192,14 @@ private:
   void operator=(const vtkPVDataRepresentation&); // Not implemented
 
   bool Visibility;
-  bool UseCache;
   bool ForceUseCache;
-  double CacheKey;
   double ForcedCacheKey;
   bool NeedUpdate;
 
   class Internals;
   Internals* Implementation;
+  vtkWeakPointer<vtkView> View;
 
-//ETX
 };
 
 #endif

@@ -18,17 +18,15 @@
 // At the time when the link is created every output property is synchornized 
 // with the first input property.
 
-#ifndef __vtkSMPropertyLink_h
-#define __vtkSMPropertyLink_h
+#ifndef vtkSMPropertyLink_h
+#define vtkSMPropertyLink_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMLink.h"
 
-//BTX
 class vtkSMProperty;
 class vtkSMPropertyLinkInternals;
 class vtkSMPropertyLinkObserver;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMPropertyLink : public vtkSMLink
 {
@@ -52,6 +50,7 @@ public:
 
   // Description:
   // Get the number of properties that are involved in this link.
+  unsigned int GetNumberOfLinkedObjects();
   unsigned int GetNumberOfLinkedProperties();
 
   // Description:
@@ -69,13 +68,12 @@ public:
   // Description:
   // Get the direction of a property involved in this link
   // (see vtkSMLink::UpdateDirections)
+  int GetLinkedObjectDirection(int index);
   int GetLinkedPropertyDirection(int index);
   
   // Description:
   // Remove all links.
   virtual void RemoveAllLinks();
-
-//BTX
 
   // Description:
   // This method is used to initialize the object to the given state
@@ -119,7 +117,7 @@ private:
 
   vtkSMPropertyLink(const vtkSMPropertyLink&); // Not implemented.
   void operator=(const vtkSMPropertyLink&); // Not implemented.
-//ETX
+
 };
 
 

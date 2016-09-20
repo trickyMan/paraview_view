@@ -17,8 +17,8 @@
 // vtkPythonExtractSelection is a used to extra cells/points using numpy. This
 // enables creation of arbitrary queries to be used as the selection criteria.
 
-#ifndef __vtkPythonExtractSelection_h
-#define __vtkPythonExtractSelection_h
+#ifndef vtkPythonExtractSelection_h
+#define vtkPythonExtractSelection_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkExtractSelectionBase.h"
@@ -39,7 +39,6 @@ public:
   bool ExtractElements(int attributeType, vtkDataObject* input, vtkDataObject* output);
   bool ExtractElements(int attributeType, vtkCompositeDataSet* input, vtkCompositeDataSet* output);
 
-//BTX
 protected:
   vtkPythonExtractSelection();
   ~vtkPythonExtractSelection();
@@ -60,7 +59,6 @@ private:
   vtkPythonExtractSelection(const vtkPythonExtractSelection&); // Not implemented
   void operator=(const vtkPythonExtractSelection&); // Not implemented
 
-//ETX
 };
 
 #endif

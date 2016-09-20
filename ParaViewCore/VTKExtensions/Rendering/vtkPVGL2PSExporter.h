@@ -17,19 +17,19 @@
 // This is used to export ParaView renderings to a variety of vector graphics
 // formats.
 
-#ifndef __vtkPVGL2PSExporter_h
-#define __vtkPVGL2PSExporter_h
+#ifndef vtkPVGL2PSExporter_h
+#define vtkPVGL2PSExporter_h
 
-#include "vtkGL2PSExporter.h"
+#include "vtkOpenGLGL2PSExporter.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
 #include "vtkStdString.h" // for vtkStdString
 
 class VTKPVVTKEXTENSIONSRENDERING_EXPORT vtkPVGL2PSExporter
-    : public vtkGL2PSExporter
+    : public vtkOpenGLGL2PSExporter
 {
 public:
   static vtkPVGL2PSExporter* New();
-  vtkTypeMacro(vtkPVGL2PSExporter, vtkGL2PSExporter);
+  vtkTypeMacro(vtkPVGL2PSExporter, vtkOpenGLGL2PSExporter)
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -47,7 +47,6 @@ public:
   vtkGetMacro(ExcludeCubeAxesActorsFromRasterization, int)
   vtkBooleanMacro(ExcludeCubeAxesActorsFromRasterization, int)
 
-//BTX
 protected:
   vtkPVGL2PSExporter();
   ~vtkPVGL2PSExporter();
@@ -60,7 +59,7 @@ protected:
 private:
   vtkPVGL2PSExporter(const vtkPVGL2PSExporter&); // Not implemented
   void operator=(const vtkPVGL2PSExporter&); // Not implemented
-//ETX
+
 };
 
 #endif

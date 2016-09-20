@@ -23,8 +23,8 @@
 // .SECTION See Also
 // vtkSMVectorProperty vtkSMDoubleVectorProperty vtkSMIntVectorProperty
 
-#ifndef __vtkSMStringVectorProperty_h
-#define __vtkSMStringVectorProperty_h
+#ifndef vtkSMStringVectorProperty_h
+#define vtkSMStringVectorProperty_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMVectorProperty.h"
@@ -113,9 +113,7 @@ public:
   // before a domain check is performed.
   virtual unsigned int GetNumberOfUncheckedElements();
 
-  //BTX
   enum ElementTypes{ INT, DOUBLE, STRING };
-  //ETX
 
   // Description: 
   // Copy all property values.

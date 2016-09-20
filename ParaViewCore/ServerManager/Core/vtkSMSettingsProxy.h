@@ -19,8 +19,8 @@
 // for changes to the underlying VTK objects and updates the proxy properties
 // whenever the VTK object settings change.
 
-#ifndef __vtkSMSettingsProxy_h
-#define __vtkSMSettingsProxy_h
+#ifndef vtkSMSettingsProxy_h
+#define vtkSMSettingsProxy_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -39,7 +39,6 @@ public:
   // "setter" properties.
   int ReadXMLAttributes(vtkSMSessionProxyManager* pm, vtkPVXMLElement* element);
 
-//BTX
  protected:
   vtkSMSettingsProxy();
   ~vtkSMSettingsProxy();
@@ -59,7 +58,7 @@ public:
 private:
   vtkSMSettingsProxy(const vtkSMSettingsProxy&); // Not implemented
   void operator=(const vtkSMSettingsProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

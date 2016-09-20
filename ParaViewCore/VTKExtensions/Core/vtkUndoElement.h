@@ -24,8 +24,8 @@
 // .SECTION See Also
 // vtkUndoStack vtkUndoSet
 
-#ifndef __vtkUndoElement_h
-#define __vtkUndoElement_h
+#ifndef vtkUndoElement_h
+#define vtkUndoElement_h
 
 #include "vtkObject.h"
 #include "vtkPVVTKExtensionsCoreModule.h" // needed for export macro
@@ -78,7 +78,6 @@ public:
     this->UndoSetWorkingContext = workCTX;
     }
 
-//BTX
 protected:
   vtkUndoElement();
   ~vtkUndoElement();
@@ -93,7 +92,7 @@ protected:
 private:
   vtkUndoElement(const vtkUndoElement&); // Not implemented.
   void operator=(const vtkUndoElement&); // Not implemented.
-//ETX
+
 };
 
 #endif

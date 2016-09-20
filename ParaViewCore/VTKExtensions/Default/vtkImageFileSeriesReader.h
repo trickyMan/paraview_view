@@ -22,8 +22,8 @@
 // pass all filenames to the internal reader and then let it handle the pipeline
 // requests.
 
-#ifndef __vtkImageFileSeriesReader_h
-#define __vtkImageFileSeriesReader_h
+#ifndef vtkImageFileSeriesReader_h
+#define vtkImageFileSeriesReader_h
 
 #include "vtkFileSeriesReader.h"
 
@@ -43,8 +43,6 @@ public:
   // correct filenames when ReadAsImageStack is true.
   virtual int ProcessRequest(vtkInformation*, vtkInformationVector**, vtkInformationVector*);
 
-
-//BTX
 protected:
   vtkImageFileSeriesReader();
   ~vtkImageFileSeriesReader();
@@ -55,7 +53,7 @@ protected:
 private:
   vtkImageFileSeriesReader(const vtkImageFileSeriesReader&); // Not implemented
   void operator=(const vtkImageFileSeriesReader&); // Not implemented
-//ETX
+
 };
 
 #endif

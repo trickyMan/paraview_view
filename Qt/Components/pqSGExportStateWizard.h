@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqSGExportStateWizard_h
-#define __pqSGExportStateWizard_h
+#ifndef pqSGExportStateWizard_h
+#define pqSGExportStateWizard_h
 
 #include "pqComponentsModule.h"
 #include <QWizard>
@@ -59,11 +59,7 @@ protected slots:
   void onShowAllSources(bool);
   void onAdd();
   void onRemove();
-  void incrementView();
-  void decrementView();
   void toggleCinema(bool);
-  void incrementTrack();
-  void decrementTrack();
 
 protected:
   virtual bool getCommandString(QString& command) = 0;
@@ -75,8 +71,6 @@ protected:
 private:
   Q_DISABLE_COPY(pqSGExportStateWizard)
 
-  int CurrentView;
-  int CurrentTrack;
   friend class pqSGExportStateWizardPage2;
   friend class pqSGExportStateWizardPage3;
 };

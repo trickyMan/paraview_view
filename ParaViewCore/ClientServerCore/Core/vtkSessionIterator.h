@@ -17,8 +17,8 @@
 // vtkSessionIterator is used to iterate over sessions in the global
 // ProcessModule.
 
-#ifndef __vtkSessionIterator_h
-#define __vtkSessionIterator_h
+#ifndef vtkSessionIterator_h
+#define vtkSessionIterator_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -55,7 +55,6 @@ public:
   // Returns the current session id.
   vtkIdType GetCurrentSessionId();
 
-//BTX
 protected:
   vtkSessionIterator();
   ~vtkSessionIterator();
@@ -65,7 +64,7 @@ protected:
 private:
   vtkSessionIterator(const vtkSessionIterator&); // Not implemented
   void operator=(const vtkSessionIterator&); // Not implemented
-//ETX
+
 };
 
 #endif

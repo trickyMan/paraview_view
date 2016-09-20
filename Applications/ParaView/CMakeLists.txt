@@ -51,11 +51,13 @@ foreach (module IN LISTS VTK_MODULES_ENABLED)
   endif()
 endforeach()
 
-#------------------------------------------------------------------------------
-# Build Online-Help (aka Embedded Help) for the ParaView application.
-# This is done after the above piece of code that sets the application_gui_xmls
-# variable. Documentation/CMakeLists.txt depends on it.
-add_subdirectory(Documentation)
+if (PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION)
+  #------------------------------------------------------------------------------
+  # Build Online-Help (aka Embedded Help) for the ParaView application.
+  # This is done after the above piece of code that sets the application_gui_xmls
+  # variable. Documentation/CMakeLists.txt depends on it.
+  add_subdirectory(Documentation)
+endif()
 
 #------------------------------------------------------------------------------
 # FIXME: This is necessary because the vtkPVStaticPluginsInit library cannot be
@@ -73,11 +75,15 @@ add_subdirectory(Documentation)
 # ParaView itself needs vtkPVStaticPluginsInit as well.
 set(SUPPORT_STATIC_PLUGINS TRUE)
 
+set(title "ParaView ${PARAVIEW_VERSION_FULL} ${PARAVIEW_BUILD_ARCHITECTURE}-bit")
+if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL")
+  set(title "${title} (Legacy Rendering Backend)")
+endif()
 #------------------------------------------------------------------------------
 # Build the client
 build_paraview_client(paraview
     APPLICATION_NAME "ParaView"
-    TITLE "ParaView ${PARAVIEW_VERSION_FULL} ${PARAVIEW_BUILD_ARCHITECTURE}-bit"
+    TITLE ${title}
     ORGANIZATION  "ParaView"
     VERSION_MAJOR ${PARAVIEW_VERSION_MAJOR}
     VERSION_MINOR ${PARAVIEW_VERSION_MINOR}
@@ -103,9 +109,11 @@ if( PARAVIEW_QT_VERSION VERSION_GREATER "4" )
     LINK_PRIVATE ${QT_LIBRARIES})
 endif()
 
-# Link against the documentation module.
-target_link_libraries(paraview
-  LINK_PRIVATE vtkParaViewDocumentation)
+if (PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION)
+  # Link against the documentation module.
+  target_link_libraries(paraview
+    LINK_PRIVATE vtkParaViewDocumentation)
+endif()
 
 # link enabled plugins if not building in shared library mode and
 # add dependecies to linked python modules These are non-empty only when

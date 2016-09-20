@@ -40,7 +40,6 @@ set (Module_SRCS
   vtkChartWarning.cxx
   vtkClientServerMoveData.cxx
   vtkCompositeRepresentation.cxx
-  vtkCubeAxesRepresentation.cxx
   vtkDataLabelRepresentation.cxx
   vtkGeometryRepresentation.cxx
   vtkGeometryRepresentationWithFaces.cxx
@@ -103,6 +102,8 @@ set (Module_SRCS
 
 if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
   add_definitions(-DVTKGL2)
+  list(APPEND Module_SRCS
+    vtkPointGaussianRepresentation.cxx)
 endif()
 
 if (PARAVIEW_ENABLE_PYTHON)

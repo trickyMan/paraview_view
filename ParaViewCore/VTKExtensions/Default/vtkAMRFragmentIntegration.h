@@ -21,8 +21,8 @@
 //   Output 0: A multiblock containing tables of fragments, one block 
 //             for each requested material
 
-#ifndef __vtkAMRFragmentIntegration_h
-#define __vtkAMRFragmentIntegration_h
+#ifndef vtkAMRFragmentIntegration_h
+#define vtkAMRFragmentIntegration_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMultiBlockDataSetAlgorithm.h"
@@ -44,7 +44,6 @@ protected:
   vtkAMRFragmentIntegration();
   virtual ~vtkAMRFragmentIntegration();
 
-  //BTX
   virtual int FillInputPortInformation(int port, vtkInformation *info);
   virtual int FillOutputPortInformation(int port, vtkInformation *info);
 
@@ -61,9 +60,9 @@ protected:
 private:
   vtkAMRFragmentIntegration(const vtkAMRFragmentIntegration&);  // Not implemented.
   void operator=(const vtkAMRFragmentIntegration&);  // Not implemented.
-  //ETX
+
 };
 
-#endif /* __vtkAMRFragmentIntegration_h */
+#endif /* vtkAMRFragmentIntegration_h */
 //
 // VTK-HeaderTest-Exclude: vtkAMRFragmentIntegration.h

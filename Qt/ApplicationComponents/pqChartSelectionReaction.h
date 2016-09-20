@@ -29,22 +29,21 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqChartSelectionReaction_h 
-#define __pqChartSelectionReaction_h
+#ifndef pqChartSelectionReaction_h
+#define pqChartSelectionReaction_h
 
-#include "pqReaction.h"
+#include "pqSelectionReaction.h"
 #include <QPointer> // needed for QPointer.
 
 class pqContextView;
-class QActionGroup;
 class vtkObject;
 
 /// @ingroup Reactions
 /// Reaction for creating selections on chart views.
-class PQAPPLICATIONCOMPONENTS_EXPORT pqChartSelectionReaction : public pqReaction
+class PQAPPLICATIONCOMPONENTS_EXPORT pqChartSelectionReaction : public pqSelectionReaction
 {
   Q_OBJECT
-  typedef pqReaction Superclass;
+  typedef pqSelectionReaction Superclass;
 public:
   /// Constructor. \c parent is expected to have data() that indicates the
   /// selection type e.g. vtkChart::SELECT_RECTANGLE or vtkChart::SELECT_POLYGON.
@@ -73,12 +72,13 @@ protected slots:
   void stopSelection();
 
   /// called when modifier group is changed.
-  void modifiersChanged();
+  virtual void modifiersChanged();
 
+  // Get the current state of selection modifier, converting it to vtkScene enum
+  int getSelectionModifier();
 private:
   Q_DISABLE_COPY(pqChartSelectionReaction)
   QPointer<pqContextView> View;
-  QPointer<QActionGroup> ModifierGroup;
 };
 
 #endif

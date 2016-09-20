@@ -34,8 +34,8 @@
 // more than one layout, this is strictly prohibited and can cause unexpected
 // problems at run-time.
 
-#ifndef __vtkSMViewLayoutProxy_h
-#define __vtkSMViewLayoutProxy_h
+#ifndef vtkSMViewLayoutProxy_h
+#define vtkSMViewLayoutProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -204,9 +204,10 @@ public:
   static void SetMultiViewImageBorderColor(double r, double g, double b);
   static void SetMultiViewImageBorderWidth(int width);
   static const double* GetMultiViewImageBorderColor();
+  static void GetMultiViewImageBorderColor(unsigned char rgb[3]);
+  static void GetMultiViewImageBorderColor(double rgb[3]);
   static int GetMultiViewImageBorderWidth();
 
-//BTX
 protected:
   vtkSMViewLayoutProxy();
   ~vtkSMViewLayoutProxy();
@@ -252,7 +253,6 @@ private:
   static double MultiViewImageBorderColor[3];
   static int MultiViewImageBorderWidth;
 
-//ETX
 };
 
 #endif

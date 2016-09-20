@@ -15,6 +15,7 @@
 #include "vtkImageVolumeRepresentation.h"
 
 #include "vtkAlgorithmOutput.h"
+#include "vtkCellData.h"
 #include "vtkCommand.h"
 #include "vtkExtentTranslator.h"
 #include "vtkImageData.h"
@@ -33,11 +34,73 @@
 #include "vtkSmartPointer.h"
 #include "vtkSmartVolumeMapper.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkStructuredData.h"
 #include "vtkVolumeProperty.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 
+namespace
+{
+  //----------------------------------------------------------------------------
+  void vtkGetNonGhostExtent(
+    int *resultExtent, vtkImageData* dataSet)
+    {
+    // this is really only meant for topologically structured grids
+    dataSet->GetExtent(resultExtent);
+
+    if (vtkUnsignedCharArray* ghostArray = vtkUnsignedCharArray::SafeDownCast(
+        dataSet->GetCellData()->GetArray(vtkDataSetAttributes::GhostArrayName())))
+      {
+      // We have a ghost array. We need to iterate over the array to prune ghost
+      // extents.
+
+      int pntExtent[6];
+      std::copy(resultExtent, resultExtent+6, pntExtent);
+
+      int validCellExtent[6];
+      vtkStructuredData::GetCellExtentFromPointExtent(pntExtent, validCellExtent);
+
+      // The start extent is the location of the first cell with ghost value 0.
+      for (vtkIdType cc=0, numTuples = ghostArray->GetNumberOfTuples(); cc < numTuples; ++cc)
+        {
+        if (ghostArray->GetValue(cc) == 0)
+          {
+          int ijk[3];
+          vtkStructuredData::ComputeCellStructuredCoordsForExtent(cc, pntExtent, ijk);
+          validCellExtent[0] = ijk[0];
+          validCellExtent[2] = ijk[1];
+          validCellExtent[4] = ijk[2];
+          break;
+          }
+        }
+
+      // The end extent is the  location of the last cell with ghost value 0.
+      for (vtkIdType cc= (ghostArray->GetNumberOfTuples()-1); cc >= 0; --cc)
+        {
+        if (ghostArray->GetValue(cc) == 0)
+          {
+          int ijk[3];
+          vtkStructuredData::ComputeCellStructuredCoordsForExtent(cc, pntExtent, ijk);
+          validCellExtent[1] = ijk[0];
+          validCellExtent[3] = ijk[1];
+          validCellExtent[5] = ijk[2];
+          break;
+          }
+        }
+
+      // convert cell-extents to pt extents.
+      resultExtent[0] = validCellExtent[0];
+      resultExtent[2] = validCellExtent[2];
+      resultExtent[4] = validCellExtent[4];
+
+      resultExtent[1] = std::min(validCellExtent[1]+1, resultExtent[1]);
+      resultExtent[3] = std::min(validCellExtent[3]+1, resultExtent[3]);
+      resultExtent[5] = std::min(validCellExtent[5]+1, resultExtent[5]);
+      }
+    }
+}
 
 vtkStandardNewMacro(vtkImageVolumeRepresentation);
 //----------------------------------------------------------------------------
@@ -61,6 +124,11 @@ vtkImageVolumeRepresentation::vtkImageVolumeRepresentation()
 
   vtkMath::UninitializeBounds(this->DataBounds);
   this->DataSize = 0;
+
+  this->Origin[0] = this->Origin[1] = this->Origin[2] = 0;
+  this->Spacing[0] = this->Spacing[1] = this->Spacing[2] = 0;
+  this->WholeExtent[0] = this->WholeExtent[2] = this->WholeExtent[4] = 0;
+  this->WholeExtent[1] = this->WholeExtent[3] = this->WholeExtent[5] = -1;
 }
 
 //----------------------------------------------------------------------------
@@ -107,8 +175,10 @@ int vtkImageVolumeRepresentation::ProcessViewRequest(
 
     vtkPVRenderView::SetGeometryBounds(inInfo, this->DataBounds);
 
-    vtkImageVolumeRepresentation::PassOrderedCompositingInformation(
-      this, inInfo);
+    // Pass partitioning information to the render view.
+    vtkPVRenderView::SetOrderedCompositingInformation(
+      inInfo, this, this->PExtentTranslator.GetPointer(),
+      this->WholeExtent, this->Origin, this->Spacing);
 
     vtkPVRenderView::SetRequiresDistributedRendering(inInfo, this, true);
     }
@@ -130,35 +200,17 @@ int vtkImageVolumeRepresentation::ProcessViewRequest(
 }
 
 //----------------------------------------------------------------------------
+#ifndef VTK_LEGACY_REMOVE
 void vtkImageVolumeRepresentation::PassOrderedCompositingInformation(
-  vtkPVDataRepresentation* self, vtkInformation* inInfo)
+  vtkPVDataRepresentation* vtkNotUsed(self), vtkInformation* vtkNotUsed(inInfo))
 {
-  // The KdTree generation code that uses the image cuts needs to be updated
-  // bigtime. But due to time shortage, I'm leaving the old code as is. We
-  // will get back to it later.
-  (void)inInfo;
-  if (self->GetNumberOfInputConnections(0) == 1)
-    {
-    vtkAlgorithmOutput* connection = self->GetInputConnection(0, 0);
-    vtkAlgorithm* inputAlgo = connection->GetProducer();
-    vtkStreamingDemandDrivenPipeline* sddp =
-      vtkStreamingDemandDrivenPipeline::SafeDownCast(inputAlgo->GetExecutive());
-
-    int extent[6] = {1, -1, 1, -1, 1, -1};
-    sddp->GetWholeExtent(sddp->GetOutputInformation(connection->GetIndex()),
-      extent);
-    double origin[3], spacing[3];
-    vtkImageData* image = vtkImageData::SafeDownCast(
-      inputAlgo->GetOutputDataObject(connection->GetIndex()));
-    image->GetOrigin(origin);
-    image->GetSpacing(spacing);
-
-    vtkNew<vtkPExtentTranslator> translator;
-    translator->GatherExtents(image);
-    vtkPVRenderView::SetOrderedCompositingInformation(
-      inInfo, self, translator.GetPointer(), extent, origin, spacing);
-    }
+  vtkGenericWarningMacro(
+    "vtkImageVolumeRepresentation::PassOrderedCompositingInformation was deprecated in "
+    "ParaView 5.0 and will be removed in a future version. Change your representation "
+    "to cache information about image and then pass to "
+    "vtkPVRenderView::SetOrderedCompositingInformation() directly.");
 }
+#endif
 
 //----------------------------------------------------------------------------
 int vtkImageVolumeRepresentation::RequestData(vtkInformation* request,
@@ -166,6 +218,10 @@ int vtkImageVolumeRepresentation::RequestData(vtkInformation* request,
 {
   vtkMath::UninitializeBounds(this->DataBounds);
   this->DataSize = 0;
+  this->Origin[0] = this->Origin[1] = this->Origin[2] = 0;
+  this->Spacing[0] = this->Spacing[1] = this->Spacing[2] = 0;
+  this->WholeExtent[0] = this->WholeExtent[2] = this->WholeExtent[4] = 0;
+  this->WholeExtent[1] = this->WholeExtent[3] = this->WholeExtent[5] = -1;
 
   // Pass caching information to the cache keeper.
   this->CacheKeeper->SetCachingEnabled(this->GetUseCache());
@@ -177,6 +233,16 @@ int vtkImageVolumeRepresentation::RequestData(vtkInformation* request,
     if (!this->GetUsingCacheForUpdate())
       {
       this->Cache->ShallowCopy(input);
+      if (input->HasAnyGhostCells())
+        {
+        int ext[6];
+        vtkGetNonGhostExtent(ext, this->Cache);
+        // Yup, this will modify the "input", but that okay for now. Ultimately,
+        // we will teach the volume mapper to handle ghost cells and this won't
+        // be needed. Once that's done, we'll need to teach the KdTree
+        // generation code to handle overlap in extents, however.
+        this->Cache->Crop(ext);
+        }
       }
     this->CacheKeeper->Update();
 
@@ -184,12 +250,20 @@ int vtkImageVolumeRepresentation::RequestData(vtkInformation* request,
     this->VolumeMapper->SetInputConnection(
       this->CacheKeeper->GetOutputPort());
 
-    this->OutlineSource->SetBounds(vtkImageData::SafeDownCast(
-        this->CacheKeeper->GetOutputDataObject(0))->GetBounds());
+    vtkImageData* output = vtkImageData::SafeDownCast(this->CacheKeeper->GetOutputDataObject(0));
+    this->OutlineSource->SetBounds(output->GetBounds());
     this->OutlineSource->GetBounds(this->DataBounds);
     this->OutlineSource->Update();
 
-    this->DataSize = this->CacheKeeper->GetOutputDataObject(0)->GetActualMemorySize();
+    this->DataSize = output->GetActualMemorySize();
+
+    // Collect information about volume that is needed for data redistribution
+    // later.
+    this->PExtentTranslator->GatherExtents(output);
+    output->GetOrigin(this->Origin);
+    output->GetSpacing(this->Spacing);
+    vtkStreamingDemandDrivenPipeline::GetWholeExtent(
+      inputVector[0]->GetInformationObject(0), this->WholeExtent);
     }
   else
     {
@@ -228,7 +302,7 @@ bool vtkImageVolumeRepresentation::AddToView(vtkView* view)
   if (rview)
     {
     rview->GetRenderer()->AddActor(this->Actor);
-    return true;
+    return this->Superclass::AddToView(view);
     }
   return false;
 }
@@ -240,7 +314,7 @@ bool vtkImageVolumeRepresentation::RemoveFromView(vtkView* view)
   if (rview)
     {
     rview->GetRenderer()->RemoveActor(this->Actor);
-    return true;
+    return this->Superclass::RemoveFromView(view);
     }
   return false;
 }

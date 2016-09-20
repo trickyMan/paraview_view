@@ -118,6 +118,15 @@
     <Proxy group="filters" name="EnvironmentAnnotation" />
   </Category>
 
+  <Category name="Point Interpolation" menu_label="Point Interpolation">
+    <Proxy group="filters" name="PointLineInterpolator" />
+    <Proxy group="filters" name="PointPlaneInterpolator" />
+    <Proxy group="filters" name="PointVolumeInterpolator" />
+    <Proxy group="filters" name="SPHLineInterpolator" />
+    <Proxy group="filters" name="SPHPlaneInterpolator" />
+    <Proxy group="filters" name="SPHVolumeInterpolator" />
+  </Category>
+
   <Proxy group="filters" name="AddFieldArrays" />
   <Proxy group="filters" name="ImageDataToAMR" />
   <Proxy group="filters" name="UniformGridPartitioner" />
@@ -162,6 +171,7 @@
   <Proxy group="filters" name="FFTSelectionOverTime" />
   <Proxy group="filters" name="GaussianSplatter"/>
   <Proxy group="filters" name="GenerateIdScalars"/>
+  <Proxy group="filters" name="GhostCellsGenerator" />
   <Proxy group="filters" name="Glyph" />
   <Proxy group="filters" name="GlyphWithCustomSource" />
   <Proxy group="filters" name="Gradient" />
@@ -192,7 +202,6 @@
   <Proxy group="filters" name="PointDataToCellData" />
   <Proxy group="filters" name="PolyDataNormals" />
   <Proxy group="filters" name="Probe" />
-  <Proxy group="filters" name="ImageResampling" />
   <Proxy group="filters" name="ProbeLine" />
   <Proxy group="filters" name="ProbePoint" />
   <Proxy group="filters" name="ProcessIdScalars" />
@@ -205,6 +214,7 @@
   <Proxy group="filters" name="RectilinearGridConnectivity" />
   <Proxy group="filters" name="RectilinearGridToPointSet" />
   <Proxy group="filters" name="ReflectionFilter" />
+  <Proxy group="filters" name="ResampleToImage" />
   <Proxy group="filters" name="RibbonFilter" />
   <Proxy group="filters" name="RotationalExtrusionFilter" />
   <Proxy group="filters" name="ScatterPlot"/>

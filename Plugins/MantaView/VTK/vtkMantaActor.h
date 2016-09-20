@@ -63,19 +63,17 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // vtkMantaActor is a concrete implementation of the abstract class vtkActor.
 // vtkMantaActor interfaces to the Manta Raytracer library.
 
-#ifndef __vtkMantaActor_h
-#define __vtkMantaActor_h
+#ifndef vtkMantaActor_h
+#define vtkMantaActor_h
 
 #include "vtkMantaModule.h"
 #include "vtkActor.h"
 
-//BTX
 namespace Manta {
 class Group;
 class AccelerationStructure;
 class Object;
 };
-//ETX
 
 class vtkMantaManager;
 class vtkMantaTexture;
@@ -117,7 +115,6 @@ public:
   // Overridden to swap in a manta texture
   virtual void SetTexture(vtkTexture*);
 
-  //BTX
   //TODO: This leaks whatever was there, but must schedule its 
   //deletion because of threading
   void SetGroup( Manta::Group * group );
@@ -129,7 +126,6 @@ public:
   { 
     return this->MantaAS; 
   }
-  //ETX
 
   //Description:
   //Lets you choose the manta space sorting (acceleration) structure
@@ -155,11 +151,10 @@ public:
 
   int SortType;
     
-  //BTX
+
   enum {DYNBVH, RECURSIVEGRID3};
   Manta::Group * Group; //geometry
   Manta::AccelerationStructure * MantaAS; //acceleration structure for that geometry
-  //ETX
 
   vtkMantaTexture *MantaTexture;
   vtkMantaManager *MantaManager;

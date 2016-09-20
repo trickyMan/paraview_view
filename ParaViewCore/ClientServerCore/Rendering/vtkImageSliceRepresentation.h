@@ -19,14 +19,16 @@
 // image dataset. Currently, it does not support composite datasets, however, we
 // should be able to add such a support in future.
 
-#ifndef __vtkImageSliceRepresentation_h
-#define __vtkImageSliceRepresentation_h
+#ifndef vtkImageSliceRepresentation_h
+#define vtkImageSliceRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
 #include "vtkStructuredData.h" // for VTK_*_PLANE
+#include "vtkNew.h" // for vtkNew.
 
 class vtkImageData;
+class vtkPExtentTranslator;
 class vtkPVCacheKeeper;
 class vtkPVImageSliceMapper;
 class vtkPVLODActor;
@@ -88,14 +90,12 @@ public:
   virtual void SetSlice(unsigned int);
   vtkGetMacro(Slice, unsigned int);
 
-  //BTX
   enum
     {
     XY_PLANE = VTK_XY_PLANE,
     YZ_PLANE = VTK_YZ_PLANE,
     XZ_PLANE = VTK_XZ_PLANE
     };
-  //ETX
 
   // Description:
   // Get/Set the direction in which to slice a 3D input data.
@@ -124,7 +124,6 @@ public:
   // Provides access to the actor used by this representation.
   vtkPVLODActor* GetActor() { return this->Actor; }
 
-//BTX
 protected:
   vtkImageSliceRepresentation();
   ~vtkImageSliceRepresentation();
@@ -168,16 +167,19 @@ protected:
   int SliceMode;
   unsigned int Slice;
 
-  int WholeExtent[6];
   vtkPVCacheKeeper* CacheKeeper;
-
   vtkPVImageSliceMapper* SliceMapper;
   vtkPVLODActor* Actor;
   vtkImageData* SliceData;
+
+  // meta-data about the input image to pass on to render view for hints
+  // when redistributing data.
+  vtkNew<vtkPExtentTranslator> PExtentTranslator;
+  int WholeExtent[6];
 private:
   vtkImageSliceRepresentation(const vtkImageSliceRepresentation&); // Not implemented
   void operator=(const vtkImageSliceRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

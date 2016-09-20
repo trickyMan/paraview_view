@@ -19,8 +19,8 @@
 // interface. Concrete implementations of this class can be written to support
 // tcp/ip socket or ssl or ssh based network connections among processes.
 
-#ifndef __vtkNetworkAccessManager_h
-#define __vtkNetworkAccessManager_h
+#ifndef vtkNetworkAccessManager_h
+#define vtkNetworkAccessManager_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -79,7 +79,6 @@ public:
   // Returns true is the manager is currently waiting for any connections.
   virtual bool GetPendingConnectionsPresent()=0;
 
-//BTX
 protected:
   vtkNetworkAccessManager();
   ~vtkNetworkAccessManager();
@@ -87,7 +86,7 @@ protected:
 private:
   vtkNetworkAccessManager(const vtkNetworkAccessManager&); // Not implemented
   void operator=(const vtkNetworkAccessManager&); // Not implemented
-//ETX
+
 };
 
 #endif

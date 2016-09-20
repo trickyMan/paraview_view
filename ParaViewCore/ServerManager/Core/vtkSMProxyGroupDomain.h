@@ -23,17 +23,16 @@
 // @endverbatim// .SECTION See Also
 // vtkSMDomain vtkSMProxyPropery
 
-#ifndef __vtkSMProxyGroupDomain_h
-#define __vtkSMProxyGroupDomain_h
+#ifndef vtkSMProxyGroupDomain_h
+#define vtkSMProxyGroupDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDomain.h"
 
 class vtkSMProperty;
 class vtkSMProxy;
-//BTX
+
 struct vtkSMProxyGroupDomainInternals;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMProxyGroupDomain : public vtkSMDomain
 {

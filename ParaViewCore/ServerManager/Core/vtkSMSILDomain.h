@@ -24,8 +24,8 @@
 // similar to vtkSMArraySelectionDomain) with one notable exception. This
 // information property typically uses the vtkSMSILInformationHelper which is
 // used to access the SIL if requested by using GetSIL().
-#ifndef __vtkSMSILDomain_h
-#define __vtkSMSILDomain_h
+#ifndef vtkSMSILDomain_h
+#define vtkSMSILDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMArraySelectionDomain.h"
@@ -56,7 +56,6 @@ public:
   // Overridden to leave defaults unchanged.
   virtual int SetDefaultValues(vtkSMProperty*, bool){ return 1; }
 
-//BTX
 protected:
 
   // Description:
@@ -77,7 +76,7 @@ protected:
 private:
   vtkSMSILDomain(const vtkSMSILDomain&); // Not implemented
   void operator=(const vtkSMSILDomain&); // Not implemented
-//ETX
+
 };
 
 #endif

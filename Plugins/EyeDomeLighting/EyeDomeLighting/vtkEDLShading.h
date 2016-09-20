@@ -55,8 +55,8 @@ Ph.D. thesis of Christian BOUCHENY.
 // and will render its delegate and return.
 //
 
-#ifndef __vtkEDLShading_h
-#define __vtkEDLShading_h
+#ifndef vtkEDLShading_h
+#define vtkEDLShading_h
 
 #define EDL_HIGH_RESOLUTION_ON 1
 #define EDL_LOW_RESOLUTION_ON 1
@@ -81,12 +81,10 @@ public:
   vtkTypeMacro(vtkEDLShading,vtkDepthImageProcessingPass);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  //BTX
   // Description:
   // Perform rendering according to a render state \p s.
   // \pre s_exists: s!=0
   virtual void Render(const vtkRenderState *s);
-  //ETX
 
   // Description:
   // Release graphics resources and ask components to release their own

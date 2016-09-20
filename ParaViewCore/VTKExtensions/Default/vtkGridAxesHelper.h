@@ -21,8 +21,8 @@
 // This class works with a single face of the bounding box specified using the
 // GridBounds.
 
-#ifndef __vtkGridAxesHelper_h
-#define __vtkGridAxesHelper_h
+#ifndef vtkGridAxesHelper_h
+#define vtkGridAxesHelper_h
 
 #include "vtkObject.h"
 
@@ -150,8 +150,6 @@ public:
   // Get if the face is facing backwards in the current viewport.
   vtkGetMacro(Backface, bool);
 
-
-//BTX
 protected:
   vtkGridAxesHelper();
   ~vtkGridAxesHelper();
@@ -192,7 +190,7 @@ protected:
 private:
   vtkGridAxesHelper(const vtkGridAxesHelper&); // Not implemented.
   void operator=(const vtkGridAxesHelper&); // Not implemented.
-//ETX
+
 };
 
 #endif

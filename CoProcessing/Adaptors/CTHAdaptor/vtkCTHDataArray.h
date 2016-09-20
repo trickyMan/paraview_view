@@ -1,5 +1,5 @@
-#ifndef __vtkCTHDataArray_h
-#define __vtkCTHDataArray_h
+#ifndef vtkCTHDataArray_h
+#define vtkCTHDataArray_h
 
 // #include "vtksnlIOWin32Header.h"
 
@@ -66,11 +66,9 @@ public:
   // Returns an ArrayIterator over doubles, this will end up with a deep copy
   vtkArrayIterator* NewIterator ();
 
-  //BTX
   vtkIdType LookupValue (vtkVariant value);
   void LookupValue (vtkVariant value, vtkIdList* ids);
   void SetVariantValue (vtkIdType vtkNotUsed(index), vtkVariant vtkNotUsed(value)) { /* TODO */ }
-  //ETX
 
   // Description:
   // Get the address of a particular data index. Performs no checks
@@ -173,13 +171,11 @@ public:
     return ret;
   }
 
-  //BTX
   void InsertVariantValue (vtkIdType idx, vtkVariant value)
   {
     this->BuildFallback ();
     return this->Fallback->InsertVariantValue (idx, value);
   }
-  //ETX
 
   void RemoveTuple (vtkIdType id)
   {
@@ -214,6 +210,11 @@ public:
     return this->DeepCopy( (vtkAbstractArray*) da);
   }
 
+  void SetVoidArray (void *p, vtkIdType id, int i, int j)
+  {
+    this->BuildFallback ();
+    return this->Fallback->SetVoidArray (p, id, i, j);
+  }
   void SetVoidArray (void *p, vtkIdType id, int i)
   {
     this->BuildFallback ();
@@ -279,4 +280,4 @@ private:
   void operator= (const vtkCTHDataArray&); // Not implemented
 };
 
-#endif /* __vtkCTHDataArray_h */
+#endif /* vtkCTHDataArray_h */

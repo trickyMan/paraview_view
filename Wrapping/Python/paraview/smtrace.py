@@ -264,6 +264,19 @@ class Trace(object):
                     "# get layout",
                     "%s = GetLayout()" % accessor])
                 return True
+            else:
+                varname = cls.get_varname(cls.get_registered_name(obj, "layouts"))
+                accessor = ProxyAccessor(varname, obj)
+                cls.Output.append_separated([\
+                    "# get layout",
+                    "%s = GetLayoutByName(\"%s\")" % (accessor, cls.get_registered_name(obj, "layouts"))])
+                return True
+        if obj.SMProxy.IsA("vtkSMTimeKeeperProxy"):
+            tkAccessor = ProxyAccessor(cls.get_varname(cls.get_registered_name(obj, "timekeeper")), obj)
+            cls.Output.append_separated([\
+                    "# get the time-keeper",
+                    "%s = GetTimeKeeper()" % tkAccessor])
+            return True
         return False
 
     @classmethod
@@ -652,7 +665,7 @@ class ViewProxyFilter(ProxyFilter):
         # missing something in the design of vtkSMProperties here. We need to
         # reclassify properties to cleanly address all its "roles".
         if prop.get_property_name() in [\
-            "ViewTime", "CacheKey", "Representations", "CameraClippingRange"]: return True
+            "ViewTime", "CacheKey", "Representations"]: return True
         return ProxyFilter.should_never_trace(self, prop, hide_gui_hidden=False)
 
 class AnimationProxyFilter(ProxyFilter):
@@ -986,12 +999,6 @@ class SaveData(TraceItem):
         del writerAccessor
         del writer
         Trace.Output.append_separated(trace.raw_data())
-
-class EnsureLayout(TraceItem):
-    def __init__(self, layout):
-        TraceItem.__init__(self)
-        layout = sm._getPyProxy(layout)
-        accessor = Trace.get_accessor(layout)
 
 class RegisterLayoutProxy(TraceItem):
     def __init__(self, layout):

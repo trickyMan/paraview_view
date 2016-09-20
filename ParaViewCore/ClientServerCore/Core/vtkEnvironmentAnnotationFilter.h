@@ -26,8 +26,8 @@
 // \li DisplayUserName: Boolean value representing whether the username is visible.
 
 
-#ifndef __vtkEnvironmentAnnotationFilter_h
-#define __vtkEnvironmentAnnotationFilter_h
+#ifndef vtkEnvironmentAnnotationFilter_h
+#define vtkEnvironmentAnnotationFilter_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkTableAlgorithm.h"
@@ -56,7 +56,6 @@ public:
   vtkSetMacro(DisplayDate, bool);
   vtkGetMacro(DisplayDate, bool);
 
-//BTX
 protected:
   vtkEnvironmentAnnotationFilter();
   ~vtkEnvironmentAnnotationFilter();
@@ -80,7 +79,6 @@ private:
   bool DisplayFileName;
   bool DisplayDate;
 
-//ETX
 };
 
 #endif

@@ -39,11 +39,14 @@
 // example when a run starts in one actor whose reduced color matches the
 // background the background is colored with the actor color.
 //
+// The compressor uses a modified SQUIRT implementation where encode 4-bit
+// opacity information as well. This is needed to improve background color
+// blending for translucent renderings in ParaView.
 // .SECTION Thanks
 // Thanks to Sandia National Laboratories for this compression technique
 
-#ifndef __vtkSquirtCompressor_h
-#define __vtkSquirtCompressor_h
+#ifndef vtkSquirtCompressor_h
+#define vtkSquirtCompressor_h
 
 #include "vtkImageCompressor.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -70,18 +73,19 @@ public:
   virtual int Compress();
   virtual int Decompress();
 
-  //BTX
   // Description:
   // Serialize/Restore compressor configuration (but not the data) into the stream.
   virtual void SaveConfiguration(vtkMultiProcessStream *stream);
   virtual bool RestoreConfiguration(vtkMultiProcessStream *stream);
-  //ETX
+
   virtual const char *SaveConfiguration();
   virtual const char *RestoreConfiguration(const char *stream);
 
 protected:
   vtkSquirtCompressor();
   virtual ~vtkSquirtCompressor();
+  int DecompressRGB();
+  int DecompressRGBA();
 
   int SquirtLevel;
 

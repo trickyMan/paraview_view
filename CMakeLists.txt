@@ -28,19 +28,7 @@
 #  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #==========================================================================
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
-
-# Link to Qt5's WinMain automatically (in executables).
-if (POLICY CMP0020)
-  cmake_policy(SET CMP0020 NEW)
-endif ()
-
-# Set a consistent MACOSX_RPATH default across all CMake versions.
-# When CMake 2.8.12 is required, change this default to 1.
-# When CMake 3.0.0 is required, remove this block (see CMP0042).
-if(NOT DEFINED CMAKE_MACOSX_RPATH)
-  set(CMAKE_MACOSX_RPATH 0)
-endif()
+cmake_minimum_required(VERSION 3.5)
 
 project(ParaView)
 
@@ -93,13 +81,10 @@ include(CMakeDependentOption)
 # Setup ParaView Environment
 #------------------------------------------------------------------------------
 # Determine ParaView Source Version
-set (PARAVIEW_VERSION_MAJOR 4)
-set (PARAVIEW_VERSION_MINOR 4)
-set (PARAVIEW_VERSION_PATCH 0)
-set (PARAVIEW_VERSION_PATCH_EXTRA)
-set (PARAVIEW_VERSION "4.4")
-set (PARAVIEW_VERSION_FULL "4.4.0")
-
+# Hardcoded version variables are readin from a separate file. This makes it
+# easier to have a script to update version numbers automatically.
+file(STRINGS version.txt version_txt)
+extract_version_components("${version_txt}" "PARAVIEW")
 determine_version(${ParaView_SOURCE_DIR} ${GIT_EXECUTABLE} "PARAVIEW")
 
 # Setup some cross compiling related things.
@@ -213,10 +198,14 @@ option(PARAVIEW_BUILD_QT_GUI "Enable ParaView Qt-based client" ON)
 option(PARAVIEW_USE_DAX "Build ParaView with Dax many-core filters" OFF)
 option(PARAVIEW_USE_MPI "Enable MPI support for parallel computing" OFF)
 option(PARAVIEW_USE_PISTON "Build ParaView with Piston GPGPU filters" OFF)
+option(PARAVIEW_USE_OSPRAY "Build ParaView with OSPRay Ray Traced rendering" OFF)
 option(PARAVIEW_USE_VISITBRIDGE "Build ParaView with VisIt readers." OFF)
 
 # Xdmf3 is not ON by default since it depends on Boost.
 option(PARAVIEW_ENABLE_XDMF3 "Enable Xdmf3 support (requires Boost)." OFF)
+
+# Enable CGNS support
+option(PARAVIEW_ENABLE_CGNS "Enable the CGNS file reader" OFF)
 
 if (UNIX)
   option(PARAVIEW_ENABLE_FFMPEG "Enable FFMPEG Support." OFF)
@@ -255,6 +244,14 @@ cmake_dependent_option(PARAVIEW_USE_QTWEBKIT
   "PARAVIEW_ENABLE_QT_SUPPORT" OFF)
 mark_as_advanced(PARAVIEW_USE_QTWEBKIT)
 
+# This option controls the behavior of the build_help_project function.  If it is
+# on then the .qch file will be generated, if not then the function does nothing.
+cmake_dependent_option(PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION 
+       "Build the ParaView help menu documentation for ParaView and its plugins" ON
+       "PARAVIEW_BUILD_QT_GUI" ON)
+mark_as_advanced(PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION)
+
+
 # If PARAVIEW_BUILD_QT_GUI is OFF, provide an option to the user to turn other command line
 # executables ON/OFF.
 cmake_dependent_option(PARAVIEW_ENABLE_COMMANDLINE_TOOLS
@@ -264,6 +261,7 @@ cmake_dependent_option(PARAVIEW_ENABLE_COMMANDLINE_TOOLS
 option(PARAVIEW_ENABLE_PYTHON "Enable/Disable Python scripting support" OFF)
 cmake_dependent_option(PARAVIEW_USE_UNIFIED_BINDINGS "If enabled, Python bindings will back the ClientServer wrapping implementation" OFF
   PARAVIEW_ENABLE_PYTHON OFF)
+mark_as_advanced(PARAVIEW_USE_UNIFIED_BINDINGS)
 cmake_dependent_option(PARAVIEW_ENABLE_MATPLOTLIB "Enable/Disable Python scripting support" ON
   "PARAVIEW_ENABLE_PYTHON" OFF)
 mark_as_advanced(PARAVIEW_ENABLE_MATPLOTLIB)
@@ -276,12 +274,6 @@ if (UNIX)
     "Build ParaView with CosmoTools VTK Extensions" OFF
     "PARAVIEW_USE_MPI" OFF)
   mark_as_advanced(PARAVIEW_ENABLE_COSMOTOOLS)
-
-  cmake_dependent_option(PARAVIEW_ENABLE_CGNS
-  "Enable the CGNS file reader" OFF
-  "PARAVIEW_USE_MPI" OFF)
-  mark_as_advanced(PARAVIEW_ENABLE_CGNS)
-
 endif()
 
 # Is this a 32 bit or 64bit build. Display this in about dialog.
@@ -331,9 +323,7 @@ if (APPLE AND PARAVIEW_DO_UNIX_STYLE_INSTALLS)
     # same place as ParaView's binaries.
     set(CMAKE_INSTALL_NAME_DIR "${PARAVIEW_CUSTOM_INSTALL_NAME_DIR}/${VTK_INSTALL_LIBRARY_DIR}")
   else ()
-    # Set CMAKE_INSTALL_NAME_DIR to point to the libraries directory relative
-    # to the executable.
-    set(CMAKE_INSTALL_NAME_DIR "@executable_path/../${VTK_INSTALL_LIBRARY_DIR}")
+    set(CMAKE_INSTALL_NAME_DIR "@rpath/")
   endif ()
 
   # ensure that we don't build forwarding executables on apple.
@@ -382,7 +372,7 @@ elseif (APPLE AND NOT PARAVIEW_DO_UNIX_STYLE_INSTALLS)
     CACHE PATH
     "Location where the *.app bundle must be installed.")
   set(CMAKE_INSTALL_NAME_DIR "@executable_path/../Libraries")
-  set(PV_INSTALL_PLUGIN_DIR "plugins")
+  set(PV_INSTALL_PLUGIN_DIR "Plugins")
 
   # ensure that we don't build forwarding executables on apple.
   set(VTK_BUILD_FORWARDING_EXECUTABLES FALSE)
@@ -473,10 +463,8 @@ if (PARAVIEW_ENABLE_QT_SUPPORT)
     set (Qt5_FIND_COMPONENTS
       Help
       Network
-      Test
       UiTools
-      Widgets
-      Xml)
+      Widgets)
     if(PARAVIEW_USE_QTWEBKIT)
       list(APPEND Qt5_FIND_COMPONENTS WebKitWidgets)
     endif()
@@ -596,8 +584,10 @@ else()
 
   #----------------------------------------------------------------------------------
   # Set some flags that affect VTK's modules.
-  set (VTK_NO_PYTHON_THREADS 1 CACHE INTERNAL
-                               "Disable Python Threads support" FORCE)
+  cmake_dependent_option(VTK_NO_PYTHON_THREADS "Disable Python Threads support" ON PARAVIEW_ENABLE_PYTHON OFF)
+  cmake_dependent_option(VTK_PYTHON_FULL_THREADSAFE "Ensure all calls to Python using GIL" OFF "NOT VTK_NO_PYTHON_THREADS" OFF)
+  mark_as_advanced(VTK_NO_PYTHON_THREADS VTK_PYTHON_FULL_THREADSAFE)
+
   set(VTK_WRAP_PYTHON ${PARAVIEW_ENABLE_PYTHON}
     CACHE INTERNAL "Should VTK Python wrapping be built?" FORCE)
 
@@ -625,6 +615,10 @@ endif()
 include(vtkModuleAPI)
 include(vtkModuleMacros)
 include(ParaViewMacros)
+
+#----------------------------------------------------------------------------------
+# Use consistent compiler flags in ParaView and VTK.
+include(vtkDetermineCompilerFlags)
 
 #----------------------------------------------------------------------------------
 list (APPEND PARAVIEW_MODULE_ROOTS
@@ -677,8 +671,13 @@ mark_as_advanced(
   VTK_USE_TK
   VTK_WRAP_JAVA
   VTK_WRAP_TCL)
-
-
+mark_as_advanced(
+  VTK_ANDROID_BUILD
+  VTK_IOS_BUILD
+  VTK_USE_CXX11_FEATURES
+  VTK_USE_LARGE_DATA
+  VTK_USE_SYSTEM_GLEW
+  VTK_PYTHON_VERSION)
 #------------------------------------------------------------------------------
 # Based on state of VTK modules, set up some variables that paraview needs to
 # compile optional code.
@@ -734,7 +733,9 @@ if (PARAVIEW_ENABLE_PYTHON AND PARAVIEW_ENABLE_CATALYST)
 
   list(APPEND VTK_PYTHON_MODULES ${vtk-module})
   set(vtkPVPythonCatalyst_HEADERS vtkCPPythonScriptPipeline)
-  vtk_add_python_wrapping(${vtk-module})
+  vtk_add_python_wrapping(${vtk-module} pv_wrapping_sources)
+  vtk_add_python_wrapping_library(${vtk-module} pv_wrapping_sources ${vtk-module})
+
   if (BUILD_TESTING)
     set (_test_module_name "${vtk-module}-Test-Cxx")
     add_subdirectory(
@@ -865,11 +866,19 @@ if (BUILD_EXAMPLES)
   # that examples can be built by themselves as well as avoiding pollution of
   # the ParaView target space with targets (and other things) from examples.
   include(${CMAKE_CURRENT_SOURCE_DIR}/Examples/BuildExamples.cmake)
+  if (BUILD_TESTING AND PARAVIEW_ENABLE_PYTHON AND PARAVIEW_USE_MPI AND PARAVIEW_ENABLE_CATALYST)
+    set_property(
+      DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+      APPEND
+      PROPERTY
+      TEST_INCLUDE_FILE "${CMAKE_CURRENT_BINARY_DIR}/CatalystExamples.cmake")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/CatalystExamples.cmake" "subdirs(${CMAKE_CURRENT_BINARY_DIR}/Examples/All/Catalyst/)")
+  ENDIF ()
 endif()
 
 
 #-----------------------------------------------------------------------------
-if (PARAVIEW_BUILD_CATALYST_ADAPTORS)
+if (PARAVIEW_BUILD_CATALYST_ADAPTORS AND NOT WIN32)
   # BuildAdaptors.cmake builds the adaptors as a separate project. We mark is
   # OPTIONAL for Catalyst packages that don't have the adaptors included.
   include(${CMAKE_CURRENT_SOURCE_DIR}/CoProcessing/Adaptors/BuildAdaptors.cmake

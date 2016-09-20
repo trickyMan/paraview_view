@@ -16,8 +16,8 @@
 // .SECTION Description
 // SIProperty that deals with TimeLabel annotation on Algorithm object type
 
-#ifndef __vtkSITimeLabelProperty_h
-#define __vtkSITimeLabelProperty_h
+#ifndef vtkSITimeLabelProperty_h
+#define vtkSITimeLabelProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProperty.h"
@@ -29,7 +29,6 @@ public:
   vtkTypeMacro(vtkSITimeLabelProperty, vtkSIProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSITimeLabelProperty();
   ~vtkSITimeLabelProperty();
@@ -43,7 +42,7 @@ protected:
 private:
   vtkSITimeLabelProperty(const vtkSITimeLabelProperty&); // Not implemented
   void operator=(const vtkSITimeLabelProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -17,8 +17,8 @@
 // vtkSMBoxRepresentationProxy is a proxy for vtkBoxRepresentation. A
 // specialization is needed to set the tranform on the vtkBoxRepresentation.
 
-#ifndef __vtkSMBoxRepresentationProxy_h
-#define __vtkSMBoxRepresentationProxy_h
+#ifndef vtkSMBoxRepresentationProxy_h
+#define vtkSMBoxRepresentationProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMWidgetRepresentationProxy.h"
@@ -35,7 +35,6 @@ public:
   virtual void UpdatePropertyInformation(vtkSMProperty* prop)
     { this->Superclass::UpdatePropertyInformation(prop); }
 
-//BTX
 protected:
   vtkSMBoxRepresentationProxy();
   ~vtkSMBoxRepresentationProxy();
@@ -46,7 +45,7 @@ protected:
 private:
   vtkSMBoxRepresentationProxy(const vtkSMBoxRepresentationProxy&); // Not implemented
   void operator=(const vtkSMBoxRepresentationProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

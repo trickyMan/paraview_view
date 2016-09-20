@@ -26,8 +26,8 @@
 // correctly and don't suffer from uncanny side effects when that's done
 // repeatedly.
 
-#ifndef __vtkCompositeRepresentation_h
-#define __vtkCompositeRepresentation_h
+#ifndef vtkCompositeRepresentation_h
+#define vtkCompositeRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
@@ -82,23 +82,15 @@ public:
   virtual vtkDataObject* GetRenderedDataObject(int port);
 
   // Description:
-  // Bring this algorithm's outputs up-to-date.
-  virtual void Update() { this->Superclass::Update(); }
-  virtual void Update(int port);
-
-  // Description:
   // Returns the list of available representation types as a string array.
   vtkStringArray* GetRepresentationTypes();
 
   // Description:
   // Passed on to internal representations as well.
   virtual void SetUpdateTime(double time);
-  virtual void SetUseCache(bool val);
-  virtual void SetCacheKey(double val);
   virtual void SetForceUseCache(bool val);
   virtual void SetForcedCacheKey(double val);
 
-//BTX
 protected:
   vtkCompositeRepresentation();
   ~vtkCompositeRepresentation();
@@ -128,7 +120,7 @@ private:
   class vtkInternals;
   vtkInternals* Internals;
   vtkCommand* Observer;
-//ETX
+
 };
 
 #endif

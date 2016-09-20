@@ -17,8 +17,8 @@
 // vtkOutlineRepresentation is merely a vtkGeometryRepresentationWithFaces that forces
 // the geometry filter to produce outlines.
 
-#ifndef __vtkOutlineRepresentation_h
-#define __vtkOutlineRepresentation_h
+#ifndef vtkOutlineRepresentation_h
+#define vtkOutlineRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkGeometryRepresentationWithFaces.h"
@@ -40,7 +40,6 @@ public:
   virtual void SetPickable(int)
     { this->Superclass::SetPickable(0); }
 
-//BTX
 protected:
   vtkOutlineRepresentation();
   ~vtkOutlineRepresentation();
@@ -51,7 +50,7 @@ protected:
 private:
   vtkOutlineRepresentation(const vtkOutlineRepresentation&); // Not implemented
   void operator=(const vtkOutlineRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

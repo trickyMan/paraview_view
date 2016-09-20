@@ -32,8 +32,8 @@
 // vtkSMUndoStackBuilder
 
 
-#ifndef __vtkSMUndoStack_h
-#define __vtkSMUndoStack_h
+#ifndef vtkSMUndoStack_h
+#define vtkSMUndoStack_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkUndoStack.h"
@@ -71,8 +71,6 @@ public:
   // \returns the status of the operation.
   virtual int Redo();
 
-//BTX
-
   enum EventIds
     {
     PushUndoSetEvent = 1987,
@@ -101,7 +99,7 @@ private:
   vtkInternal* Internal;
   
   vtkSMUndoStackObserver* Observer;
-//ETX
+
 };
 
 

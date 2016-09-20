@@ -16,8 +16,8 @@
 // .SECTION Description
 // SIProperty that deals with vtkDataArray object type
 
-#ifndef __vtkSIDataArrayProperty_h
-#define __vtkSIDataArrayProperty_h
+#ifndef vtkSIDataArrayProperty_h
+#define vtkSIDataArrayProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProperty.h"
@@ -29,7 +29,6 @@ public:
   vtkTypeMacro(vtkSIDataArrayProperty, vtkSIProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSIDataArrayProperty();
   ~vtkSIDataArrayProperty();
@@ -43,7 +42,7 @@ protected:
 private:
   vtkSIDataArrayProperty(const vtkSIDataArrayProperty&); // Not implemented
   void operator=(const vtkSIDataArrayProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

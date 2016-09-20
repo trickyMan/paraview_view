@@ -25,8 +25,8 @@
 // vtkPainterPolyDataMapper
 
 
-#ifndef __vtkPVImageSliceMapper_h
-#define __vtkPVImageSliceMapper_h
+#ifndef vtkPVImageSliceMapper_h
+#define vtkPVImageSliceMapper_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkMapper.h"
@@ -69,14 +69,12 @@ public:
   vtkSetMacro(Slice,int);
   vtkGetMacro(Slice,int);
 
-  //BTX
   enum
     {
     XY_PLANE = VTK_XY_PLANE,
     YZ_PLANE = VTK_YZ_PLANE,
     XZ_PLANE = VTK_XZ_PLANE,
     };
-  //ETX
 
   vtkSetClampMacro(SliceMode, int, XY_PLANE, XZ_PLANE);
   vtkGetMacro(SliceMode, int);
@@ -99,6 +97,10 @@ public:
   virtual void Update(int port);
   virtual void Update()
     { this->Superclass::Update(); }
+  virtual int Update(int port, vtkInformationVector* requests)
+    { return this->Superclass::Update(port, requests); }
+  virtual int Update(vtkInformation* requests)
+    { return this->Superclass::Update(requests); }
 
   // Description:
   // If you want only a part of the data, specify by setting the piece.

@@ -71,6 +71,10 @@
     { "name":"vtkUtilitiesKWSys",
       "path":"VTK/Utilities/KWSys"
     },
+    {
+      "name":"vtkkwiml",
+      "path":"VTK/Utilities/KWIML"
+    },
     { "name":"vtkPVServerManagerCore",
       "path":"ParaViewCore/ServerManager/Core",
       "cswrap":true,
@@ -247,6 +251,7 @@
     { "path":"VTK/Copyright.txt" },
     { "path":"License_v1.2.txt" },
     { "path":"CMakeLists.txt" },
+    { "path":"version.txt" },
     { "path":"CTestConfig.cmake" },
     { "path":"CMake" },
     { "path":"VTK/CMake" },

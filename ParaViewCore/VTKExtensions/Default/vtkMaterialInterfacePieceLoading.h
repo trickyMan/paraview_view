@@ -17,9 +17,10 @@
 // Data structure that describes a fragment's loading.
 // Holds its id and its loading factor.
 
-#ifndef __vtkMaterialInterfacePieceLoading_h
-#define __vtkMaterialInterfacePieceLoading_h
+#ifndef vtkMaterialInterfacePieceLoading_h
+#define vtkMaterialInterfacePieceLoading_h
 
+#include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkSystemIncludes.h"
 
 #include <cassert>
@@ -27,7 +28,7 @@
 #include <vector>
 #include <iostream>
 
-class vtkMaterialInterfacePieceLoading
+class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkMaterialInterfacePieceLoading
 {
 public:
   enum {ID=0,LOADING=1,SIZE=2};
@@ -78,7 +79,9 @@ public:
 private:
   vtkIdType Data[SIZE];
 };
-std::ostream &operator<<(std::ostream &sout, vtkMaterialInterfacePieceLoading &fp);
+VTKPVVTKEXTENSIONSDEFAULT_EXPORT 
+std::ostream &operator<<(std::ostream &sout, const vtkMaterialInterfacePieceLoading &fp);
+VTKPVVTKEXTENSIONSDEFAULT_EXPORT 
 void PrintPieceLoadingHistogram(std::vector<std::vector<vtkIdType> > &pla);
 #endif
 

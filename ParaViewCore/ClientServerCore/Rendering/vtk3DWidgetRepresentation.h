@@ -18,8 +18,8 @@
 // and their representations. It makes it possible to add 3D widgets to
 // vtkPVRenderView.
 
-#ifndef __vtk3DWidgetRepresentation_h
-#define __vtk3DWidgetRepresentation_h
+#ifndef vtk3DWidgetRepresentation_h
+#define vtk3DWidgetRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkDataRepresentation.h"
@@ -65,7 +65,6 @@ public:
   // the implicit plane widget handles this ability
   void SetCustomWidgetTransform(vtkTransform *transform);
 
-//BTX
 protected:
   vtk3DWidgetRepresentation();
   ~vtk3DWidgetRepresentation();
@@ -114,7 +113,7 @@ private:
   void operator=(const vtk3DWidgetRepresentation&); // Not implemented
   unsigned long RepresentationObserverTag;
   unsigned long ViewObserverTag;
-//ETX
+
 };
 
 #endif

@@ -26,8 +26,8 @@
 //
 // Internally this filter uses vtkPProbeFilter and vtkExtractSelection.
 
-#ifndef __vtkHybridProbeFilter_h
-#define __vtkHybridProbeFilter_h
+#ifndef vtkHybridProbeFilter_h
+#define vtkHybridProbeFilter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
@@ -57,7 +57,6 @@ public:
   vtkSetVector3Macro(Location, double);
   vtkGetVector3Macro(Location, double);
 
-//BTX
 protected:
   vtkHybridProbeFilter();
   ~vtkHybridProbeFilter();
@@ -76,7 +75,7 @@ protected:
 private:
   vtkHybridProbeFilter(const vtkHybridProbeFilter&); // Not implemented
   void operator=(const vtkHybridProbeFilter&); // Not implemented
-//ETX
+
 };
 
 #endif

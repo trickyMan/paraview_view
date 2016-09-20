@@ -32,8 +32,8 @@
 // or create a circular mask.
 
 
-#ifndef __vtkImageSpriteSource_h
-#define __vtkImageSpriteSource_h
+#ifndef vtkImageSpriteSource_h
+#define vtkImageSpriteSource_h
 
 #include "vtkPointSpriteRenderingModule.h" //needed for exports
 #include "vtkImageAlgorithm.h"
@@ -68,9 +68,8 @@ public:
   // is inferior or superior to the given threhold.
   vtkSetMacro(AlphaMethod, int);
   vtkGetMacro(AlphaMethod, int);
-  //BTX
+
   enum {NONE = 0, PROPORTIONAL=1, CLAMP=2};
-  //ETX
 
   // Description:
   // Set/Get the alpha threshold used if the AlphaMethod is CLAMP.

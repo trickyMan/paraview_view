@@ -20,8 +20,8 @@
 // internally uses vtkPVDataInformation to collect information about each
 // timestep.
 
-#ifndef __vtkPVTemporalDataInformation_h
-#define __vtkPVTemporalDataInformation_h
+#ifndef vtkPVTemporalDataInformation_h
+#define vtkPVTemporalDataInformation_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -108,7 +108,6 @@ public:
   vtkPVArrayInformation* GetArrayInformation(
     const char* arrayname, int fieldAssociation);
 
-//BTX
 protected:
   vtkPVTemporalDataInformation();
   ~vtkPVTemporalDataInformation();
@@ -126,7 +125,7 @@ protected:
 private:
   vtkPVTemporalDataInformation(const vtkPVTemporalDataInformation&); // Not implemented
   void operator=(const vtkPVTemporalDataInformation&); // Not implemented
-//ETX
+
 };
 
 #endif

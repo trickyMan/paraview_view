@@ -21,8 +21,8 @@
 // modified paraview state to its object.
 // @ingroup LiveInsitu
 
-#ifndef __vtkSMLiveInsituLinkProxy_h
-#define __vtkSMLiveInsituLinkProxy_h
+#ifndef vtkSMLiveInsituLinkProxy_h
+#define vtkSMLiveInsituLinkProxy_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -61,10 +61,15 @@ public:
     return this->TimeStep;
   }
 
-//BTX
   // Description:
   // Overridden to handle server-notification messages.
   virtual void LoadState(const vtkSMMessage* msg, vtkSMProxyLocator* locator);
+
+  // Description:
+  // Push updated states from the client to the server in aggregate (originally,
+  // when the simulation was paused, multiple partial updates were pushed,
+  // resulting in the connection between client and server to sever).
+  void PushUpdatedStates();
 
 protected:
   vtkSMLiveInsituLinkProxy();
@@ -94,7 +99,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

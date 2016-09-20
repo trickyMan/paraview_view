@@ -20,8 +20,8 @@
 // uses the bounds of the slice to position the quad. Unlike other image data
 // algorithms, this painter provides API to choose the scalars to upload. If
 // cell data is used, then cell centers are used to position the slice.
-#ifndef __vtkTexturePainter_h
-#define __vtkTexturePainter_h
+#ifndef vtkTexturePainter_h
+#define vtkTexturePainter_h
 
 #include "vtkPainter.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -123,20 +123,17 @@ public:
   vtkBooleanMacro(UseXYPlane, int);
   vtkGetMacro(UseXYPlane, int);
 
-  //BTX
   enum
     {
     YZ_PLANE = 0,
     XZ_PLANE = 1,
     XY_PLANE = 2,
     };
-  //ETX
 
   virtual void ReleaseGraphicsResources (vtkWindow *);
 
   vtkSetVector6Macro(WholeExtent, int);
 
-//BTX
 protected:
   vtkTexturePainter();
   ~vtkTexturePainter();
@@ -183,7 +180,7 @@ protected:
 private:
   vtkTexturePainter(const vtkTexturePainter&); // Not implemented.
   void operator=(const vtkTexturePainter&); // Not implemented.
-//ETX
+
 };
 
 #endif

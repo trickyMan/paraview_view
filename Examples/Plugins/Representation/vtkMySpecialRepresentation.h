@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkMySpecialRepresentation_h
-#define __vtkMySpecialRepresentation_h
+#ifndef vtkMySpecialRepresentation_h
+#define vtkMySpecialRepresentation_h
 
 #include "vtkGeometryRepresentationWithFaces.h"
 
@@ -28,7 +28,6 @@ public:
   vtkTypeMacro(vtkMySpecialRepresentation, vtkGeometryRepresentationWithFaces);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkMySpecialRepresentation();
   ~vtkMySpecialRepresentation();
@@ -36,7 +35,7 @@ protected:
 private:
   vtkMySpecialRepresentation(const vtkMySpecialRepresentation&); // Not implemented
   void operator=(const vtkMySpecialRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

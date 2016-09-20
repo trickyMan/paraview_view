@@ -123,8 +123,8 @@
 //        value as a default.
 //
 
-#ifndef __vtkSMProperty_h
-#define __vtkSMProperty_h
+#ifndef vtkSMProperty_h
+#define vtkSMProperty_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -140,9 +140,8 @@ class vtkSMInformationHelper;
 class vtkSMPropertyLink;
 class vtkSMProxy;
 class vtkSMProxyLocator;
-//BTX
+
 struct vtkSMPropertyInternals;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMProperty : public vtkSMObject
 {
@@ -404,7 +403,10 @@ public:
   // runtime based on input dataset or file being processed.
   bool HasDomainsWithRequiredProperties();
 
-//BTX
+  // Description:
+  // Use this method to clear unchecked values set of this property.
+  virtual void ClearUncheckedElements() {}
+
 protected:
   vtkSMProperty();
   ~vtkSMProperty();
@@ -569,7 +571,7 @@ private:
 
   bool PendingModifiedEvents;
   bool BlockModifiedEvents;
-//ETX
+
 };
 
 #define vtkSMPropertyTemplateMacroCase(typeSMProperty, type, prop, call) \

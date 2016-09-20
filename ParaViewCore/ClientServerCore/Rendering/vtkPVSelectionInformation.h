@@ -19,8 +19,8 @@
 // .SECTION See Also
 // vtkSelection
 
-#ifndef __vtkPVSelectionInformation_h
-#define __vtkPVSelectionInformation_h
+#ifndef vtkPVSelectionInformation_h
+#define vtkPVSelectionInformation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -44,12 +44,10 @@ public:
   // Merge another information object.
   virtual void AddInformation(vtkPVInformation*);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*);
   virtual void CopyFromStream(const vtkClientServerStream*);
-  //ETX
 
   // Description:
   // Returns the selection. Selection is created and populated

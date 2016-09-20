@@ -7,8 +7,8 @@
    All rights reserved.
 
    ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2. 
-   
+   under the terms of the ParaView license version 1.2.
+
    See License_v1.2.txt for the full ParaView license.
    A copy of this license can be obtained by contacting
    Kitware Inc.
@@ -29,10 +29,13 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqExportReaction_h 
-#define __pqExportReaction_h
+#ifndef pqExportReaction_h
+#define pqExportReaction_h
 
 #include "pqReaction.h"
+
+
+class pqProxyWidget;
 
 /// @ingroup Reactions
 /// Reaction for exporting a view. Uses pqViewExporterManager for actual
@@ -45,8 +48,9 @@ public:
   /// Constructor. Parent cannot be NULL.
   pqExportReaction(QAction* parent);
 
-  /// Exports the current view.
-  void exportActiveView();
+  /// Exports the current view. Returns the exported filename of successful
+  /// export, otherwise returns an empty QString.
+  QString exportActiveView();
 
 public slots:
   /// Updates the enabled state. Applications need not explicitly call
@@ -59,6 +63,9 @@ protected:
     { this->exportActiveView(); }
 
 private:
+  /// Creates a dialog widget containing the predefined proxyWidget.
+  QDialog* createConfigurationDialog(pqProxyWidget* proxyWidget);
+
   Q_DISABLE_COPY(pqExportReaction)
 };
 

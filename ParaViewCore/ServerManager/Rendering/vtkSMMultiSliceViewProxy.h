@@ -17,8 +17,8 @@
 // Custom RenderViewProxy to override CreateDefaultRepresentation method
 // so only the Multi-Slice representation will be available to the user
 
-#ifndef __vtkSMMultiSliceViewProxy_h
-#define __vtkSMMultiSliceViewProxy_h
+#ifndef vtkSMMultiSliceViewProxy_h
+#define vtkSMMultiSliceViewProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMRenderViewProxy.h"
@@ -63,7 +63,7 @@ public:
   // HACK: Get source's input data bounds (or BoundingBoxInModelCoordinates if
   // present).
   static bool GetDataBounds(vtkSMSourceProxy* source, int opport, double bounds[6]);
-//BTX
+
 protected:
   vtkSMMultiSliceViewProxy();
   ~vtkSMMultiSliceViewProxy();
@@ -80,7 +80,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

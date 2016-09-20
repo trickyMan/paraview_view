@@ -17,8 +17,8 @@
 // vtkPythonView is a view for displaying data via a Python script
 // that uses matplotlib to generate a plot.
 
-#ifndef __vtkPythonView_h
-#define __vtkPythonView_h
+#ifndef vtkPythonView_h
+#define vtkPythonView_h
 
 #include "vtkPVView.h"
 
@@ -157,7 +157,6 @@ public:
   // exposed to be wrapped.
   vtkSetObjectMacro(ImageData, vtkImageData);
 
-//BTX
 protected:
   vtkPythonView();
   virtual ~vtkPythonView();
@@ -179,7 +178,6 @@ private:
 
   // Run Python code with custom local dictionary
   int RunSimpleStringWithCustomLocals(const char* code);
-//ETX
 
   class vtkInternals;
   vtkInternals* Internals;

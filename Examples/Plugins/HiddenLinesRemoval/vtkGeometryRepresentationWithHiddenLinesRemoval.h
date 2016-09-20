@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkGeometryRepresentationWithHiddenLinesRemoval_h
-#define __vtkGeometryRepresentationWithHiddenLinesRemoval_h
+#ifndef vtkGeometryRepresentationWithHiddenLinesRemoval_h
+#define vtkGeometryRepresentationWithHiddenLinesRemoval_h
 
 #include "vtkGeometryRepresentationWithFaces.h"
 
@@ -29,7 +29,6 @@ public:
   vtkTypeMacro(vtkGeometryRepresentationWithHiddenLinesRemoval, vtkGeometryRepresentationWithFaces);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkGeometryRepresentationWithHiddenLinesRemoval();
   ~vtkGeometryRepresentationWithHiddenLinesRemoval();
@@ -37,7 +36,7 @@ protected:
 private:
   vtkGeometryRepresentationWithHiddenLinesRemoval(const vtkGeometryRepresentationWithHiddenLinesRemoval&); // Not implemented
   void operator=(const vtkGeometryRepresentationWithHiddenLinesRemoval&); // Not implemented
-//ETX
+
 };
 
 #endif

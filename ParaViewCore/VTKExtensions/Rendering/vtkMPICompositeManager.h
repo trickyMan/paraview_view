@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkMPICompositeManager_h
-#define __vtkMPICompositeManager_h
+#ifndef vtkMPICompositeManager_h
+#define vtkMPICompositeManager_h
 
 #include "vtkCompositeRenderManager.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -43,12 +43,10 @@ public:
   // Internal method: called only on non-Root nodes.
   void GatherZBufferValueRMI(int x, int y);
 
-//BTX
   enum Tags {
     GATHER_Z_RMI_TAG=987987,
     Z_TAG=88771
   };
-//ETX
 
   // Description:
   // Overridden to set the Image Size when ParallelRendering is off.

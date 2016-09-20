@@ -16,8 +16,8 @@
 // .SECTION Description
 // SIProperty that deals with TimeRange on Algorithm object type
 
-#ifndef __vtkSITimeStepsProperty_h
-#define __vtkSITimeStepsProperty_h
+#ifndef vtkSITimeStepsProperty_h
+#define vtkSITimeStepsProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProperty.h"
@@ -29,7 +29,6 @@ public:
   vtkTypeMacro(vtkSITimeStepsProperty, vtkSIProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSITimeStepsProperty();
   ~vtkSITimeStepsProperty();
@@ -43,7 +42,7 @@ protected:
 private:
   vtkSITimeStepsProperty(const vtkSITimeStepsProperty&); // Not implemented
   void operator=(const vtkSITimeStepsProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -22,8 +22,8 @@
 // * ArraySelection -- string vector property used to select the array.
 // This domain will not work if either of the required properties is missing.
 
-#ifndef __vtkSMNumberOfComponentsDomain_h
-#define __vtkSMNumberOfComponentsDomain_h
+#ifndef vtkSMNumberOfComponentsDomain_h
+#define vtkSMNumberOfComponentsDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMIntRangeDomain.h"
@@ -45,7 +45,6 @@ public:
   // only the first component of the array.
   virtual void Update(vtkSMProperty* prop);
 
-//BTX
 protected:
   vtkSMNumberOfComponentsDomain();
   ~vtkSMNumberOfComponentsDomain();
@@ -59,7 +58,7 @@ protected:
 private:
   vtkSMNumberOfComponentsDomain(const vtkSMNumberOfComponentsDomain&); // Not implemented
   void operator=(const vtkSMNumberOfComponentsDomain&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -21,6 +21,7 @@
 #include "vtkUnsignedCharArray.h"
 #include "vtkMultiProcessStream.h"
 #include <sstream>
+#include <algorithm>
 
 vtkStandardNewMacro(vtkSquirtCompressor);
 
@@ -59,11 +60,11 @@ int vtkSquirtCompressor::Compress()
   int compress_level = this->LossLessMode?0:this->SquirtLevel;
   unsigned int current_color;
   unsigned char compress_masks[6][4] = {  {0xFF, 0xFF, 0xFF, 0xFF},
-      {0xFE, 0xFF, 0xFE, 0xFF},
-      {0xFC, 0xFE, 0xFC, 0xFF},
-      {0xF8, 0xFC, 0xF8, 0xFF},
-      {0xF0, 0xF8, 0xF0, 0xFF},
-      {0xE0, 0xF0, 0xE0, 0xFF}};
+      {0xFE, 0xFF, 0xFE, 0xFE},
+      {0xFC, 0xFE, 0xFC, 0xFC},
+      {0xF8, 0xFC, 0xF8, 0xF8},
+      {0xF0, 0xF8, 0xF0, 0xF0},
+      {0xE0, 0xF0, 0xE0, 0xE0}};
 
   if (compress_level < 0 || compress_level > 5)
     {
@@ -93,17 +94,20 @@ int vtkSquirtCompressor::Compress()
 
       // Record color
       current_color = _rawCompressedBuffer[comp_index] =_rawColorBuffer[index];
+      unsigned char opacity = *(((unsigned char*)&current_color)+3);
       index++;
 
       // Compute Run
-      while((index<end_index) && (count<0x7F) &&
+      while((index<end_index) && (count<0x0F) &&
         ((current_color&compress_mask) == (_rawColorBuffer[index]&compress_mask)))
-        { 
-        index++; count++;   
-        }
-      if (*(((unsigned char*)&current_color)+3) > 0)
         {
-        count |= 0x80;
+        index++; count++;
+        }
+      if (opacity > 0)
+        {
+        opacity /= 16; // since we want to encode 8-bit opacity into 4 bits.
+        opacity = opacity << 4;
+        count |= opacity;
         }
 
       // Record Run length
@@ -160,7 +164,7 @@ int vtkSquirtCompressor::Compress()
         }
 
       // Record Run length
-      *((unsigned char*)_rawCompressedBuffer+comp_index*4+3) =(unsigned char)count;
+      reinterpret_cast<unsigned char*>(_rawCompressedBuffer)[comp_index*4+3] = static_cast<unsigned char>(count);
       comp_index++;
 
       count = 0;
@@ -183,8 +187,30 @@ int vtkSquirtCompressor::Decompress()
     return VTK_ERROR;
     }
 
+  vtkUnsignedCharArray* out = this->GetOutput();
+
+  // We assume that 'out' has exactly the same number of component set as the
+  // input before compression.
+  switch (out->GetNumberOfComponents())
+    {
+  case 3:
+    return this->DecompressRGB();
+  case 4:
+    return this->DecompressRGBA();
+
+  default:
+    vtkErrorMacro("SQUIRT only support 3 or 4 component arrays.");
+    return VTK_ERROR;
+    }
+}
+
+//-----------------------------------------------------------------------------
+int vtkSquirtCompressor::DecompressRGBA()
+{
   vtkUnsignedCharArray* in = this->GetInput();
   vtkUnsignedCharArray* out = this->GetOutput();
+  assert(out->GetNumberOfComponents() == 4);
+
   int count=0;
   int index=0;
   unsigned int current_color;
@@ -207,25 +233,77 @@ int vtkSquirtCompressor::Decompress()
     // Get run length count;
     count = *((unsigned char*)&current_color+3);
 
-    if (out->GetNumberOfComponents() == 4)
+    if (count > 0x0f)
       {
-      *((unsigned char*)&current_color+3) = (count & 0x80) != 0? 0xff : 0;
-      count &= 0x7f;
+      // we have some opacity.
+      unsigned char opacity = (count & 0xF0);
+      opacity = opacity >> 4;
+      opacity *= 16;
+      *((unsigned char*)&current_color+3) = opacity;
       }
     else
       {
-      *((unsigned char*)&current_color+3) = 0xff;
+      *((unsigned char*)&current_color+3) = 0;
       }
+    count &= 0x0F;
 
     // Set color
     _rawColorBuffer[index++] = current_color;
 
     // Blast color into color buffer
     for(int j=0; j< count; j++)
+      {
       _rawColorBuffer[index++] = current_color;
+      }
     }
   return VTK_OK;
 }
+
+//-----------------------------------------------------------------------------
+int vtkSquirtCompressor::DecompressRGB()
+{
+  vtkUnsignedCharArray* in = this->GetInput();
+  vtkUnsignedCharArray* out = this->GetOutput();
+  assert(out->GetNumberOfComponents() == 3);
+
+  int count=0;
+  unsigned int current_color;
+  unsigned char* _rawColorBuffer;
+  unsigned int* _rawCompressedBuffer;
+
+  // Get compressed buffer size
+  int CompSize = in->GetNumberOfTuples()/4; /// NOTE 1->4
+
+  // Access raw arrays directly
+  _rawColorBuffer = (unsigned char*)out->GetPointer(0);
+  _rawCompressedBuffer = (unsigned int*)in->GetPointer(0);
+
+  // Go through compress buffer and extract RLE format into color buffer
+  for(int i=0; i<CompSize; i++)
+    {
+    // Get color and count
+    current_color = _rawCompressedBuffer[i];
+
+    // Get run length count;
+    count = *((unsigned char*)&current_color+3);
+
+    *((unsigned char*)&current_color+3) = 0xff;
+
+    unsigned char current_color_rgb[3];
+    std::copy(reinterpret_cast<const unsigned char*>(&current_color),
+      reinterpret_cast<const unsigned char*>(&current_color) +3, current_color_rgb);
+    std::copy(current_color_rgb, current_color_rgb + 3, _rawColorBuffer);
+    _rawColorBuffer+=3;
+    for(int j=0; j< count; j++)
+      {
+      std::copy(current_color_rgb, current_color_rgb + 3, _rawColorBuffer);
+      _rawColorBuffer+=3;
+      }
+    }
+  return VTK_OK;
+}
+
+
 
 //-----------------------------------------------------------------------------
 void vtkSquirtCompressor::SaveConfiguration(vtkMultiProcessStream *stream)

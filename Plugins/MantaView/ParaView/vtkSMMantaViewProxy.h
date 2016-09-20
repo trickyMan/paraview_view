@@ -65,8 +65,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // also initializes the client server wrapped vtkManta library for
 // paraview.
 
-#ifndef __vtkSMMantaViewProxy_h
-#define __vtkSMMantaViewProxy_h
+#ifndef vtkSMMantaViewProxy_h
+#define vtkSMMantaViewProxy_h
 
 #include "vtkSMRenderViewProxy.h"
 
@@ -101,7 +101,6 @@ public:
   // Call to make an different light active so the user can control it.
   void NextLight();
 
-//BTX
 protected:
   vtkSMMantaViewProxy();
   ~vtkSMMantaViewProxy();
@@ -115,7 +114,7 @@ private:
 
   class Internal;
   Internal *Internals;
-//ETX
+
 };
 
 

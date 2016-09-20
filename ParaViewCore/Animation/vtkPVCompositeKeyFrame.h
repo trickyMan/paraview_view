@@ -21,8 +21,8 @@
 // active type. This is helpful in GUIs that allow for switching the
 // type of keyframe on the fly without much effort from the GUI.
 
-#ifndef __vtkPVCompositeKeyFrame_h
-#define __vtkPVCompositeKeyFrame_h
+#ifndef vtkPVCompositeKeyFrame_h
+#define vtkPVCompositeKeyFrame_h
 
 #include "vtkPVKeyFrame.h"
 
@@ -37,7 +37,7 @@ public:
   static vtkPVCompositeKeyFrame* New();
   vtkTypeMacro(vtkPVCompositeKeyFrame, vtkPVKeyFrame);
   void PrintSelf(ostream& os, vtkIndent indent);
-  //BTX
+
   enum
     {
     NONE =0,
@@ -46,7 +46,6 @@ public:
     EXPONENTIAL=3,
     SINUSOID=4
     };
-  //ETX
 
   // Description:
   // Overridden to pass on to the internal keyframe proxies.

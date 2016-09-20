@@ -26,8 +26,8 @@
 // except that it works in a data parallel manner.
 //
 
-#ifndef __vtkPTemporalRanges_h
-#define __vtkPTemporalRanges_h
+#ifndef vtkPTemporalRanges_h
+#define vtkPTemporalRanges_h
 
 #include "vtkTemporalRanges.h"
 
@@ -59,10 +59,9 @@ private:
   vtkPTemporalRanges(const vtkPTemporalRanges &);       // Not implemented
   void operator=(const vtkPTemporalRanges &);           // Not implemented
 
-//BTX
   class vtkRangeTableReduction;
   friend class vtkRangeTableReduction;
-//ETX
+
 };
 
-#endif //__vtkPTemporalRanges_h
+#endif //vtkPTemporalRanges_h

@@ -20,8 +20,8 @@
   the U.S. Government retains certain rights in this software.
 -------------------------------------------------------------------------*/
 
-#ifndef __pqGlobalPlotter_h
-#define __pqGlobalPlotter_h
+#ifndef pqGlobalPlotter_h
+#define pqGlobalPlotter_h
 
 #include "pqPlotter.h"
 
@@ -32,10 +32,7 @@ class pqGlobalPlotter : public pqPlotter
 public:
 
   pqGlobalPlotter();
-
-  virtual ~pqGlobalPlotter()
-  {
-  }
+  virtual ~pqGlobalPlotter();
 
   virtual QStringList getTheVars(vtkSMProxy * meshReaderProxy);
 
@@ -56,10 +53,6 @@ public:
   virtual QString getPlotterTextEditObjectName();
 
 protected:
-
-  class pqInternal;
-  pqInternal * Internal;
-
 };
 
-#endif // __pqGlobalPlotter_h
+#endif // pqGlobalPlotter_h

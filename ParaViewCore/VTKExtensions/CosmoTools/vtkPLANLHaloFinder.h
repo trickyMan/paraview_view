@@ -64,10 +64,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // grid of all particles and assigns each particle a halo id.
 //
 
-#ifndef __vtkPLANLHaloFinder_h
-#define __vtkPLANLHaloFinder_h
+#ifndef vtkPLANLHaloFinder_h
+#define vtkPLANLHaloFinder_h
 
-#include "vtkUnstructuredGridAlgorithm.h" // Base class
+#include "vtkUnstructuredGridAlgorithm.h"
 #include "vtkPVVTKExtensionsCosmoToolsModule.h" // For export macro
 
 // Forward declarations
@@ -277,11 +277,9 @@ class VTKPVVTKEXTENSIONSCOSMOTOOLS_EXPORT vtkPLANLHaloFinder :
   int MinFOFSize;         // Minimum FOF size for SOD (1000)
   float MinFOFMass;       // Minimum FOF mass for SOD (5.0e12)
 
-// BTX
   HaloFinderInternals::ParticleData *Particles;
   HaloFinderInternals::HaloData *Halos;
   cosmotk::CosmoHaloFinderP *HaloFinder;
-// ETX
 
  private:
   vtkPLANLHaloFinder(const vtkPLANLHaloFinder&);  // Not implemented.
@@ -289,4 +287,4 @@ class VTKPVVTKEXTENSIONSCOSMOTOOLS_EXPORT vtkPLANLHaloFinder :
 
 };
 
-#endif //  __vtkPLANLHaloFinder_h
+#endif //  vtkPLANLHaloFinder_h

@@ -29,8 +29,8 @@
 // Once the factory has been configured, the API to create readers, get
 // available readers etc. can be used.
 
-#ifndef __vtkSMReaderFactory_h
-#define __vtkSMReaderFactory_h
+#ifndef vtkSMReaderFactory_h
+#define vtkSMReaderFactory_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -147,7 +147,7 @@ public:
   // the begining of the application's execution before any sessions are
   // created.
   static void AddReaderToWhitelist(const char* readerxmlgroup, const char* readerxmlname);
-//BTX
+
 protected:
   vtkSMReaderFactory();
   ~vtkSMReaderFactory();
@@ -171,7 +171,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

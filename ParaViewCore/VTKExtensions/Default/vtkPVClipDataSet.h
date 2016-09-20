@@ -18,8 +18,8 @@
 // This is a subclass of vtkTableBasedClipDataSet that allows selection of input
 // scalars.
 
-#ifndef __vtkPVClipDataSet_h
-#define __vtkPVClipDataSet_h
+#ifndef vtkPVClipDataSet_h
+#define vtkPVClipDataSet_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkTableBasedClipDataSet.h"
@@ -44,7 +44,6 @@ public:
   vtkGetMacro(UseAMRDualClipForAMR, bool);
   vtkBooleanMacro(UseAMRDualClipForAMR, bool);
 
-//BTX
 protected:
   vtkPVClipDataSet(vtkImplicitFunction *cf=NULL);
   ~vtkPVClipDataSet();
@@ -75,7 +74,7 @@ protected:
 private:
   vtkPVClipDataSet(const vtkPVClipDataSet&);  // Not implemented.
   void operator=(const vtkPVClipDataSet&);  // Not implemented.
-//ETX
+
 };
 
 #endif

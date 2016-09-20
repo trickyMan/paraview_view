@@ -15,8 +15,8 @@
 // .NAME vtkGridAxes3DActor
 // .SECTION Description
 
-#ifndef __vtkGridAxes3DActor_h
-#define __vtkGridAxes3DActor_h
+#ifndef vtkGridAxes3DActor_h
+#define vtkGridAxes3DActor_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkProp3D.h"
@@ -232,7 +232,7 @@ public:
   virtual int RenderOverlay(vtkViewport* viewport);
   virtual int HasTranslucentPolygonalGeometry();
   virtual void ReleaseGraphicsResources(vtkWindow *);
-//BTX
+
 protected:
   vtkGridAxes3DActor();
   ~vtkGridAxes3DActor();
@@ -253,7 +253,7 @@ private:
   void operator=(const vtkGridAxes3DActor&); // Not implemented.
 
   unsigned long GetBoundsMTime;
-//ETX
+
 };
 
 

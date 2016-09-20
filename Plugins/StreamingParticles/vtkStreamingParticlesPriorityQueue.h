@@ -27,8 +27,8 @@
 // .SECTION See Also
 // vtkStreamingParticlesRepresentation, vtkAMRStreamingPriorityQueue
 
-#ifndef __vtkStreamingParticlesPriorityQueue_h
-#define __vtkStreamingParticlesPriorityQueue_h
+#ifndef vtkStreamingParticlesPriorityQueue_h
+#define vtkStreamingParticlesPriorityQueue_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" // for export macros
 #include "vtkObject.h"
@@ -117,7 +117,6 @@ public:
   vtkGetMacro(DetailLevelToLoad,double)
   vtkSetMacro(DetailLevelToLoad,double)
 
-//BTX
 protected:
   vtkStreamingParticlesPriorityQueue();
   ~vtkStreamingParticlesPriorityQueue();
@@ -138,7 +137,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

@@ -40,8 +40,8 @@
 // \li \c EnableRenderOnInteraction :- when present provides a flag whether the interactor
 // should trigger the render calls (either StillRender or InteractiveRender) as
 // a consequence of interaction. If missing, we treat EnableRender as ON.
-#ifndef __vtkSMViewProxyInteractorHelper_h
-#define __vtkSMViewProxyInteractorHelper_h
+#ifndef vtkSMViewProxyInteractorHelper_h
+#define vtkSMViewProxyInteractorHelper_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkWeakPointer.h" //needed for vtkWeakPointer
@@ -73,7 +73,6 @@ public:
   vtkRenderWindowInteractor* GetInteractor();
   void CleanupInteractor() { this->SetupInteractor(NULL); }
 
-//BTX
 protected:
   vtkSMViewProxyInteractorHelper();
   ~vtkSMViewProxyInteractorHelper();
@@ -94,7 +93,7 @@ protected:
 private:
   vtkSMViewProxyInteractorHelper(const vtkSMViewProxyInteractorHelper&); // Not implemented
   void operator=(const vtkSMViewProxyInteractorHelper&); // Not implemented
-//ETX
+
 };
 
 #endif

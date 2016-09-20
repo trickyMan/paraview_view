@@ -16,8 +16,8 @@
 // .SECTION Description
 // SIProperty that deals with ArraySelection object
 
-#ifndef __vtkSIArraySelectionProperty_h
-#define __vtkSIArraySelectionProperty_h
+#ifndef vtkSIArraySelectionProperty_h
+#define vtkSIArraySelectionProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProperty.h"
@@ -29,7 +29,6 @@ public:
   vtkTypeMacro(vtkSIArraySelectionProperty, vtkSIProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSIArraySelectionProperty();
   ~vtkSIArraySelectionProperty();
@@ -43,7 +42,7 @@ protected:
 private:
   vtkSIArraySelectionProperty(const vtkSIArraySelectionProperty&); // Not implemented
   void operator=(const vtkSIArraySelectionProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

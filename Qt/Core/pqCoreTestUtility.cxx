@@ -35,7 +35,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QApplication>
 #include <QCommonStyle>
 #include <QCoreApplication>
-#include <QDir>
 #include <QEvent>
 #include <QFileInfo>
 #include <QImage>
@@ -90,6 +89,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # include "pqPythonEventSourceImage.h"
 #endif
 
+const char* pqCoreTestUtility::PQ_COMPAREVIEW_PROPERTY_NAME = "PQ_COMPAREVIEW_PROPERTY_NAME";
 
 template<typename WriterT>
 bool saveImage(vtkWindowToImageFilter* Capture, const QFileInfo& File)
@@ -192,6 +192,54 @@ QString pqCoreTestUtility::DataRoot()
   // Trim excess whitespace ...
   result = result.trimmed();
     
+  return result;
+}
+
+//-----------------------------------------------------------------------------
+QString pqCoreTestUtility::BaselineDirectory()
+{
+  QString result;
+  if (pqOptions* const options = pqOptions::SafeDownCast(
+    vtkProcessModule::GetProcessModule()->GetOptions()))
+    {
+    result = options->GetBaselineDirectory();
+    }
+
+  // Let the user override the defaults by setting an environment variable ...
+  if(result.isEmpty())
+    {
+    result = getenv("PARAVIEW_TEST_BASELINE_DIR");
+    }
+  
+  // Finally use the xml file location if an instance is available
+  if(result.isEmpty())
+    {
+    pqApplicationCore* core = pqApplicationCore::instance();
+    if (core != NULL)
+      {
+      pqTestUtility* testUtil = core->testUtility();
+      result = QFileInfo(testUtil->filename()).path();
+      }
+    }
+
+  // Use current repo in case non are provided
+  if(result.isEmpty())
+    {
+    result = ".";
+    }
+
+  // Ensure all slashes face forward ...
+  result.replace('\\', '/');
+  
+  // Remove any trailing slashes ...
+  if(result.size() && result.at(result.size()-1) == '/')
+    {
+    result.chop(1);
+    }
+    
+  // Trim excess whitespace ...
+  result = result.trimmed();
+  
   return result;
 }
 
@@ -309,9 +357,9 @@ bool pqCoreTestUtility::CompareImage(QWidget* widget,
   // for generic QWidget's, let's paint the widget into our QPixmap,
   // put it in a vtkImageData and compare the image with a baseline
   QFont oldFont = widget->font();
-#if defined(Q_WS_WIN)
+#if defined(Q_WS_WIN) || defined(Q_OS_WIN)
   QFont newFont("Courier", 10, QFont::Normal, false);
-#elif defined(Q_WS_X11)
+#elif defined(Q_WS_X11) || defined(Q_OS_LINUX)
   QFont newFont("Courier", 10, QFont::Normal, false);
 #else
   QFont newFont("Courier Regular", 10, QFont::Normal, false);
@@ -370,12 +418,32 @@ bool pqCoreTestUtility::CompareView(
 //-----------------------------------------------------------------------------
 QString pqCoreTestUtility::TestDirectory()
 {
+  QString result;
   if (pqOptions* const options = pqOptions::SafeDownCast(
     vtkProcessModule::GetProcessModule()->GetOptions()))
     {
-    return options->GetTestDirectory();
+    result =  options->GetTestDirectory();
     }
-  return QString();
+
+  // Let the user override the defaults by setting an environment variable ...
+  if(result.isEmpty())
+    {
+    result = getenv("PARAVIEW_TEST_DIR");
+    }
+  
+  // Ensure all slashes face forward ...
+  result.replace('\\', '/');
+  
+  // Remove any trailing slashes ...
+  if(result.size() && result.at(result.size()-1) == '/')
+    {
+    result.chop(1);
+    }
+    
+  // Trim excess whitespace ...
+  result = result.trimmed();
+  
+  return result;
 }
 
 //-----------------------------------------------------------------------------

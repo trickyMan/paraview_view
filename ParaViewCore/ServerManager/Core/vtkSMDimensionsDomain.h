@@ -27,8 +27,8 @@
 // \li \c Direction: points to a property that provides the value for the
 //                   selected direction.
 
-#ifndef __vtkSMDimensionsDomain_h
-#define __vtkSMDimensionsDomain_h
+#ifndef vtkSMDimensionsDomain_h
+#define vtkSMDimensionsDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMIntRangeDomain.h"
@@ -48,7 +48,6 @@ public:
   // required properties. 
   virtual void Update(vtkSMProperty*);
 
-//BTX
 protected:
   vtkSMDimensionsDomain();
   ~vtkSMDimensionsDomain();
@@ -61,7 +60,7 @@ protected:
 private:
   vtkSMDimensionsDomain(const vtkSMDimensionsDomain&); // Not implemented
   void operator=(const vtkSMDimensionsDomain&); // Not implemented
-//ETX
+
 };
 
 #endif

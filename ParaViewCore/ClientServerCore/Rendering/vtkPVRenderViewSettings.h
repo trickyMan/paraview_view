@@ -20,8 +20,8 @@
 // All class to vtkPVRenderViewSettings::New() returns a reference to the
 // singleton instance.
 
-#ifndef __vtkPVRenderViewSettings_h
-#define __vtkPVRenderViewSettings_h
+#ifndef vtkPVRenderViewSettings_h
+#define vtkPVRenderViewSettings_h
 
 #include "vtkObject.h"
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
@@ -69,19 +69,24 @@ public:
   vtkSetMacro(PointPickingRadius, int);
   vtkGetMacro(PointPickingRadius, int);
 
-//BTX
+  // Description:
+  // EXPERIMENTAL: Add ability to disable IceT.
+  vtkSetMacro(DisableIceT, bool);
+  vtkGetMacro(DisableIceT, bool);
+
 protected:
   vtkPVRenderViewSettings();
   ~vtkPVRenderViewSettings();
 
   vtkIdType OutlineThreshold;
   int PointPickingRadius;
+  bool DisableIceT;
 private:
   vtkPVRenderViewSettings(const vtkPVRenderViewSettings&); // Not implemented
   void operator=(const vtkPVRenderViewSettings&); // Not implemented
 
   static vtkSmartPointer<vtkPVRenderViewSettings> Instance;
-//ETX
+
 };
 
 #endif

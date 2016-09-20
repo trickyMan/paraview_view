@@ -19,8 +19,8 @@
 // representation type is VTK_WIREFRAME, then it will automatically remove the
 // hidden lines. 
 
-#ifndef __vtkVisibleLinesPainter_h
-#define __vtkVisibleLinesPainter_h
+#ifndef vtkVisibleLinesPainter_h
+#define vtkVisibleLinesPainter_h
 
 #include "vtkOpenGLRepresentationPainter.h"
 
@@ -37,7 +37,6 @@ public:
   // resources to release. In this case, releases the display lists.
   virtual void ReleaseGraphicsResources(vtkWindow *);
 
-//BTX
 protected:
   vtkVisibleLinesPainter();
   ~vtkVisibleLinesPainter();
@@ -65,7 +64,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

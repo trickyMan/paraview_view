@@ -7,8 +7,8 @@
    All rights reserved.
 
    ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2. 
-   
+   under the terms of the ParaView license version 1.2.
+
    See License_v1.2.txt for the full ParaView license.
    A copy of this license can be obtained by contacting
    Kitware Inc.
@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqCameraReaction_h 
-#define __pqCameraReaction_h
+#ifndef pqCameraReaction_h
+#define pqCameraReaction_h
 
 #include "pqReaction.h"
 
@@ -51,7 +51,9 @@ public:
     RESET_NEGATIVE_X,
     RESET_NEGATIVE_Y,
     RESET_NEGATIVE_Z,
-    ZOOM_TO_DATA
+    ZOOM_TO_DATA,
+    ROTATE_CAMERA_CW,
+    ROTATE_CAMERA_CCW
     };
 
   pqCameraReaction(QAction* parent, Mode mode);
@@ -67,6 +69,7 @@ public:
     double look_x, double look_y, double look_z,
     double up_x, double up_y, double up_z);
   static void zoomToData();
+  static void rotateCamera(double angle);
 
 public slots:
   /// Updates the enabled state. Applications need not explicitly call

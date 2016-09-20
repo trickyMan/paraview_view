@@ -24,16 +24,17 @@
 // Transaction are intended to execute in fragment order
 // so that no deadlocks occur.
 
-#ifndef __vtkMaterialInterfacePieceTransactionMatrix_h
-#define __vtkMaterialInterfacePieceTransactionMatrix_h
+#ifndef vtkMaterialInterfacePieceTransactionMatrix_h
+#define vtkMaterialInterfacePieceTransactionMatrix_h
 
+#include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMaterialInterfacePieceTransaction.h" //
 #include "vtkType.h" //
 #include <vector> //
 
 class vtkCommunicator;
 
-class vtkMaterialInterfacePieceTransactionMatrix
+class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkMaterialInterfacePieceTransactionMatrix
 {
 public:
   // Description:

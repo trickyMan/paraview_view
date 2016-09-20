@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqColorButtonEventPlayer_h
-#define __pqColorButtonEventPlayer_h
+#ifndef pqColorButtonEventPlayer_h
+#define pqColorButtonEventPlayer_h
 
 #include "pqWidgetEventPlayer.h"
 #include "pqWidgetsModule.h" // needed for EXPORT macro.
@@ -44,6 +44,7 @@ public:
   pqColorButtonEventPlayer(QObject* parent=0);
   ~pqColorButtonEventPlayer();
 
+  using Superclass::playEvent;
   bool playEvent(QObject* object, const QString& command, const QString&
     arguments, bool& error);
 

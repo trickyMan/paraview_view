@@ -18,8 +18,8 @@
 // This offset is used together with normal and origin when
 // setting parameters on the represented object.
 
-#ifndef __vtkPVPlane_h
-#define __vtkPVPlane_h
+#ifndef vtkPVPlane_h
+#define vtkPVPlane_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPlane.h"
@@ -60,7 +60,6 @@ public:
   // any derived class.
   virtual void EvaluateGradient(double x[3], double g[3]);
 
-//BTX
 protected:
   vtkPVPlane();
   ~vtkPVPlane();
@@ -71,7 +70,7 @@ protected:
 private:
   vtkPVPlane(const vtkPVPlane&); // Not implemented
   void operator=(const vtkPVPlane&); // Not implemented
-//ETX
+
 };
 
 #endif

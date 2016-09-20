@@ -20,8 +20,8 @@
 // from all processes involved. Implementation uses vtksys::SystemInformation to
 // obtain the relevant information for each of the processes.
 
-#ifndef __vtkPVSystemInformation_h
-#define __vtkPVSystemInformation_h
+#ifndef vtkPVSystemInformation_h
+#define vtkPVSystemInformation_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkProcessModule.h" // needed for vtkProcessModule::ProcessTypes
@@ -44,12 +44,10 @@ public:
   // Merge another information object.
   virtual void AddInformation(vtkPVInformation*);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*);
   virtual void CopyFromStream(const vtkClientServerStream*);
-  //ETX
 
   struct SystemInformationType
     {
@@ -70,14 +68,10 @@ public:
     size_t AvailableVirtualMemory;
     };
 
-  //BTX
   //  Provides access to the vector of informations.
   const std::vector<SystemInformationType>& GetSystemInformations()
     { return this->SystemInformations; }
-  //ETX
 
-
-//BTX
 protected:
   vtkPVSystemInformation();
   ~vtkPVSystemInformation();
@@ -86,7 +80,7 @@ protected:
 private:
   vtkPVSystemInformation(const vtkPVSystemInformation&); // Not implemented
   void operator=(const vtkPVSystemInformation&); // Not implemented
-//ETX
+
 };
 
 #endif

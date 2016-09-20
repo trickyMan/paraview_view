@@ -257,18 +257,6 @@ void vtkCompositeRepresentation::MarkModified()
 }
 
 //----------------------------------------------------------------------------
-void vtkCompositeRepresentation::Update(int port)
-{
-  // FIXME:STREAMING -- do we call Update() on the active repr here?
-  //vtkPVDataRepresentation* curActive = this->GetActiveRepresentation();
-  //if (curActive)
-  //  {
-  //  curActive->Update();
-  //  }
-  this->Superclass::Update(port);
-}
-
-//----------------------------------------------------------------------------
 void vtkCompositeRepresentation::SetUpdateTime(double time)
 {
   vtkInternals::RepresentationMap::iterator iter;
@@ -278,28 +266,6 @@ void vtkCompositeRepresentation::SetUpdateTime(double time)
     iter->second.GetPointer()->SetUpdateTime(time);
     }
   this->Superclass::SetUpdateTime(time);
-}
-//----------------------------------------------------------------------------
-void vtkCompositeRepresentation::SetUseCache(bool val)
-{
-  vtkInternals::RepresentationMap::iterator iter;
-  for (iter = this->Internals->Representations.begin();
-    iter != this->Internals->Representations.end(); iter++)
-    {
-    iter->second.GetPointer()->SetUseCache(val);
-    }
-  this->Superclass::SetUseCache(val);
-}
-//----------------------------------------------------------------------------
-void vtkCompositeRepresentation::SetCacheKey(double val)
-{
-  vtkInternals::RepresentationMap::iterator iter;
-  for (iter = this->Internals->Representations.begin();
-    iter != this->Internals->Representations.end(); iter++)
-    {
-    iter->second.GetPointer()->SetCacheKey(val);
-    }
-  this->Superclass::SetCacheKey(val);
 }
 
 //----------------------------------------------------------------------------

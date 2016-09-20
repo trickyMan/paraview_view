@@ -17,8 +17,8 @@
 // Abstract class for SIProperty that hold an array of values.
 // Define the array management API
 
-#ifndef __vtkSIVectorProperty_h
-#define __vtkSIVectorProperty_h
+#ifndef vtkSIVectorProperty_h
+#define vtkSIVectorProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProperty.h"
@@ -68,7 +68,6 @@ public:
 
   vtkGetStringMacro(InitialString);
 
-//BTX
 protected:
   vtkSIVectorProperty();
   ~vtkSIVectorProperty();
@@ -90,7 +89,7 @@ protected:
 private:
   vtkSIVectorProperty(const vtkSIVectorProperty&); // Not implemented
   void operator=(const vtkSIVectorProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

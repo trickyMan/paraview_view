@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkSMSession is the default ParaView session. This class can be used as the
 // session for non-client-server configurations eg. builtin mode or batch.
-#ifndef __vtkSMSession_h
-#define __vtkSMSession_h
+#ifndef vtkSMSession_h
+#define vtkSMSession_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkPVSessionBase.h"
@@ -123,7 +123,6 @@ public:
   // vtkPVSession::CLIENT_AND_SERVERS suitable for builtin-mode.
   virtual ServerFlags GetProcessRoles();
 
-//BTX
   // Description:
   // Push the state message. Overridden to ensure that the information in the
   // undo-redo state manager is updated.
@@ -138,7 +137,6 @@ public:
   // Sends the message to all but the active client-session.
   virtual void NotifyOtherClients(const vtkSMMessage*)
     { /* nothing to do. */ }
-//ETX
 
   //---------------------------------------------------------------------------
   // API for Collaboration management
@@ -215,7 +213,6 @@ public:
   // default pipeline.
   vtkGetMacro(IsAutoMPI, bool);
 
-//BTX
 protected:
   // Subclasses should set initialize_during_constructor to false so that
   // this->Initialize() is not called in constructor but only after the session
@@ -256,7 +253,7 @@ private:
 
   // AutoMPI helper class
   static vtkSmartPointer<vtkProcessModuleAutoMPI> AutoMPI;
-//ETX
+
 };
 
 #endif

@@ -26,8 +26,8 @@
 // the ChartType. Refer to vtkChartXY::AddPlot() for details on what the type
 // must be.
 
-#ifndef __vtkXYChartRepresentation_h
-#define __vtkXYChartRepresentation_h
+#ifndef vtkXYChartRepresentation_h
+#define vtkXYChartRepresentation_h
 
 #include "vtkChartRepresentation.h"
 
@@ -102,7 +102,18 @@ public:
 
   vtkSetVector3Macro(SelectionColor, double);
   vtkGetVector3Macro(SelectionColor, double);
-//BTX
+
+  // Description:
+  // Get/Set the series label prefix.
+  vtkSetStringMacro(SeriesLabelPrefix);
+  vtkGetStringMacro(SeriesLabelPrefix);
+
+  // Description:
+  // Called by vtkPVContextView::Export() to export the representation's data to
+  // a CSV file. Return false on failure which will call the exporting process
+  // to abort and raise an error. Default implementation simply returns false.
+  virtual bool Export(vtkCSVExporter* exporter);
+
 protected:
   vtkXYChartRepresentation();
   ~vtkXYChartRepresentation();
@@ -129,7 +140,8 @@ private:
   bool UseIndexForXAxis;
   bool PlotDataHasChanged;
   double SelectionColor[3];
-//ETX
+  char* SeriesLabelPrefix;
+
 };
 
 #endif

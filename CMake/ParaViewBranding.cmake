@@ -1,7 +1,7 @@
 ###############################################################################
 # This file defines the macros that ParaView-based clients can use of creating
 # custom ParaView client builds with custom branding and configuration.
-# 
+#
 # build_paraview_client(
 #   # The name for this client. This is the name used for the executable created.
 #   paraview
@@ -9,25 +9,26 @@
 #   # Optional name for the application (If none is specified then the
 #   # client-name is used.
 #   APPLICATION_NAME "ParaView"
-# 
-#   # This is the title bar text. If none is provided the name will be used.
+#
+#   # This is the title bar text (optional).
+#
 #   TITLE "Kitware ParaView"
-#   
+#
 #   # This is the organization name.
 #   ORGANIZATION "Kitware Inc."
-# 
+#
 #   # PNG Image to be used for the Splash screen. If none is provided, default
-#   # ParaView splash screen will be shown. 
+#   # ParaView splash screen will be shown.
 #   SPLASH_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/Splash.png"
-# 
+#
 #   # Provide version information for the client.
 #   VERSION_MAJOR ${PARAVIEW_VERSION_MAJOR}
 #   VERSION_MINOR ${PARAVIEW_VERSION_MINOR}
 #   VERSION_PATCH ${PARAVIEW_VERSION_PATCH}
-# 
+#
 #   # Icon to be used for the Mac bundle.
 #   BUNDLE_ICON   "${CMAKE_CURRENT_SOURCE_DIR}/Icon.icns"
-# 
+#
 #   # Icon to be used for the Windows application.
 #   APPLICATION_ICON "${CMAKE_CURRENT_SOURCE_DIR}/Icon.ico"
 #
@@ -35,7 +36,7 @@
 #   # default QMainWindow will be used.
 #   PVMAIN_WINDOW QMainWindow-subclass
 #   PVMAIN_WINDOW_INCLUDE QMainWindow-subclass-header
-# 
+#
 #   # Next specify the plugins that are needed to be built and loaded on startup
 #   # for this client to work. These must be specified in the order that they
 #   # should be loaded. The name is the name of the plugin specified in the
@@ -44,7 +45,7 @@
 #   # to load the plugins on the server side when a new server connection is made.
 #   # That may be added in future, if deemed necessary.
 #   REQUIRED_PLUGINS PointSpritePlugin
-# 
+#
 #   # Next specify the plugin that are not required, but if available, should be
 #   # loaded on startup. These must be specified in the order that they
 #   # should be loaded. The name is the name of the plugin specified in the
@@ -89,12 +90,12 @@
 #   # Deprecated.  Use INSTALL_LIBRARY_DIR and INSTALL_ARCHIVE_DIR instead.
 #   INSTALL_LIB_DIR "lib"
 #   )
-# 
+#
 ###############################################################################
-include(vtkForwardingExecutable)
+include(pvForwardingExecutable)
 
 FUNCTION(build_paraview_client BPC_NAME)
-  PV_PARSE_ARGUMENTS(BPC 
+  PV_PARSE_ARGUMENTS(BPC
     "APPLICATION_NAME;TITLE;ORGANIZATION;SPLASH_IMAGE;VERSION_MAJOR;VERSION_MINOR;VERSION_PATCH;BUNDLE_ICON;APPLICATION_ICON;REQUIRED_PLUGINS;OPTIONAL_PLUGINS;PVMAIN_WINDOW;PVMAIN_WINDOW_INCLUDE;EXTRA_DEPENDENCIES;GUI_CONFIGURATION_XMLS;COMPRESSED_HELP_FILE;SOURCES;INSTALL_RUNTIME_DIR;INSTALL_LIBRARY_DIR;INSTALL_ARCHIVE_DIR;INSTALL_BUNDLE_DIR;INSTALL_BIN_DIR;INSTALL_LIB_DIR"
     "MAKE_INITIALIZER_LIBRARY"
     ${ARGN}
@@ -102,11 +103,16 @@ FUNCTION(build_paraview_client BPC_NAME)
 
   # Version numbers are required. Throw an error is not set correctly.
   IF (NOT DEFINED BPC_VERSION_MAJOR OR NOT DEFINED BPC_VERSION_MINOR OR NOT DEFINED BPC_VERSION_PATCH)
-    MESSAGE(ERROR 
+    MESSAGE(ERROR
       "VERSION_MAJOR, VERSION_MINOR and VERSION_PATCH must be specified")
   ENDIF ()
 
   # If no title is provided, make one up using the name.
+  if(DEFINED BPC_TITLE)
+    set (BPC_HAS_TITLE 1)
+  else()
+    set (BPC_HAS_TITLE 0)
+  endif()
   pv_set_if_not_set(BPC_TITLE "${BPC_NAME}")
   pv_set_if_not_set(BPC_APPLICATION_NAME "${BPC_NAME}")
   pv_set_if_not_set(BPC_ORGANIZATION "Humanity")
@@ -135,21 +141,6 @@ FUNCTION(build_paraview_client BPC_NAME)
       "// remains consistent on all systems.\n"
       "IDI_ICON1 ICON \"${BPC_APPLICATION_ICON}\"")
     SET(exe_icon "${CMAKE_CURRENT_BINARY_DIR}/Icon.rc")
-
-    if (NOT CMAKE_GENERATOR MATCHES "Visual Studio")
-      set(dir "${CMAKE_CURRENT_BINARY_DIR}/${BPC_NAME}-icon")
-      set(rctarget "${BPC_NAME}rc")
-      file(MAKE_DIRECTORY "${dir}")
-      if (NOT EXISTS "${dir}/dummy.cxx")
-        file(WRITE "${dir}/dummy.cxx"
-          "int dummy_${BPC_NAME}(int a) { return a; }\n")
-      endif ()
-      file(WRITE "${dir}/CMakeLists.txt"
-        "set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
-add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
-      add_subdirectory("${dir}" "${dir}/build")
-      unset(exe_icon)
-    endif ()
   ENDIF ()
 
   # executable_flags are used to pass options to add_executable(..) call such as
@@ -219,8 +210,8 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
 
   # Generate a resource file out of the splash image.
   GENERATE_QT_RESOURCE_FROM_FILES(
-    "${CMAKE_CURRENT_BINARY_DIR}/${BPC_NAME}_generated.qrc" 
-    "/${BPC_NAME}" ${BPC_SPLASH_IMAGE}) 
+    "${CMAKE_CURRENT_BINARY_DIR}/${BPC_NAME}_generated.qrc"
+    "/${BPC_NAME}" ${BPC_SPLASH_IMAGE})
 
   GENERATE_QT_RESOURCE_FROM_FILES(
     "${CMAKE_CURRENT_BINARY_DIR}/${BPC_NAME}_configuration.qrc"
@@ -238,7 +229,7 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
   IF (BPC_COMPRESSED_HELP_FILE)
     # If a help collection file is specified, create a resource from it so that
     # when the ParaView help system can locate it at runtime and show the
-    # appropriate help when the user asks for it. The 
+    # appropriate help when the user asks for it. The
     set (outfile "${CMAKE_CURRENT_BINARY_DIR}/${BPC_NAME}_help.qrc")
     GENERATE_QT_RESOURCE_FROM_FILES("${outfile}"
       "/${BPC_APPLICATION_NAME}/Documentation"
@@ -284,8 +275,8 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
                ${BPC_SOURCES})
 
   IF (BPC_MAKE_INITIALIZER_LIBRARY)
-    ADD_LIBRARY(pq${BPC_NAME}Initializer SHARED 
-                ${EXE_SRCS} 
+    ADD_LIBRARY(pq${BPC_NAME}Initializer SHARED
+                ${EXE_SRCS}
                 )
     SET (EXE_SRCS)
     TARGET_LINK_LIBRARIES(pq${BPC_NAME}Initializer
@@ -306,14 +297,14 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
   SET (PV_EXE_LIST ${BPC_NAME})
 
   # needed to set up shared forwarding correctly.
-  vtk_add_executable_with_forwarding2(pv_exe_suffix
+  pv_add_executable_with_forwarding2(pv_exe_suffix
                  "${PARAVIEW_LIBRARY_DIRS}"
                  "../${PARAVIEW_INSTALL_LIB_DIR}"
                  "${BPC_INSTALL_LIBRARY_DIR}"
                  ${BPC_NAME}
                  ${executable_flags}
-                 ${exe_icon}
                  ${BPC_NAME}_main.cxx
+                 ${exe_icon}
                  ${apple_bundle_sources}
                  ${EXE_SRCS}
                  )
@@ -321,9 +312,9 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
       LINK_PRIVATE
         pqApplicationComponents
         vtkPVServerManagerApplication
+        vtksys
         ${QT_QTMAIN_LIBRARY}
         ${BPC_EXTRA_DEPENDENCIES}
-        ${rctarget}
     )
 
   IF (BPC_MAKE_INITIALIZER_LIBRARY)
@@ -349,8 +340,12 @@ add_library(${rctarget} STATIC dummy.cxx \"${exe_icon}\")\n")
       SET_TARGET_PROPERTIES(${BPC_NAME} PROPERTIES
         MACOSX_BUNDLE_ICON_FILE ${bundle_icon_file})
     ENDIF ()
-    SET_TARGET_PROPERTIES(${BPC_NAME} PROPERTIES 
+    SET_TARGET_PROPERTIES(${BPC_NAME} PROPERTIES
       MACOSX_BUNDLE_BUNDLE_NAME "${BPC_APPLICATION_NAME}")
+    if (NOT PARAVIEW_DO_UNIX_STYLE_INSTALLS)
+      set_target_properties("${BPC_NAME}" PROPERTIES
+        INSTALL_RPATH "@executable_path/../Libraries;@executable_path/../Plugins")
+    endif ()
   ENDIF ()
 
   IF (PARAVIEW_QT_VERSION VERSION_GREATER "4")

@@ -17,8 +17,8 @@
 // Extend vtkPVTrivialProducer to allow distributed code to easily populate
 // a trivial producer with local DataObject while using a regular Proxy Model.
 
-#ifndef __vtkDistributedTrivialProducer_h
-#define __vtkDistributedTrivialProducer_h
+#ifndef vtkDistributedTrivialProducer_h
+#define vtkDistributedTrivialProducer_h
 
 #include "vtkPVTrivialProducer.h"
 #include "vtkPVVTKExtensionsCoreModule.h" // needed for export macro"
@@ -47,7 +47,6 @@ public:
   // as current output.
   virtual void UpdateFromGlobal(const char* key);
 
-//BTX
 protected:
   vtkDistributedTrivialProducer();
   ~vtkDistributedTrivialProducer();
@@ -57,7 +56,7 @@ private:
   void operator=(const vtkDistributedTrivialProducer&); // Not implemented
 
   static vtkPVTrivialProducerStaticInternal* InternalStatic;
-//ETX
+
 };
 
 #endif

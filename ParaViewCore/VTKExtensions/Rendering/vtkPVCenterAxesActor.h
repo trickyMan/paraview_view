@@ -17,8 +17,8 @@
 // vtkPVCenterAxesActor is an actor for the center-axes used in ParaView. It
 // merely uses vtkAxes as the poly data source.
 
-#ifndef __vtkPVCenterAxesActor_h
-#define __vtkPVCenterAxesActor_h
+#ifndef vtkPVCenterAxesActor_h
+#define vtkPVCenterAxesActor_h
 
 #include "vtkOpenGLActor.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -41,7 +41,6 @@ public:
   // Option for computing normals.  By default they are computed.
   void SetComputeNormals(int);
 
-//BTX
 protected:
   vtkPVCenterAxesActor();
   ~vtkPVCenterAxesActor();
@@ -53,7 +52,7 @@ protected:
 private:
   vtkPVCenterAxesActor(const vtkPVCenterAxesActor&); // Not implemented
   void operator=(const vtkPVCenterAxesActor&); // Not implemented
-//ETX
+
 };
 
 #endif

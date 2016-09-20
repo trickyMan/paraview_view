@@ -18,8 +18,8 @@
 // states. This is the base class of deserialization classes that load
 // XMLs/Protobuf/? to restore servermanager state (or part thereof).
 
-#ifndef __vtkSMDeserializer_h
-#define __vtkSMDeserializer_h
+#ifndef vtkSMDeserializer_h
+#define vtkSMDeserializer_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -54,7 +54,6 @@ public:
   // this->GetSessionProxyManager()->GetSession() (with NULL checks).
   vtkSMSession* GetSession();
 
-//BTX
 protected:
   vtkSMDeserializer();
   ~vtkSMDeserializer();
@@ -77,7 +76,7 @@ protected:
 private:
   vtkSMDeserializer(const vtkSMDeserializer&); // Not implemented
   void operator=(const vtkSMDeserializer&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -18,8 +18,8 @@
 // vtkSMMessage form. It works with any proxy and RemoteObject. It is a very
 // generic undoElement.
 
-#ifndef __vtkSMRemoteObjectUpdateUndoElement_h
-#define __vtkSMRemoteObjectUpdateUndoElement_h
+#ifndef vtkSMRemoteObjectUpdateUndoElement_h
+#define vtkSMRemoteObjectUpdateUndoElement_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMUndoElement.h"
@@ -49,8 +49,6 @@ public:
   // Set ProxyLocator to use if any.
   virtual void SetProxyLocator(vtkSMProxyLocator*);
 
-//BTX
-
   // Description:
   // Set the state of the UndoElement
   virtual void SetUndoRedoState(const vtkSMMessage* before,
@@ -75,7 +73,6 @@ private:
   vtkSMRemoteObjectUpdateUndoElement(const vtkSMRemoteObjectUpdateUndoElement&); // Not implemented.
   void operator=(const vtkSMRemoteObjectUpdateUndoElement&); // Not implemented.
 
-//ETX
 };
 
 #endif

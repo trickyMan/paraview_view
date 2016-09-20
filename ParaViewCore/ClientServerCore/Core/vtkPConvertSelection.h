@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkPConvertSelection is a parallel aware vtkConvertSelection subclass.
 
-#ifndef __vtkPConvertSelection_h
-#define __vtkPConvertSelection_h
+#ifndef vtkPConvertSelection_h
+#define vtkPConvertSelection_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkConvertSelection.h"
@@ -36,7 +36,6 @@ public:
   void SetController(vtkMultiProcessController*);
   vtkGetObjectMacro(Controller, vtkMultiProcessController);
 
-//BTX
 protected:
   vtkPConvertSelection();
   ~vtkPConvertSelection();
@@ -50,7 +49,7 @@ protected:
 private:
   vtkPConvertSelection(const vtkPConvertSelection&); // Not implemented
   void operator=(const vtkPConvertSelection&); // Not implemented
-//ETX
+
 };
 
-#endif // __vtkPConvertSelection_h
+#endif // vtkPConvertSelection_h

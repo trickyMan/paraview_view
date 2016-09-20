@@ -19,15 +19,13 @@
 // included in the iteration. For sub-proxies, only
 // exposed properties are iterated over.
 
-#ifndef __vtkSMPropertyIterator_h
-#define __vtkSMPropertyIterator_h
+#ifndef vtkSMPropertyIterator_h
+#define vtkSMPropertyIterator_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
 
-//BTX
 struct vtkSMPropertyIteratorInternals;
-//ETX
 
 class vtkSMProperty;
 class vtkSMProxy;

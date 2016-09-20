@@ -16,8 +16,8 @@
 // .SECTION Description
 // ServerImplementation Property to deal with String array as method arguments.
 
-#ifndef __vtkSIStringVectorProperty_h
-#define __vtkSIStringVectorProperty_h
+#ifndef vtkSIStringVectorProperty_h
+#define vtkSIStringVectorProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIVectorProperty.h"
@@ -29,8 +29,6 @@ public:
   vtkTypeMacro(vtkSIStringVectorProperty, vtkSIVectorProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-
-//BTX
 protected:
   vtkSIStringVectorProperty();
   ~vtkSIStringVectorProperty();
@@ -58,7 +56,7 @@ private:
 
   bool Push(const vtkVectorOfStrings &values);
   vtkVectorOfInts* ElementTypes;
-//ETX
+
 };
 
 #endif

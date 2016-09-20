@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkAdiosPixieReader_h
-#define __vtkAdiosPixieReader_h
+#ifndef vtkAdiosPixieReader_h
+#define vtkAdiosPixieReader_h
 
 #include "vtkMultiBlockDataSetAlgorithm.h"
 
@@ -74,7 +74,6 @@ public:
   // reader.
   virtual int CanReadFile(const char* name);
 
-//BTX
 protected:
   vtkAdiosPixieReader();
   ~vtkAdiosPixieReader();
@@ -96,7 +95,7 @@ private:
 
   class Internals;
   Internals* Internal;
-//ETX
+
 };
 
 #endif

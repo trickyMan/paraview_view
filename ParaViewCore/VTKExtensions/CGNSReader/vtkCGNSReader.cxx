@@ -15,34 +15,36 @@
 //  Copyright 2013-2014 Mickael Philit.
 
 #include "vtkCGNSReader.h"
+#include "vtkCGNSReaderInternal.h" // For parsing information request
 
-#include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkCallbackCommand.h"
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
+#include "vtkCharArray.h"
 #include "vtkDataArraySelection.h"
+#include "vtkDoubleArray.h"
+#include "vtkErrorCode.h"
+#include "vtkFloatArray.h"
 #include "vtkIdTypeArray.h"
 #include "vtkInformation.h"
+#include "vtkInformationStringKey.h"
 #include "vtkInformationVector.h"
-#include "vtkTypeInt32Array.h"
-#include "vtkTypeInt64Array.h"
+#include "vtkIntArray.h"
+#include "vtkLongArray.h"
 #include "vtkMultiBlockDataSet.h"
+#include "vtkMultiProcessController.h"
+#include "vtkNew.h"
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
+#include "vtkPolyhedron.h"
+#include "vtkPVInformationKeys.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkStructuredGrid.h"
+#include "vtkTypeInt32Array.h"
+#include "vtkTypeInt64Array.h"
 #include "vtkUnsignedIntArray.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkVertex.h"
-#include "vtkPolyhedron.h"
-#include "vtkErrorCode.h"
-#include "vtkCharArray.h"
-#include "vtkDoubleArray.h"
-#include "vtkFloatArray.h"
-#include "vtkIntArray.h"
-#include "vtkLongArray.h"
-#include "vtkInformationStringKey.h"
-#include "vtkPVInformationKeys.h"
-#include "vtkNew.h"
 
 #include <algorithm>
 #include <functional>
@@ -54,9 +56,6 @@
 
 #include <vtksys/SystemTools.hxx>
 
-#ifdef PARAVIEW_USE_MPI
-#include "vtkMultiProcessController.h"
-#endif
 
 #include "cgio_helpers.h"
 
@@ -89,8 +88,49 @@ namespace
   };
 }
 
+// vtkCGNSReader has several method that used types from CGNS
+// which resulted in CGNS include being exposed to the users of this class
+// causing build complications. This makes that easier.
+class vtkCGNSReader::vtkPrivate
+{
+public:
+  static bool IsVarEnabled(
+    CGNS_ENUMT(GridLocation_t) varcentering, const CGNSRead::char_33 name,
+    vtkCGNSReader* self);
+  static int getGridAndSolutionName(int base,
+    CGNSRead::char_33 GridCoordName, CGNSRead::char_33 SolutionName,
+    bool& readGridCoordName, bool& readSolutionName,
+    vtkCGNSReader* self);
+  static int getCoordsIdAndFillRind(const CGNSRead::char_33 GridCoordName,
+    const int physicalDim, std::size_t& nCoordsArray,
+    std::vector<double>& gridChildId, int* rind,
+    vtkCGNSReader* self);
+  static int getVarsIdAndFillRind(
+    const double cgioSolId,
+    std::size_t& nVarArray, CGNS_ENUMT(GridLocation_t)& varCentering,
+    std::vector<double>& solChildId, int* rind,
+    vtkCGNSReader* self);
+
+  static int fillArrayInformation(
+    const std::vector<double>& solChildId,
+    const int physicalDim,
+    std::vector< CGNSRead::CGNSVariable >& cgnsVars,
+    std::vector< CGNSRead::CGNSVector >& cgnsVectors,
+    vtkCGNSReader* self);
+
+  static int AllocateVtkArray(
+    const int physicalDim, const vtkIdType nVals,
+    const CGNS_ENUMT(GridLocation_t) varCentering,
+    const std::vector< CGNSRead::CGNSVariable >& cgnsVars,
+    const std::vector< CGNSRead::CGNSVector >& cgnsVectors,
+    std::vector<vtkDataArray *>& vtkVars,
+    vtkCGNSReader* self);
+
+  static int AttachReferenceValue(const int base, vtkDataSet* ds, vtkCGNSReader* self);
+};
+
 //----------------------------------------------------------------------------
-vtkCGNSReader::vtkCGNSReader()
+vtkCGNSReader::vtkCGNSReader() : Internal(new CGNSRead::vtkCGNSMetaData())
 {
   this->FileName = NULL;
 
@@ -120,12 +160,10 @@ vtkCGNSReader::vtkCGNSReader()
   this->SetNumberOfInputPorts(0);
   this->SetNumberOfOutputPorts(1);
 
-#ifdef PARAVIEW_USE_MPI
   this->ProcRank = 0;
   this->ProcSize = 1;
   this->Controller = NULL;
   this->SetController(vtkMultiProcessController::GetGlobalController());
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -140,13 +178,12 @@ vtkCGNSReader::~vtkCGNSReader()
   this->BaseSelection->RemoveObserver(this->SelectionObserver);
   this->BaseSelection->Delete();
   this->SelectionObserver->Delete();
-
-#ifdef PARAVIEW_USE_MPI
   this->SetController(NULL);
-#endif
+
+  delete this->Internal;
+  this->Internal = NULL;
 }
 
-#ifdef PARAVIEW_USE_MPI
 //----------------------------------------------------------------------------
 void vtkCGNSReader::SetController(vtkMultiProcessController* c)
 {
@@ -177,65 +214,67 @@ void vtkCGNSReader::SetController(vtkMultiProcessController* c)
     this->ProcSize = 1;
     }
 }
-#endif
 
 //------------------------------------------------------------------------------
-bool vtkCGNSReader::IsVarEnabled(CGNS_ENUMT(GridLocation_t) varcentering,
-                                 const CGNSRead::char_33 name)
+bool vtkCGNSReader::vtkPrivate::IsVarEnabled(
+  CGNS_ENUMT(GridLocation_t) varcentering, const CGNSRead::char_33 name,
+  vtkCGNSReader* self)
 {
   vtkDataArraySelection *DataSelection = 0;
   if (varcentering == CGNS_ENUMV(Vertex))
     {
-    DataSelection = this->PointDataArraySelection;
+    DataSelection = self->PointDataArraySelection;
     }
   else
     {
-    DataSelection = this->CellDataArraySelection;
+    DataSelection = self->CellDataArraySelection;
     }
 
   return (DataSelection->ArrayIsEnabled(name) != 0);
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::getGridAndSolutionName(const int base,
-                                          CGNSRead::char_33 GridCoordName,
-                                          CGNSRead::char_33 SolutionName,
-                                          bool& readGridCoordName,
-                                          bool& readSolutionName)
+int vtkCGNSReader::vtkPrivate::getGridAndSolutionName(
+  const int base,
+  CGNSRead::char_33 GridCoordName,
+  CGNSRead::char_33 SolutionName,
+  bool& readGridCoordName,
+  bool& readSolutionName,
+  vtkCGNSReader* self)
 {
   //
   // Get Coordinates and FlowSolution node names
   readGridCoordName = true;
   readSolutionName = true;
 
-  if ((this->Internal.GetBase(base).useGridPointers == true) ||
-      (this->Internal.GetBase(base).useFlowPointers == true))
+  if ((self->Internal->GetBase(base).useGridPointers == true) ||
+      (self->Internal->GetBase(base).useFlowPointers == true))
     {
 
     CGNSRead::char_33 zoneIterName;
     double ziterId = 0;
-    std::size_t ptSize = 32*this->Internal.GetBase(base).steps.size() + 1;
+    std::size_t ptSize = 32*self->Internal->GetBase(base).steps.size() + 1;
     char *pointers = new char[ptSize];
 
-    if (CGNSRead::getFirstNodeId(this->cgioNum, this->currentId,
+    if (CGNSRead::getFirstNodeId(self->cgioNum, self->currentId,
                                  "ZoneIterativeData_t", &ziterId) == CG_OK)
       {
-      cgio_get_name(cgioNum, ziterId, zoneIterName);
+      cgio_get_name(self->cgioNum, ziterId, zoneIterName);
       //
       CGNSRead::char_33 nodeLabel;
       CGNSRead::char_33 nodeName;
       std::vector<double> iterChildId;
 
-      CGNSRead::getNodeChildrenId(cgioNum, ziterId, iterChildId);
+      CGNSRead::getNodeChildrenId(self->cgioNum, ziterId, iterChildId);
 
       for (std::size_t nn = 0; nn < iterChildId.size(); nn++)
         {
 
-        if (cgio_get_name(cgioNum, iterChildId[nn], nodeName) != CG_OK)
+        if (cgio_get_name(self->cgioNum, iterChildId[nn], nodeName) != CG_OK)
           {
           return 1;
           }
-        if (cgio_get_label(cgioNum, iterChildId[nn], nodeLabel) != CG_OK)
+        if (cgio_get_label(self->cgioNum, iterChildId[nn], nodeLabel) != CG_OK)
           {
           return 1;
           }
@@ -243,9 +282,9 @@ int vtkCGNSReader::getGridAndSolutionName(const int base,
         if (isDataArray &&
             (strcmp(nodeName, "GridCoordinatesPointers") == 0))
           {
-          cgio_read_block_data(this->cgioNum, iterChildId[nn],
-                               (cgsize_t)(this->ActualTimeStep*32 + 1),
-                               (cgsize_t)(this->ActualTimeStep*32 + 32),
+          cgio_read_block_data(self->cgioNum, iterChildId[nn],
+                               (cgsize_t)(self->ActualTimeStep*32 + 1),
+                               (cgsize_t)(self->ActualTimeStep*32 + 32),
                                ( void * ) GridCoordName);
           GridCoordName[32] ='\0';
           readGridCoordName = false;
@@ -253,14 +292,14 @@ int vtkCGNSReader::getGridAndSolutionName(const int base,
         else if (isDataArray &&
                  (strcmp(nodeName, "FlowSolutionPointers") == 0))
           {
-          cgio_read_block_data(this->cgioNum, iterChildId[nn],
-                               (cgsize_t)(this->ActualTimeStep*32 + 1),
-                               (cgsize_t)(this->ActualTimeStep*32 + 32),
+          cgio_read_block_data(self->cgioNum, iterChildId[nn],
+                               (cgsize_t)(self->ActualTimeStep*32 + 1),
+                               (cgsize_t)(self->ActualTimeStep*32 + 32),
                                (void *) SolutionName);
           SolutionName[32] ='\0';
           readSolutionName = false;
           }
-        cgio_release_id(cgioNum, iterChildId[nn]);
+        cgio_release_id(self->cgioNum, iterChildId[nn]);
         }
       }
     else
@@ -280,11 +319,13 @@ int vtkCGNSReader::getGridAndSolutionName(const int base,
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::getCoordsIdAndFillRind(const CGNSRead::char_33 GridCoordName,
+int vtkCGNSReader::vtkPrivate::getCoordsIdAndFillRind(
+                                          const CGNSRead::char_33 GridCoordName,
                                           const int physicalDim,
                                           std::size_t& nCoordsArray,
                                           std::vector<double>& gridChildId,
-                                          int* rind)
+                                          int* rind,
+                                          vtkCGNSReader* self)
 {
   char nodeLabel[CGIO_MAX_NAME_LENGTH+1];
   std::size_t na;
@@ -292,17 +333,17 @@ int vtkCGNSReader::getCoordsIdAndFillRind(const CGNSRead::char_33 GridCoordName,
   nCoordsArray = 0;
   // Get GridCoordinate node ID for low level access
   double gridId;
-  if (cgio_get_node_id(this->cgioNum, this->currentId,
+  if (cgio_get_node_id(self->cgioNum, self->currentId,
                        GridCoordName, &gridId) != CG_OK)
     {
     char message[81];
     cgio_error_message(message);
-    vtkErrorMacro(<< "Error while reading mesh coordinates node :" << message);
+    vtkErrorWithObjectMacro(self, << "Error while reading mesh coordinates node :" << message);
     return 1;
     }
 
   // Get the number of Coordinates in GridCoordinates node
-  CGNSRead::getNodeChildrenId(this->cgioNum, gridId, gridChildId);
+  CGNSRead::getNodeChildrenId(self->cgioNum, gridId, gridChildId);
 
   for (int n = 0; n < 6; n++)
     {
@@ -310,10 +351,10 @@ int vtkCGNSReader::getCoordsIdAndFillRind(const CGNSRead::char_33 GridCoordName,
     }
   for (nCoordsArray = 0, na = 0; na < gridChildId.size(); ++na)
     {
-    if ( cgio_get_label(cgioNum, gridChildId[na], nodeLabel) != CG_OK)
+    if ( cgio_get_label(self->cgioNum, gridChildId[na], nodeLabel) != CG_OK)
       {
-      vtkErrorMacro(<< "Not enough coordinates in node "
-                    << GridCoordName << "\n");
+      vtkErrorWithObjectMacro(self, << "Not enough coordinates in node "
+                                    << GridCoordName << "\n");
       continue;
       }
 
@@ -328,29 +369,30 @@ int vtkCGNSReader::getCoordsIdAndFillRind(const CGNSRead::char_33 GridCoordName,
     else if ( strcmp(nodeLabel, "Rind_t") == 0)
       {
       // check for rind
-      CGNSRead::setUpRind(this->cgioNum, gridChildId[na], rind);
+      CGNSRead::setUpRind(self->cgioNum, gridChildId[na], rind);
       }
     else
       {
-      cgio_release_id(cgioNum, gridChildId[na]);
+      cgio_release_id(self->cgioNum, gridChildId[na]);
       }
     }
   if (nCoordsArray < static_cast<std::size_t>(physicalDim))
     {
-    vtkErrorMacro(<< "Not enough coordinates in node "
-                  << GridCoordName << "\n");
+    vtkErrorWithObjectMacro(self, << "Not enough coordinates in node "
+                                  << GridCoordName << "\n");
     return 1;
     }
-  cgio_release_id(this->cgioNum, gridId);
+  cgio_release_id(self->cgioNum, gridId);
   return 0;
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::getVarsIdAndFillRind(const double cgioSolId,
+int vtkCGNSReader::vtkPrivate::getVarsIdAndFillRind(const double cgioSolId,
                                         std::size_t& nVarArray,
                                         CGNS_ENUMT(GridLocation_t) & varCentering,
                                         std::vector<double>& solChildId,
-                                        int* rind)
+                                        int* rind,
+                                        vtkCGNSReader* self)
 {
   char nodeLabel[CGIO_MAX_NAME_LENGTH+1];
   std::size_t na;
@@ -361,13 +403,13 @@ int vtkCGNSReader::getVarsIdAndFillRind(const double cgioSolId,
     rind[n] = 0;
     }
 
-  CGNSRead::getNodeChildrenId ( this->cgioNum, cgioSolId, solChildId );
+  CGNSRead::getNodeChildrenId ( self->cgioNum, cgioSolId, solChildId );
 
   for (nVarArray = 0, na = 0; na < solChildId.size(); ++na)
     {
-    if (cgio_get_label(cgioNum, solChildId[na], nodeLabel) != CG_OK)
+    if (cgio_get_label(self->cgioNum, solChildId[na], nodeLabel) != CG_OK)
       {
-      vtkErrorMacro(<< "Error while reading node label in solution\n");
+      vtkErrorWithObjectMacro(self, << "Error while reading node label in solution\n");
       continue;
       }
 
@@ -381,13 +423,13 @@ int vtkCGNSReader::getVarsIdAndFillRind(const double cgioSolId,
       }
     else if ( strcmp(nodeLabel, "Rind_t") == 0)
       {
-      CGNSRead::setUpRind(this->cgioNum, solChildId[na], rind);
+      CGNSRead::setUpRind(self->cgioNum, solChildId[na], rind);
       }
     else if ( strcmp(nodeLabel, "GridLocation_t") == 0)
       {
       CGNSRead::char_33 dataType;
 
-      if (cgio_get_data_type(cgioNum, solChildId[na], dataType) != CG_OK)
+      if (cgio_get_data_type(self->cgioNum, solChildId[na], dataType) != CG_OK)
         {
         return 1;
         }
@@ -400,7 +442,7 @@ int vtkCGNSReader::getVarsIdAndFillRind(const double cgioSolId,
         }
 
       std::string location;
-      CGNSRead::readNodeStringData(this->cgioNum, solChildId[na], location);
+      CGNSRead::readNodeStringData(self->cgioNum, solChildId[na], location);
 
       if (location == "Vertex")
         {
@@ -417,28 +459,30 @@ int vtkCGNSReader::getVarsIdAndFillRind(const double cgioSolId,
       }
     else
       {
-      cgio_release_id(this->cgioNum, solChildId[na]);
+      cgio_release_id(self->cgioNum, solChildId[na]);
       }
     }
   return 0;
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::fillArrayInformation(const std::vector<double>& solChildId,
-                                        const int physicalDim,
-                                        std::vector< CGNSRead::CGNSVariable >& cgnsVars,
-                                        std::vector< CGNSRead::CGNSVector >& cgnsVectors)
+int vtkCGNSReader::vtkPrivate::fillArrayInformation(
+  const std::vector<double>& solChildId,
+  const int physicalDim,
+  std::vector< CGNSRead::CGNSVariable >& cgnsVars,
+  std::vector< CGNSRead::CGNSVector >& cgnsVectors,
+  vtkCGNSReader* self)
 {
   // Read variable names
   for (std::size_t ff = 0; ff < cgnsVars.size(); ++ff)
     {
-    cgio_get_name(cgioNum, solChildId[ff], cgnsVars[ff].name);
+    cgio_get_name(self->cgioNum, solChildId[ff], cgnsVars[ff].name);
     cgnsVars[ff].isComponent = false;
     cgnsVars[ff].xyzIndex = 0;
 
     // read node data type
     CGNSRead::char_33 dataType;
-    cgio_get_data_type(cgioNum , solChildId[ff], dataType);
+    cgio_get_data_type(self->cgioNum , solChildId[ff], dataType);
     if (strcmp(dataType, "R8") == 0)
       {
       cgnsVars[ff].dt = CGNS_ENUMV(RealDouble);
@@ -467,11 +511,12 @@ int vtkCGNSReader::fillArrayInformation(const std::vector<double>& solChildId,
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::AllocateVtkArray(const int physicalDim, const vtkIdType nVals,
+int vtkCGNSReader::vtkPrivate::AllocateVtkArray(const int physicalDim, const vtkIdType nVals,
                                     const CGNS_ENUMT(GridLocation_t) varCentering,
                                     const std::vector< CGNSRead::CGNSVariable >& cgnsVars,
                                     const std::vector< CGNSRead::CGNSVector >& cgnsVectors,
-                                    std::vector<vtkDataArray *>& vtkVars)
+                                    std::vector<vtkDataArray *>& vtkVars,
+                                    vtkCGNSReader* self)
 {
   for (std::size_t ff = 0; ff < cgnsVars.size(); ff++)
     {
@@ -479,7 +524,7 @@ int vtkCGNSReader::AllocateVtkArray(const int physicalDim, const vtkIdType nVals
 
     if (cgnsVars[ff].isComponent == false)
       {
-      if (IsVarEnabled(varCentering, cgnsVars[ff].name) == false)
+      if (vtkPrivate::IsVarEnabled(varCentering, cgnsVars[ff].name, self) == false)
         {
         continue;
         }
@@ -514,7 +559,7 @@ int vtkCGNSReader::AllocateVtkArray(const int physicalDim, const vtkIdType nVals
     {
     vtkDataArray *arr = 0;
 
-    if (IsVarEnabled(varCentering, iter->name) == false)
+    if (vtkPrivate::IsVarEnabled(varCentering, iter->name, self) == false)
       {
       continue;
       }
@@ -555,11 +600,11 @@ int vtkCGNSReader::AllocateVtkArray(const int physicalDim, const vtkIdType nVals
 }
 
 //------------------------------------------------------------------------------
-int vtkCGNSReader::AttachReferenceValue(const int base, vtkDataSet* ds)
+int vtkCGNSReader::vtkPrivate::AttachReferenceValue(const int base, vtkDataSet* ds, vtkCGNSReader* self)
 {
   // Handle Reference Values (Mach Number, ...)
   const std::map< std::string, double>& arrState =
-      this->Internal.GetBase(base).referenceState;
+      self->Internal->GetBase(base).referenceState;
   std::map< std::string, double>::const_iterator iteRef = arrState.begin();
   for (iteRef = arrState.begin(); iteRef != arrState.end(); iteRef++)
     {
@@ -576,9 +621,11 @@ int vtkCGNSReader::AttachReferenceValue(const int base, vtkDataSet* ds)
 //------------------------------------------------------------------------------
 int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
                                       int cellDim, int physicalDim,
-                                      cgsize_t *zsize,
+                                      void* v_zsize,
                                       vtkMultiBlockDataSet *mbase)
 {
+  cgsize_t* zsize = reinterpret_cast<cgsize_t*>(v_zsize);
+
   int rind[6];
   int n;
   //int ier;
@@ -604,11 +651,11 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
   std::vector<double> gridChildId;
   std::size_t nCoordsArray = 0;
 
-  this->getGridAndSolutionName(base, GridCoordName, SolutionName,
-                               readGridCoordName, readSolutionName);
+  vtkPrivate::getGridAndSolutionName(base, GridCoordName, SolutionName,
+                                     readGridCoordName, readSolutionName, this);
 
-  this->getCoordsIdAndFillRind(GridCoordName, physicalDim,
-                               nCoordsArray, gridChildId, rind);
+  vtkPrivate::getCoordsIdAndFillRind(GridCoordName, physicalDim,
+                                     nCoordsArray, gridChildId, rind, this);
 
   // Rind was parsed (or not) then populate dimensions :
   // Compute structured grid coordinate range
@@ -696,8 +743,8 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
       std::vector<double> solChildId;
       std::size_t nVarArray = 0;
 
-      this->getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering,
-                                 solChildId, rind);
+      vtkPrivate::getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering,
+                                       solChildId, rind, this);
 
       vtkStructuredGrid *sgrid = vtkStructuredGrid::New();
       sgrid->SetExtent(extent);
@@ -719,7 +766,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
 
         std::vector< CGNSRead::CGNSVariable > cgnsVars(nVarArray);
         std::vector< CGNSRead::CGNSVector > cgnsVectors;
-        this->fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors);
+        vtkPrivate::fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors, this);
 
         // Source
         cgsize_t fieldSrcStart[3]  = {1,1,1};
@@ -768,8 +815,8 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         std::vector<vtkDataArray *> vtkVars(nVarArray);
         // Count number of vars and vectors
         // Assign vars and vectors to a vtkvars array
-        this->AllocateVtkArray(physicalDim, nVals, varCentering,
-                               cgnsVars, cgnsVectors, vtkVars);
+        vtkPrivate::AllocateVtkArray(physicalDim, nVals, varCentering,
+                                     cgnsVars, cgnsVectors, vtkVars, this);
 
         // Load Data
         for (std::size_t ff = 0; ff < nVarArray; ++ff)
@@ -830,17 +877,23 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
             continue;
             }
 
+          int arrIndex(-1);
           if ((cgnsVars[nv].isComponent == false) ||
               (cgnsVars[nv].xyzIndex == 1))
             {
-            dsa->AddArray(vtkVars[nv]);
+            arrIndex = dsa->AddArray(vtkVars[nv]);
             vtkVars[nv]->Delete();
+            }   
+          if (arrIndex >= 0 && cgnsVars[nv].isComponent && cgnsVars[nv].xyzIndex == 1)
+            {
+            vtkDataArray* arr = dsa->GetArray(arrIndex);
+            dsa->SetVectors(arr);
             }
           vtkVars[nv] = 0;
           }
         }
       //
-      this->AttachReferenceValue(base, sgrid);
+      vtkPrivate::AttachReferenceValue(base, sgrid, this);
       //
       mbase->SetBlock(zone, sgrid);
       sgrid->Delete();
@@ -879,7 +932,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
 
         cgio_get_name(this->cgioNum, zoneChildId[nn], SolutionName);
 
-        this->getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering, solChildId, rind);
+        vtkPrivate::getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering, solChildId, rind, this);
 
         if (varCentering != CGNS_ENUMV(Vertex))
           {
@@ -911,7 +964,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         std::vector< CGNSRead::CGNSVariable > cgnsVars(nVarArray);
         std::vector< CGNSRead::CGNSVector > cgnsVectors;
 
-        this->fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors);
+        vtkPrivate::fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors, this);
 
         // Source
         cgsize_t fieldSrcStart[3]  = {1,1,1};
@@ -961,7 +1014,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         // Assign vars and vectors to a vtkvars array
         std::vector<vtkDataArray *> vtkVars(nVarArray);
 
-        this->AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars);
+        vtkPrivate::AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars, this);
 
         // Load Data
         for (std::size_t ff = 0; ff < nVarArray; ++ff)
@@ -1022,18 +1075,24 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
             continue;
             }
 
+          int arrIndex(-1);
           if ((cgnsVars[nv].isComponent == false) ||
               (cgnsVars[nv].xyzIndex == 1))
             {
-            dsa->AddArray(vtkVars[nv]);
+            arrIndex = dsa->AddArray(vtkVars[nv]);
             vtkVars[nv]->Delete();
+            }
+          if (arrIndex >= 0 && cgnsVars[nv].isComponent && cgnsVars[nv].xyzIndex == 1)
+            {
+            vtkDataArray* arr = dsa->GetArray(arrIndex);
+            dsa->SetVectors(arr);
             }
           vtkVars[nv] = 0;
           }
         }
       cgio_release_id(cgioNum, zoneChildId[nn]);
       }
-    this->AttachReferenceValue(base, sgrid);
+    vtkPrivate::AttachReferenceValue(base, sgrid, this);
     if (nosolutionread == false)
       {
       mbase->SetBlock((zone), sgrid);
@@ -1071,7 +1130,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         std::size_t nVarArray = 0;
         std::vector<double> solChildId;
 
-        this->getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering, solChildId, rind);
+        vtkPrivate::getVarsIdAndFillRind(cgioSolId, nVarArray, varCentering, solChildId, rind, this);
 
         if ( varCentering != CGNS_ENUMV(Vertex) &&
              varCentering != CGNS_ENUMV(CellCenter))
@@ -1095,7 +1154,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         std::vector< CGNSRead::CGNSVariable > cgnsVars(nVarArray);
         std::vector< CGNSRead::CGNSVector > cgnsVectors;
 
-        this->fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors);
+        vtkPrivate::fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors, this);
 
         // Source
         cgsize_t fieldSrcStart[3]  = {1,1,1};
@@ -1145,7 +1204,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
         // Assign vars and vectors to a vtkvars array
         std::vector<vtkDataArray *> vtkVars(nVarArray);
 
-        this->AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars);
+        vtkPrivate::AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars, this);
 
         // Load Data
         for (std::size_t ff = 0; ff < nVarArray; ++ff)
@@ -1205,13 +1264,20 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
             continue;
             }
 
+          int arrIndex(-1);
           if ((cgnsVars[nv].isComponent == false) ||
               (cgnsVars[nv].xyzIndex == 1))
             {
-            dsa->AddArray(vtkVars[nv]);
+            arrIndex = dsa->AddArray(vtkVars[nv]);
             vtkVars[nv]->Delete();
             }
           vtkVars[nv] = 0;
+          
+          if (arrIndex >= 0 && cgnsVars[nv].isComponent && cgnsVars[nv].xyzIndex == 1)
+            {
+            vtkDataArray* arr = dsa->GetArray(arrIndex);
+            dsa->SetVectors(arr);
+            }
           }
         }
       cgio_release_id(cgioNum, zoneChildId[nn]);
@@ -1220,7 +1286,7 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
     for (std::size_t sol = 0; sol < StructuredGridList.size(); sol++)
       {
       mzone->GetMetaData(static_cast<unsigned int>(sol))->Set(vtkCompositeDataSet::NAME(), SolutionNameList[sol]);
-      this->AttachReferenceValue(base, StructuredGridList[sol]);
+      vtkPrivate::AttachReferenceValue(base, StructuredGridList[sol], this);
       mzone->SetBlock((sol), StructuredGridList[sol]);
       StructuredGridList[sol]->Delete();
       }
@@ -1251,9 +1317,11 @@ int vtkCGNSReader::GetCurvilinearZone(int base, int zone,
 //------------------------------------------------------------------------------
 int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
                                        int cellDim, int physicalDim,
-                                       cgsize_t *zsize,
+                                       void *v_zsize,
                                        vtkMultiBlockDataSet *mbase)
 {
+  cgsize_t* zsize = reinterpret_cast<cgsize_t*>(v_zsize);
+
   //========================================================================
   // Test at compilation time with static assert ...
   // In case  cgsize_t < vtkIdType one could try to start from the array end
@@ -1295,9 +1363,9 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
   std::vector<double> gridChildId;
   std::size_t nCoordsArray = 0;
 
-  this->getGridAndSolutionName(base, GridCoordName, SolutionName, readGridCoordName, readSolutionName);
+  vtkPrivate::getGridAndSolutionName(base, GridCoordName, SolutionName, readGridCoordName, readSolutionName, this);
 
-  this->getCoordsIdAndFillRind(GridCoordName, physicalDim, nCoordsArray, gridChildId, rind);
+  vtkPrivate::getCoordsIdAndFillRind(GridCoordName, physicalDim, nCoordsArray, gridChildId, rind, this);
 
   // Rind was parsed or not then populate dimensions :
   // get grid coordinate range
@@ -1554,6 +1622,12 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     return 1;
     }
 
+  // Set up ugrid - we need to refer to it if we're building an NFACE_n or NGON_n grid
+  // Create an unstructured grid to contain the points.
+  vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
+  ugrid->SetPoints(points);
+
+  bool buildGrid(true);
   // Iterate over core sections.
   for (std::vector<int>::iterator iter = coreSec.begin();
        iter != coreSec.end(); ++iter)
@@ -1572,7 +1646,7 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     double cgioSectionId;
     cgioSectionId = elemIdList[sec];
 
-    if (elemType != CGNS_ENUMV(MIXED))
+    if (elemType != CGNS_ENUMV(MIXED) && elemType != CGNS_ENUMV(NFACE_n) && elemType != CGNS_ENUMV(NGON_n)) // MDvR: test for NFACE_n, NGON_n too
       {
       // All cells are of the same type.
       int numPointsPerCell = 0;
@@ -1709,10 +1783,198 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
         CGNSRead::CGNS2VTKorder(elementSize, &cellsTypes[start-1], localElements);
         }
       }
+    else if ( elemType == CGNS_ENUMV(NFACE_n))
+      {
+      buildGrid = false;      
+    
+      // the faces are in NGON_n format, and are in another section - or multiple sections!
+      std::vector<vtkIdType> faceElements;
+      vtkIdType numFaces(0);
+      cgsize_t fDataSize(0);
+      for(size_t osec = 0, n = 0; osec < sectionInfoList.size(); ++osec)
+        {
+        // the documentation specifies that the faces of NFACE_n are always in NGON_n
+        // format, so look for another section that has that element type.        
+        if (osec == sec) continue; // skip self
+        if (sectionInfoList[osec].elemType == CGNS_ENUMV(NGON_n))
+          {            
+          fDataSize = sectionInfoList[osec].eDataSize;
+          // resize to fit the next batch of element connectivity values
+          faceElements.resize(faceElements.size() + fDataSize);
+      
+          numFaces = 1 +  sectionInfoList[osec].range[1] -  sectionInfoList[osec].range[0];
+          
+          cgsize_t memDim[2];
+          
+          srcStart[0]  = 1 ;
+          srcEnd[0] = fDataSize;
+          srcStride[0] = 1;
+          
+          memStart[0]  = 1;
+          memStart[1]  = 1;
+          memEnd[0]    = fDataSize;
+          memEnd[1]    = 1;
+          memStride[0] = 1;
+          memStride[1] = 1;
+          memDim[0]    = fDataSize;
+          memDim[1]    = 1;
+        
+          if(0 != CGNSRead::get_section_connectivity(this->cgioNum, elemIdList[osec], 1,
+                              srcStart, srcEnd, srcStride,
+                              memStart, memEnd, memStride,
+                              memDim, &faceElements[n]))
+             {
+             vtkErrorMacro(<< "FAILED to read NGON_n cells\n");
+             return 1;
+             }
+
+          n += fDataSize; // points to next index      
+          }
+        }
+      
+      vtkNew<vtkIdTypeArray> cellArray;
+      cgsize_t eDataSize(0);
+      eDataSize = sectionInfoList[sec].eDataSize;
+        
+      cellArray->SetNumberOfValues(eDataSize);
+      vtkIdType* cellElements = cellArray->GetPointer(0);
+      cgsize_t memDim[2];
+      
+      srcStart[0]  = 1 ;
+      srcEnd[0] = eDataSize;
+      srcStride[0] = 1;
+      
+      memStart[0]  = 1;
+      memStart[1]  = 1;
+      memEnd[0]    = eDataSize;
+      memEnd[1]    = 1;
+      memStride[0] = 1;
+      memStride[1] = 1;
+      memDim[0]    = eDataSize;
+      memDim[1]    = 1;
+      
+      if (0 != CGNSRead::get_section_connectivity(this->cgioNum, cgioSectionId, 1,
+                                         srcStart, srcEnd, srcStride,
+                                         memStart, memEnd, memStride,
+                                         memDim, cellElements))
+        {
+        vtkErrorMacro(<< "FAILED to read NFACE_n cells\n");
+        return 1;
+        }
+      
+      // ok, now we have the face-to-node connectivity array and the cell-to-face connectivity array.
+      // VTK, however, has no concept of faces, and uses cell-to-node connectivity, so the intermediate faces
+      // need to be taken out of the description.
+      
+      std::vector<vtkIdType> faceNodeLookupTable(numFaces);
+      
+      vtkIdType p(0);
+      for(vtkIdType nf = 0; nf < numFaces; ++nf)
+        {      
+        faceNodeLookupTable[nf] = p;
+        p += 1 + faceElements[p];
+        }
+      
+      p = 0;
+      for(vtkIdType nc = 0; nc < numCoreCells; ++nc)
+        {
+        int numCellFaces = cellElements[p];
+        
+        vtkNew<vtkIdList> faces;
+        faces->InsertNextId(numCellFaces);
+      
+        for(vtkIdType nf = 0; nf < numCellFaces; ++nf)
+          {
+          vtkIdType faceId = cellElements[p + nf + 1]; 
+          bool mustReverse = faceId > 0;
+          faceId = abs(faceId); 
+
+          // the following is needed because when the NGON_n face data preceeds the 
+          // NFACE_n cell data, the indices are continuous, so a "global-to-local" mapping must be done.
+          faceId -= sectionInfoList[sec].range[1]; 
+          faceId -= 1; // CGNS uses FORTRAN ID style, starting at 1
+          
+          vtkIdType q = faceNodeLookupTable[faceId]; 
+          vtkIdType numNodes = faceElements[q];
+          faces->InsertNextId(numNodes);
+          if (mustReverse)
+            {
+            for(vtkIdType nn = numNodes - 1; nn >= 0; --nn)
+              {
+              vtkIdType nodeID = faceElements[q + nn + 1] - 1; // AGAIN subtract 1 from node ID
+              faces->InsertNextId(nodeID);  
+              }
+            }
+          else
+            {
+            for (vtkIdType nn = 0; nn < numNodes; ++nn)
+              {
+              vtkIdType nodeID = faceElements[q + nn + 1] - 1; // AGAIN subtract 1 from node ID
+              faces->InsertNextId(nodeID);  
+              }
+            }
+          }
+        ugrid->InsertNextCell(VTK_POLYHEDRON, faces.GetPointer());
+        p += 1 + numCellFaces; //p now points to the index of the next cell
+        }      
+      }
+    else if (elemType == CGNS_ENUMV(NGON_n))
+      {
+      buildGrid = false;
+      vtkNew<vtkIdTypeArray> ngonFaceArray;
+      cgsize_t eDataSize = 0;
+      eDataSize = sectionInfoList[sec].eDataSize;
+        
+      ngonFaceArray->SetNumberOfValues(eDataSize);
+      vtkIdType* localElements = ngonFaceArray->GetPointer(0);
+      cgsize_t memDim[2];
+      
+      srcStart[0]  = 1 ;
+      srcEnd[0] = eDataSize;
+      srcStride[0] = 1;
+      
+      memStart[0]  = 1;
+      memStart[1]  = 1;
+      memEnd[0]    = eDataSize;
+      memEnd[1]    = 1;
+      memStride[0] = 1;
+      memStride[1] = 1;
+      memDim[0]    = eDataSize;
+      memDim[1]    = 1;
+      
+      if (0 != CGNSRead::get_section_connectivity(this->cgioNum, cgioSectionId, 1,
+                                         srcStart, srcEnd, srcStride,
+                                         memStart, memEnd, memStride,
+                                         memDim, localElements))
+        {
+        vtkErrorMacro(<< "FAILED to read NGON_n cells\n");
+        return 1;
+        }
+      
+      vtkIdType numFaces = 1+ sectionInfoList[sec].range[1] - sectionInfoList[sec].range[0];
+      int p(0);
+      for(vtkIdType nf = 0; nf < numFaces ; ++nf)
+        {
+        vtkIdType numNodes = localElements[p];
+        vtkNew<vtkIdList> nodes;
+        //nodes->InsertNextId(numNodes);
+        for (vtkIdType nn = 0; nn < numNodes; ++nn)
+          {
+          vtkIdType nodeId = localElements[p+nn+1];
+          nodeId -= 1; // FORTRAN to C-style indexing
+          nodes->InsertNextId(nodeId);
+          }
+        ugrid->InsertNextCell(VTK_POLYGON, nodes.GetPointer());
+        p += 1 + numNodes;
+        }
+      }
+
     cgio_release_id(this->cgioNum, cgioSectionId);
     }
+  
+  if (buildGrid)
+    cells->SetCells(numCoreCells , cellLocations.GetPointer());
 
-  cells->SetCells(numCoreCells , cellLocations.GetPointer());
   //
   bool requiredPatch = (this->LoadBndPatch != 0);
   // SetUp zone Blocks
@@ -1727,12 +1989,8 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     }
   mzone->GetMetaData((unsigned int) 0)->Set(vtkCompositeDataSet::NAME(), "Internal");
 
-  // Set up ugrid
-  // Create an unstructured grid to contain the points.
-  vtkUnstructuredGrid *ugrid = vtkUnstructuredGrid::New();
-  ugrid->SetPoints(points);
-
-  ugrid->SetCells(cellsTypes, cells.GetPointer());
+  if(buildGrid)
+    ugrid->SetCells(cellsTypes, cells.GetPointer());
 
   delete [] cellsTypes;
 
@@ -1764,7 +2022,7 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     std::vector<double> solChildId;
     std::size_t nVarArray = 0;
 
-    this->getVarsIdAndFillRind ( cgioSolId, nVarArray, varCentering, solChildId, rind);
+    vtkPrivate::getVarsIdAndFillRind ( cgioSolId, nVarArray, varCentering, solChildId, rind, this );
 
     if ((varCentering != CGNS_ENUMV(Vertex)) &&
         (varCentering != CGNS_ENUMV(CellCenter)))
@@ -1776,7 +2034,7 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     std::vector< CGNSRead::CGNSVariable > cgnsVars(nVarArray);
     std::vector< CGNSRead::CGNSVector > cgnsVectors;
 
-    this->fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors);
+    vtkPrivate::fillArrayInformation(solChildId, physicalDim, cgnsVars, cgnsVectors, this);
 
     // Source layout
     cgsize_t fieldSrcStart[3]  = {1,1,1};
@@ -1822,7 +2080,7 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
     // Count number of vars and vectors
     // Assign vars and vectors to a vtkvars array
     std::vector<vtkDataArray *> vtkVars(nVarArray);
-    this->AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars);
+    vtkPrivate::AllocateVtkArray(physicalDim, nVals, varCentering, cgnsVars, cgnsVectors, vtkVars, this);
 
     // Load Data
     for (std::size_t ff = 0; ff < nVarArray; ++ff)
@@ -1882,18 +2140,24 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
         continue;
         }
 
+      int arrIndex(-1);
       if ((cgnsVars[nv].isComponent == false) ||
           (cgnsVars[nv].xyzIndex == 1))
         {
-        dsa->AddArray(vtkVars[nv]);
+        arrIndex = dsa->AddArray(vtkVars[nv]);
         vtkVars[nv]->Delete();
+        }
+      if (arrIndex >= 0 && cgnsVars[nv].isComponent && cgnsVars[nv].xyzIndex == 1)
+        {
+        vtkDataArray* arr = dsa->GetArray(arrIndex);
+        dsa->SetVectors(arr);
         }
       vtkVars[nv] = 0;
       }
     }
 
   // Handle Reference Values (Mach Number, ...)
-  this->AttachReferenceValue(base, ugrid);
+  vtkPrivate::AttachReferenceValue(base, ugrid, this);
 
   //--------------------------------------------------
   // Read patch boundary Sections
@@ -2111,7 +2375,7 @@ int vtkCGNSReader::GetUnstructuredZone(int base, int zone,
       bnd_id_arr->Delete();
 
       // Handle Ref Values
-      this->AttachReferenceValue(base, bndugrid);
+      vtkPrivate::AttachReferenceValue(base, bndugrid, this);
 
       // Copy PointData if exists
       vtkPointData* temp = ugrid->GetPointData();
@@ -2168,7 +2432,6 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
   int nSelectedBases = 0;
   unsigned int blockIndex = 0 ;
 
-#ifdef PARAVIEW_USE_MPI
   int processNumber;
   int numProcessors;
   int startRange, endRange;
@@ -2185,11 +2448,11 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
   numProcessors =
       outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_PIECES());
 
-  int numBases = this->Internal.GetNumberOfBaseNodes();
+  int numBases = this->Internal->GetNumberOfBaseNodes();
   int numZones = 0;
   for (int bb=0; bb < numBases; bb++)
     {
-    numZones += this->Internal.GetBase(bb).nzones;
+    numZones += this->Internal->GetBase(bb).nzones;
     }
 
   // Divide the files evenly between processors
@@ -2213,14 +2476,14 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
       startRange = startRange - accumulated;
       endRange = endRange - accumulated;
       int startInterZone = std::max(startRange, 0);
-      int endInterZone = std::min(endRange, this->Internal.GetBase(bb).nzones);
+      int endInterZone = std::min(endRange, this->Internal->GetBase(bb).nzones);
 
       if ((endInterZone - startInterZone) > 0)
         {
         zoneRange[0] = startInterZone;
         zoneRange[1] = endInterZone;
         }
-      accumulated = this->Internal.GetBase(bb).nzones;
+      accumulated = this->Internal->GetBase(bb).nzones;
       baseToZoneRange[bb] = zoneRange;
       }
     }
@@ -2235,13 +2498,13 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
       startRange = startRange - accumulated;
       endRange = endRange  - accumulated;
       int startInterZone = std::max(startRange, 0);
-      int endInterZone = std::min(endRange, this->Internal.GetBase(bb).nzones);
+      int endInterZone = std::min(endRange, this->Internal->GetBase(bb).nzones);
       if ((endInterZone - startInterZone) > 0)
         {
         zoneRange[0] = startInterZone;
         zoneRange[1] = endInterZone;
         }
-      accumulated = this->Internal.GetBase(bb).nzones;
+      accumulated = this->Internal->GetBase(bb).nzones;
       baseToZoneRange[bb] = zoneRange;
       }
     }
@@ -2252,22 +2515,11 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
     this->LoadBndPatch = 0;
     this->CreateEachSolutionAsBlock = 0;
     }
-#endif
 
-  if (!this->Internal.Parse(this->FileName))
+  if (!this->Internal->Parse(this->FileName))
     {
     return 0;
     }
-
-#ifndef PARAVIEW_USE_MPI
-  // get the info object
-  vtkInformation *outInfo = outputVector->GetInformationObject(0);
-
-  // get the output
-  vtkMultiBlockDataSet *output =
-      vtkMultiBlockDataSet::SafeDownCast(
-        outInfo->Get(vtkMultiBlockDataSet::DATA_OBJECT()));
-#endif
 
   vtkMultiBlockDataSet* rootNode = output;
 
@@ -2289,21 +2541,21 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
                   << requestedTimeValue);
 
     // Clamp requestedTimeValue to available time range.
-    if (requestedTimeValue < this->Internal.GetTimes().front())
+    if (requestedTimeValue < this->Internal->GetTimes().front())
       {
-      requestedTimeValue = this->Internal.GetTimes().front();
+      requestedTimeValue = this->Internal->GetTimes().front();
       }
 
-    if (requestedTimeValue > this->Internal.GetTimes().back())
+    if (requestedTimeValue > this->Internal->GetTimes().back())
       {
-      requestedTimeValue = this->Internal.GetTimes().back() ;
+      requestedTimeValue = this->Internal->GetTimes().back() ;
       }
 
     std::vector<double>::iterator timeIte = std::find_if(
-          this->Internal.GetTimes().begin(), this->Internal.GetTimes().end(),
-          vtkstd::bind2nd(WithinTolerance(), requestedTimeValue));
+          this->Internal->GetTimes().begin(), this->Internal->GetTimes().end(),
+          std::bind2nd(WithinTolerance(), requestedTimeValue));
     //
-    if (timeIte == this->Internal.GetTimes().end())
+    if (timeIte == this->Internal->GetTimes().end())
       {
       return 0;
       }
@@ -2342,7 +2594,7 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
     int cellDim = 0;
     int physicalDim = 0;
 
-    const CGNSRead::BaseInformation & curBaseInfo = this->Internal.GetBase(numBase);
+    const CGNSRead::BaseInformation & curBaseInfo = this->Internal->GetBase(numBase);
 
     // skip unselected base
     if ( this->BaseSelection->ArrayIsEnabled ( curBaseInfo.name ) == 0 )
@@ -2380,7 +2632,7 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
           (requestedTimeValue > curBaseInfo.times.back()))
         {
         skipBase = true;
-        requestedTimeValue = this->Internal.GetTimes().front();
+        requestedTimeValue = this->Internal->GetTimes().front();
         }
 
       std::vector<double>::const_iterator iter ;
@@ -2443,15 +2695,10 @@ int vtkCGNSReader::RequestData(vtkInformation *vtkNotUsed(request),
         }
       }
 
-#ifdef PARAVIEW_USE_MPI
     int zonemin = baseToZoneRange[numBase][0];
     int zonemax = baseToZoneRange[numBase][1];
     for (int zone = zonemin; zone < zonemax; ++zone)
       {
-#else
-    for (int zone = 0; zone < nzones; ++zone)
-      {
-#endif
       CGNSRead::char_33 zoneName;
       cgsize_t zsize[9];
       CGNS_ENUMT(ZoneType_t) zt = CGNS_ENUMV(ZoneTypeNull);
@@ -2589,7 +2836,6 @@ int vtkCGNSReader::RequestInformation(vtkInformation * request,
                                         vtkInformationVector *outputVector)
 {
 
-#ifdef PARAVIEW_USE_MPI
   // Setting CAN_HANDLE_PIECE_REQUEST to 1 indicates to the
   // upstream consumer that I can provide the same number of pieces
   // as there are number of processors
@@ -2601,7 +2847,6 @@ int vtkCGNSReader::RequestInformation(vtkInformation * request,
 
   if (this->ProcRank == 0)
     {
-#endif
     if (!this->FileName)
       {
       vtkErrorMacro(<< "File name not set\n");
@@ -2620,27 +2865,25 @@ int vtkCGNSReader::RequestInformation(vtkInformation * request,
                   << this->FileName << " for fields and time steps");
 
     // Parse the file...
-    if (!this->Internal.Parse(this->FileName))
+    if (!this->Internal->Parse(this->FileName))
       {
       vtkErrorMacro(<< "Failed to parse cgns file: " << this->FileName);
       return false;
       }
-#ifdef PARAVIEW_USE_MPI
     } // End_ProcRank_0
 
   if (this->ProcSize > 1)
     {
     this->Broadcast(this->Controller);
     }
-#endif
 
-  this->NumberOfBases = this->Internal.GetNumberOfBaseNodes();
+  this->NumberOfBases = this->Internal->GetNumberOfBaseNodes();
 
   // Set up time information
-  if (this->Internal.GetTimes().size() != 0)
+  if (this->Internal->GetTimes().size() != 0)
     {
-    std::vector<double> timeSteps(this->Internal.GetTimes().begin(),
-                                  this->Internal.GetTimes().end());
+    std::vector<double> timeSteps(this->Internal->GetTimes().begin(),
+                                  this->Internal->GetTimes().end());
 
     vtkInformation* outInfo = outputVector->GetInformationObject(0);
     outInfo->Set(vtkStreamingDemandDrivenPipeline::TIME_STEPS(),
@@ -2653,9 +2896,9 @@ int vtkCGNSReader::RequestInformation(vtkInformation * request,
                  timeRange, 2);
     }
 
-  for (int base = 0; base < this->Internal.GetNumberOfBaseNodes() ; ++base)
+  for (int base = 0; base < this->Internal->GetNumberOfBaseNodes() ; ++base)
     {
-    const CGNSRead::BaseInformation& curBase = this->Internal.GetBase(base);
+    const CGNSRead::BaseInformation& curBase = this->Internal->GetBase(base);
     // Fill base names
     if ( base == 0 && (!this->BaseSelection->ArrayExists(curBase.name)))
       {
@@ -2707,6 +2950,7 @@ int vtkCGNSReader::CanReadFile(const char *name)
   double rootId;
   double childId;
   float FileVersion = 0.0;
+  int intFileVersion = 0;
   char dataType[CGIO_MAX_DATATYPE_LENGTH+1];
   char errmsg[CGIO_MAX_ERROR_LENGTH+1];
   int ndim = 0;
@@ -2773,11 +3017,13 @@ int vtkCGNSReader::CanReadFile(const char *name)
   // Check that the library version is at least as recent as the one used
   //   to create the file being read
 
-  if ((FileVersion*1000) > CGNS_VERSION)
+  intFileVersion = static_cast<int>(FileVersion * 1000 + 0.5);
+
+  if (intFileVersion > CGNS_VERSION)
     {
     // This code allows reading version newer than the lib,
     // as long as the 1st digit of the versions are equal
-    if ((FileVersion) > (CGNS_VERSION / 1000))
+    if ((intFileVersion / 1000) > (CGNS_VERSION / 1000))
       {
       vtkErrorMacro(<< "The file " << name <<
                     " was written with a more recent version"
@@ -2786,13 +3032,13 @@ int vtkCGNSReader::CanReadFile(const char *name)
       ierr = 0;
       }
     // warn only if different in second digit
-    if ((FileVersion*10) > (CGNS_VERSION / 100))
+    if ((intFileVersion / 100) > (CGNS_VERSION / 100))
       {
       vtkWarningMacro(<< "The file being read is more recent"
                        "than the CGNS library used");
       }
     }
-  if ((FileVersion*100) < 255)
+  if ((intFileVersion / 10) < 255)
     {
     vtkWarningMacro(<< "The file being read was written with an old version"
                     "of the CGNS library. Please update your file"
@@ -2970,14 +3216,12 @@ void vtkCGNSReader::SelectionModifiedCallback(vtkObject*, unsigned long,
   static_cast<vtkCGNSReader*>(clientdata)->Modified();
 }
 
-#ifdef PARAVIEW_USE_MPI
 //------------------------------------------------------------------------------
 void vtkCGNSReader::Broadcast(vtkMultiProcessController* ctrl)
 {
   if (ctrl)
     {
     int rank = ctrl->GetLocalProcessId();
-    this->Internal.Broadcast(ctrl, rank);
+    this->Internal->Broadcast(ctrl, rank);
     }
 }
-#endif

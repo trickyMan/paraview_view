@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqColorOpacityEditorWidget_h
-#define __pqColorOpacityEditorWidget_h
+#ifndef pqColorOpacityEditorWidget_h
+#define pqColorOpacityEditorWidget_h
 
 #include "pqApplicationComponentsModule.h"
 #include "pqPropertyWidget.h"
@@ -171,8 +171,8 @@ protected slots:
   /// update the transfer function with the text in CurrentDataValue text field.
   void currentDataEdited();
 
-  /// apply a present.
-  void applyCurrentPreset();
+  /// called when a preset is applied.
+  void presetApplied();
 
   /// Ensures that the color-swatches for indexedColors are shown only when this
   /// is set to true.

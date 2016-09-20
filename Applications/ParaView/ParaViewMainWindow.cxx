@@ -47,6 +47,9 @@ extern "C" {
 #include "pqOptions.h"
 #include "pqParaViewBehaviors.h"
 #include "pqParaViewMenuBuilders.h"
+#include "pqSettings.h"
+#include "pqTimer.h"
+#include "pqWelcomeDialog.h"
 #include "vtkProcessModule.h"
 #include "vtkPVGeneralSettings.h"
 #include "vtkPVPlugin.h"
@@ -61,7 +64,9 @@ extern "C" {
 #include <QUrl>
 #include <QMimeData>
 
+#ifdef PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION
 #include "ParaViewDocumentationInitializer.h"
+#endif
 
 
 #ifdef PARAVIEW_ENABLE_PYTHON
@@ -74,6 +79,11 @@ extern "C" {
 
 class ParaViewMainWindow::pqInternals : public Ui::pqClientMainWindow
 {
+public:
+  bool FirstShow;
+  pqInternals() : FirstShow(true)
+  {
+  }
 };
 
 //-----------------------------------------------------------------------------
@@ -92,8 +102,10 @@ ParaViewMainWindow::ParaViewMainWindow()
   vtkPVInitializePythonModules();
 #endif
 
+#ifdef PARAVIEW_ENABLE_EMBEDDED_DOCUMENTATION
   // init the ParaView embedded documentation.
   PARAVIEW_DOCUMENTATION_INIT();
+#endif
 
   this->Internals = new pqInternals();
   this->Internals->setupUi(this);
@@ -288,4 +300,29 @@ void ParaViewMainWindow::dropEvent(QDropEvent *evt)
     return;
     }
   pqLoadDataReaction::loadData(files);
+}
+
+//-----------------------------------------------------------------------------
+void ParaViewMainWindow::showEvent(QShowEvent * evt)
+{
+  this->Superclass::showEvent(evt);
+  if (this->Internals->FirstShow)
+    {
+    this->Internals->FirstShow = false;
+    pqApplicationCore* core = pqApplicationCore::instance();
+    if (!core->getOptions()->GetDisableRegistry())
+      {
+      if (core->settings()->value("GeneralSettings.ShowWelcomeDialog", true).toBool())
+        {
+        pqTimer::singleShot(1000, this, SLOT(showWelcomeDialog()));
+        }
+      }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void ParaViewMainWindow::showWelcomeDialog()
+{
+  pqWelcomeDialog dialog(this);
+  dialog.exec();
 }

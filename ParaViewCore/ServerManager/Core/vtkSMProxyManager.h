@@ -20,8 +20,8 @@
 // .SECTION See Also
 // vtkSMSessionProxyManager, vtkSMProxyDefinitionManager
 
-#ifndef __vtkSMProxyManager_h
-#define __vtkSMProxyManager_h
+#ifndef vtkSMProxyManager_h
+#define vtkSMProxyManager_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -176,7 +176,6 @@ public:
     vtkPVXMLElement* StateChangeElement;
     };
 
-//BTX
 protected:
   vtkSMProxyManager();
   ~vtkSMProxyManager();
@@ -203,7 +202,7 @@ private:
 
   vtkSMProxyManager(const vtkSMProxyManager&); // Not implemented
   void operator=(const vtkSMProxyManager&); // Not implemented
-//ETX
+
 };
 
 #endif

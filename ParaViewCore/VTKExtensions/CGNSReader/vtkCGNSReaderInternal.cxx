@@ -157,6 +157,7 @@ int get_section_connectivity(const int cgioNum, const double cgioSectionId,
       char message[81];
       cgio_error_message(message);
       std::cerr << "cgio_read_data :" << message;
+      return 1;
       }
     }
   else
@@ -796,7 +797,6 @@ void vtkCGNSMetaData::PrintSelf(std::ostream& os)
     }
 }
 
-#ifdef PARAVIEW_USE_MPI
 //------------------------------------------------------------------------------
 static void BroadcastCGNSString(vtkMultiProcessController* ctrl,
                                 CGNSRead::char_33 & str)
@@ -1027,6 +1027,5 @@ void vtkCGNSMetaData::Broadcast(vtkMultiProcessController* controller,
   CGNSRead::BroadcastString(controller, this->LastReadFilename, rank);
   BroadcastDoubleVector(controller, this->GlobalTime, rank);
 }
-#endif
 
 }

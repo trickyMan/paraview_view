@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkAllToNRedistributePolyData extension that is composite data aware.
 
-#ifndef __vtkAllToNRedistributeCompositePolyData_h
-#define __vtkAllToNRedistributeCompositePolyData_h
+#ifndef vtkAllToNRedistributeCompositePolyData_h
+#define vtkAllToNRedistributeCompositePolyData_h
 
 #include "vtkDataObjectAlgorithm.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -39,7 +39,6 @@ public:
   vtkSetMacro(NumberOfProcesses, int);
   vtkGetMacro(NumberOfProcesses, int);
 
-//BTX
 protected:
   vtkAllToNRedistributeCompositePolyData();
   ~vtkAllToNRedistributeCompositePolyData();
@@ -64,7 +63,7 @@ protected:
 private:
   vtkAllToNRedistributeCompositePolyData(const vtkAllToNRedistributeCompositePolyData&); // Not implemented
   void operator=(const vtkAllToNRedistributeCompositePolyData&); // Not implemented
-//ETX
+
 };
 
 #endif

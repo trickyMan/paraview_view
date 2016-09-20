@@ -16,8 +16,8 @@
 // .SECTION Description
 //  Proxy for vtkPVGL2PSExporter
 
-#ifndef __vtkSMGL2PSExporterProxy_h
-#define __vtkSMGL2PSExporterProxy_h
+#ifndef vtkSMGL2PSExporterProxy_h
+#define vtkSMGL2PSExporterProxy_h
 
 #include "vtkSMRenderViewExporterProxy.h"
 #include "vtkPVServerManagerDefaultModule.h" //needed for exports
@@ -44,7 +44,6 @@ public:
   // See superclass documentation for description.
   int ReadXMLAttributes(vtkSMSessionProxyManager *pm, vtkPVXMLElement *element);
 
-//BTX
 protected:
   vtkSMGL2PSExporterProxy();
   ~vtkSMGL2PSExporterProxy();
@@ -57,7 +56,7 @@ protected:
 private:
   vtkSMGL2PSExporterProxy(const vtkSMGL2PSExporterProxy&); // Not implemented
   void operator=(const vtkSMGL2PSExporterProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

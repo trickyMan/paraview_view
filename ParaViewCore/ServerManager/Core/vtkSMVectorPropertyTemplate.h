@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkSMVectorPropertyTemplate_h
-#define __vtkSMVectorPropertyTemplate_h
+#ifndef vtkSMVectorPropertyTemplate_h
+#define vtkSMVectorPropertyTemplate_h
 
 #include <assert.h>
 #include <vector>
@@ -317,6 +317,13 @@ public:
       this->Initialized = true;
       this->Property->Modified();
       this->ClearUncheckedElements();
+      }
+    else if (this->Property->GetRepeatable())
+      {
+      this->Values.clear();
+      this->Initialized = true;
+      this->Property->Modified();
+      this->ClearUncheckedElements();            
       }
     }
 

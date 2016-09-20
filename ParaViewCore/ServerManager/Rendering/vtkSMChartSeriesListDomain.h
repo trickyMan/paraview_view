@@ -30,12 +30,13 @@
 // Supported XML attributes
 // \li hide_partial_arrays : when set to 1, partial arrays will not be shown in
 // the domain (default).
-#ifndef __vtkSMChartSeriesListDomain_h
-#define __vtkSMChartSeriesListDomain_h
+#ifndef vtkSMChartSeriesListDomain_h
+#define vtkSMChartSeriesListDomain_h
 
 #include "vtkSMStringListDomain.h"
 #include "vtkPVServerManagerRenderingModule.h" // needed for exports
 
+class vtkPVArrayInformation;
 class vtkPVDataInformation;
 
 class VTKPVSERVERMANAGERRENDERING_EXPORT vtkSMChartSeriesListDomain :
@@ -61,7 +62,6 @@ public:
   // the last entry in this array will be NULL.
   static const char** GetKnownSeriesNames();
 
-//BTX
 protected:
   vtkSMChartSeriesListDomain();
   ~vtkSMChartSeriesListDomain();
@@ -72,11 +72,14 @@ protected:
 
   virtual int ReadXMLAttributes(vtkSMProperty* prop, vtkPVXMLElement* element);
 
+  virtual void PopulateArrayComponents(
+    vtkPVArrayInformation*, std::vector<vtkStdString>&);
+
   bool HidePartialArrays;
 private:
   vtkSMChartSeriesListDomain(const vtkSMChartSeriesListDomain&); // Not implemented
   void operator=(const vtkSMChartSeriesListDomain&); // Not implemented
-//ETX
+
 };
 
 #endif

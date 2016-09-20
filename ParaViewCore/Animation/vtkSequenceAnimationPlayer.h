@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkSequenceAnimationPlayer_h
-#define __vtkSequenceAnimationPlayer_h
+#ifndef vtkSequenceAnimationPlayer_h
+#define vtkSequenceAnimationPlayer_h
 
 #include "vtkAnimationPlayer.h"
 #include "vtkPVAnimationModule.h" // needed for export macro
@@ -32,7 +32,6 @@ public:
   vtkSetClampMacro(NumberOfFrames, int, 2, VTK_INT_MAX);
   vtkGetMacro(NumberOfFrames, int);
 
-//BTX
 protected:
   vtkSequenceAnimationPlayer();
   ~vtkSequenceAnimationPlayer();
@@ -55,7 +54,7 @@ protected:
 private:
   vtkSequenceAnimationPlayer(const vtkSequenceAnimationPlayer&); // Not implemented
   void operator=(const vtkSequenceAnimationPlayer&); // Not implemented
-//ETX
+
 };
 
 #endif

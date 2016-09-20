@@ -34,8 +34,8 @@
 // several factors. In parallel, this filter ensures that spatial bounds are collected
 // across all ranks for generating identical sample points.
 
-#ifndef __vtkPVGlyphFilter_h
-#define __vtkPVGlyphFilter_h
+#ifndef vtkPVGlyphFilter_h
+#define vtkPVGlyphFilter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkGlyph3D.h"
@@ -103,6 +103,22 @@ protected:
   // Description:
   // Returns 1 if point is to be glyped, otherwise returns 0.
   virtual int IsPointVisible(vtkDataSet* ds, vtkIdType ptId);
+
+  // Description:
+  // Returns true if input Scalars and Vectors are compatible, otherwise returns 0.
+  bool IsInputArrayToProcessValid(vtkDataSet* input);
+
+  // Description:
+  // Returns true if input Scalars and Vectors are cell attributes, otherwise returns 0.
+  bool UseCellCenters(vtkDataSet* input);
+
+  // Description:
+  // Method called in RequestData() to do the actual data processing. This will
+  // apply a Cell Centers before the Glyph. The \c input, filling up the \c output
+  // based on the filter parameters.
+  virtual bool ExecuteWithCellCenters(vtkDataSet* input,
+                                      vtkInformationVector* sourceVector,
+                                      vtkPolyData* output);
 
   int GlyphMode;
   int MaximumNumberOfSamplePoints;

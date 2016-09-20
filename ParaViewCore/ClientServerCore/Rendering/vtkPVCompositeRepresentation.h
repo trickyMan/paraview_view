@@ -22,14 +22,13 @@
 // For SelectionRepresentation, the client is expected to setup the input (look
 // at vtkSMPVRepresentationProxy).
 
-#ifndef __vtkPVCompositeRepresentation_h
-#define __vtkPVCompositeRepresentation_h
+#ifndef vtkPVCompositeRepresentation_h
+#define vtkPVCompositeRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkCompositeRepresentation.h"
 
 class vtkSelectionRepresentation;
-class vtkCubeAxesRepresentation;
 
 class VTKPVCLIENTSERVERCORERENDERING_EXPORT vtkPVCompositeRepresentation : public vtkCompositeRepresentation
 {
@@ -41,19 +40,7 @@ public:
   // Description:
   // These must only be set during initialization before adding the
   // representation to any views or calling Update().
-  void SetCubeAxesRepresentation(vtkCubeAxesRepresentation*);
   void SetSelectionRepresentation(vtkSelectionRepresentation*);
-
-  // Description:
-  // Overridden to simply pass the input to the internal representations. We
-  // won't need this if vtkDataRepresentation correctly respected in the
-  // arguments passed to it during ProcessRequest() etc.
-  virtual void SetInputConnection(int port, vtkAlgorithmOutput* input);
-  virtual void SetInputConnection(vtkAlgorithmOutput* input);
-  virtual void AddInputConnection(int port, vtkAlgorithmOutput* input);
-  virtual void AddInputConnection(vtkAlgorithmOutput* input);
-  virtual void RemoveInputConnection(int port, vtkAlgorithmOutput* input);
-  virtual void RemoveInputConnection(int port, int index);
 
   // Description:
   // Propagate the modification to all internal representations.
@@ -65,18 +52,12 @@ public:
   virtual void SetVisibility(bool visible);
 
   // Description:
-  // Set the visibility for the cube-axis.
-  virtual void SetCubeAxesVisibility(bool visible);
-
-  // Description:
   // Set the selection visibility.
   virtual void SetSelectionVisibility(bool visible);
 
   // Description:
   // Passed on to internal representations as well.
   virtual void SetUpdateTime(double time);
-  virtual void SetUseCache(bool val);
-  virtual void SetCacheKey(double val);
   virtual void SetForceUseCache(bool val);
   virtual void SetForcedCacheKey(double val);
 
@@ -90,7 +71,6 @@ public:
   // initilized as well.
   virtual unsigned int Initialize(unsigned int minIdAvailable, unsigned int maxIdAvailable);
 
-//BTX
 protected:
   vtkPVCompositeRepresentation();
   ~vtkPVCompositeRepresentation();
@@ -107,16 +87,13 @@ protected:
   // Returns true if the removal succeeds.
   virtual bool RemoveFromView(vtkView* view);
 
-  vtkCubeAxesRepresentation* CubeAxesRepresentation;
   vtkSelectionRepresentation* SelectionRepresentation;
-
-  bool CubeAxesVisibility;
   bool SelectionVisibility;
 
 private:
   vtkPVCompositeRepresentation(const vtkPVCompositeRepresentation&); // Not implemented
   void operator=(const vtkPVCompositeRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

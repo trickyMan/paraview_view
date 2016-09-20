@@ -19,8 +19,8 @@
 // This is a vtkContextItem that can be placed into a vtkContextScene. It draws
 // a block of the given dimensions, and reacts to mouse events.
 
-#ifndef __vtkChartWarning_h
-#define __vtkChartWarning_h
+#ifndef vtkChartWarning_h
+#define vtkChartWarning_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" // For export macro
 #include "vtkBlockItem.h"
@@ -38,16 +38,13 @@ public:
   // Paint event for the item.
   virtual bool Paint(vtkContext2D* painter);
 
-//BTX
   // Description:
   // Returns true if the supplied x, y coordinate is inside the item.
   virtual bool Hit(const vtkContextMouseEvent& mouse);
-//ETX
 
   vtkSetMacro(TextPad,double);
   vtkGetMacro(TextPad,double);
 
-//BTX
 protected:
   vtkChartWarning();
   ~vtkChartWarning();
@@ -59,7 +56,7 @@ protected:
 private:
   vtkChartWarning(const vtkChartWarning&); // Not implemented.
   void operator = (const vtkChartWarning&); // Not implemented.
-//ETX
+
 };
 
-#endif //__vtkChartWarning_h
+#endif //vtkChartWarning_h

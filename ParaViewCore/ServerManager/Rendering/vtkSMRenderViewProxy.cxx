@@ -21,6 +21,7 @@
 #include "vtkDataArray.h"
 #include "vtkEventForwarderCommand.h"
 #include "vtkExtractSelectedFrustum.h"
+#include "vtkFloatArray.h"
 #include "vtkIdTypeArray.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
@@ -439,7 +440,7 @@ void vtkSMRenderViewProxy::CreateVTKObjects()
     vtkPVDisplayInformation* info = vtkPVDisplayInformation::New();
     this->GetSession()->GatherInformation(
       vtkPVSession::RENDER_SERVER, info, 0);
-    if (info->GetCanOpenDisplay() == 0)
+    if (info->GetCanOpenDisplay() == 0 || info->GetSupportsOpenGL() == 0)
       {
       remote_rendering_available = false;
       }
@@ -655,10 +656,14 @@ void vtkSMRenderViewProxy::ResetCamera(double bounds[6])
 //-----------------------------------------------------------------------------
 void vtkSMRenderViewProxy::MarkDirty(vtkSMProxy* modifiedProxy)
 {
-  this->ClearSelectionCache();
+  vtkSMProxy* cameraProxy = this->GetSubProxy("ActiveCamera");
+
+  // If modified proxy is the camera, we must clear the cache even if we're
+  // currently in selection mode.
+  this->ClearSelectionCache(/*force=*/modifiedProxy == cameraProxy);
 
   // skip modified properties on camera subproxy.
-  if (modifiedProxy != this->GetSubProxy("ActiveCamera"))
+  if (modifiedProxy != cameraProxy)
     {
     this->Superclass::MarkDirty(modifiedProxy);
     }
@@ -1323,6 +1328,16 @@ vtkImageData* vtkSMRenderViewProxy::CaptureWindowInternal(int magnification)
   vtkImageData* capture = vtkImageData::New();
   capture->ShallowCopy(w2i->GetOutput());
   this->GetRenderWindow()->Frame();
+  return capture;
+}
+
+//----------------------------------------------------------------------------
+vtkFloatArray* vtkSMRenderViewProxy::CaptureDepthBuffer()
+{
+  this->InvokeCommand("CaptureZBuffer");
+  vtkPVRenderView* view =
+    vtkPVRenderView::SafeDownCast(this->GetClientSideObject());
+  vtkFloatArray *capture = view->GetCapturedZBuffer();
   return capture;
 }
 

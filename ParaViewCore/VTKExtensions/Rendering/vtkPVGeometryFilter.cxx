@@ -22,7 +22,6 @@
 #include "vtkCellData.h"
 #include "vtkCellTypes.h"
 #include "vtkCellIterator.h"
-#include "vtkCleanArrays.h"
 #include "vtkCommand.h"
 #include "vtkCompositeDataPipeline.h"
 #include "vtkCompositeDataSet.h"
@@ -219,6 +218,23 @@ vtkPVGeometryFilter::~vtkPVGeometryFilter ()
   this->OutlineSource->Delete();
   this->InternalProgressObserver->Delete();
   this->SetController(0);
+}
+
+//----------------------------------------------------------------------------
+void vtkPVGeometryFilter::SetTriangulate(int val)
+{
+#ifndef VTKGL2
+  if (this->Triangulate != val)
+    {
+    this->Triangulate = val;
+    this->Modified();
+    }
+#else
+  // OpenGL2 doesn't need to triangulate in the geometry filter. The mapper does
+  // it.
+  (void) val;
+  this->Triangulate = 0;
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -1339,13 +1355,7 @@ void vtkPVGeometryFilter::StructuredGridExecute(vtkStructuredGrid* input,
 
   vtkNew<vtkStructuredGridOutlineFilter> outline;
   outline->SetInputConnection(producer->GetOutputPort());
-  vtkStreamingDemandDrivenPipeline::SetUpdateNumberOfPieces(
-    outline->GetOutputInformation(0), updateNumPieces);
-  vtkStreamingDemandDrivenPipeline::SetUpdatePiece(
-    outline->GetOutputInformation(0), updatePiece);
-  vtkStreamingDemandDrivenPipeline::SetUpdateGhostLevel(
-    outline->GetOutputInformation(0), updateGhosts);
-  outline->Update();
+  outline->UpdatePiece(updatePiece, updateNumPieces, updateGhosts);
   output->CopyStructure(outline->GetOutput());
 }
 
@@ -1437,7 +1447,13 @@ void vtkPVGeometryFilter::UnstructuredGridExecute(
       this->UnstructuredGridGeometryFilter->AddObserver(
                                                 vtkCommand::ProgressEvent,
                                                 this->InternalProgressObserver);
+
+      // Disable point merging as it may prevent the correct visualization
+      // of non-continuous attributes.
+      this->UnstructuredGridGeometryFilter->MergingOff();
+
       this->UnstructuredGridGeometryFilter->Update();
+
       // The internal filter finished.  Remove the observer.
       this->UnstructuredGridGeometryFilter->RemoveObserver(
                                                 this->InternalProgressObserver);

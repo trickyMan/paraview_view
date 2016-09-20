@@ -18,8 +18,8 @@
 // in turn inherits vtkPVView -- that creates a vtkChart to perform
 // rendering.
 
-#ifndef __vtkPVXYChartView_h
-#define __vtkPVXYChartView_h
+#ifndef vtkPVXYChartView_h
+#define vtkPVXYChartView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVContextView.h"
@@ -149,6 +149,10 @@ public:
   // that the client-server-stream-interpreter can invoke them. Use the
   // corresponding properties to change these values.
   void SetLegendLocation(int location);
+
+  // Description:
+  // Set the legend position.
+  void SetLegendPosition(int x, int y);
 
   // Description:
   // Set the legend font family.
@@ -380,7 +384,6 @@ public:
   // Overridden to rescale axes range on every update.
   virtual void Update();
 
-//BTX
 protected:
   vtkPVXYChartView();
   ~vtkPVXYChartView();
@@ -416,7 +419,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

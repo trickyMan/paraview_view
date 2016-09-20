@@ -18,8 +18,8 @@
 //
 // .SEE vtkAMRConnectivity
 
-#ifndef __vtkAMRConnectivity_h
-#define __vtkAMRConnectivity_h
+#ifndef vtkAMRConnectivity_h
+#define vtkAMRConnectivity_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMultiBlockDataSetAlgorithm.h" 
@@ -78,7 +78,6 @@ protected:
   std::string RegionName;
   vtkIdType NextRegionId;
 
-  // BTX
   std::vector<std::string> VolumeArrays;
 
   std::vector<std::vector <vtkSmartPointer<vtkIdTypeArray> > > BoundaryArrays;
@@ -116,7 +115,7 @@ protected:
 private:
   vtkAMRConnectivity(const vtkAMRConnectivity&);  // Not implemented.
   void operator=(const vtkAMRConnectivity&);  // Not implemented.
-  // ETX
+
 };
 
-#endif /* __vtkAMRConnectivity_h */
+#endif /* vtkAMRConnectivity_h */

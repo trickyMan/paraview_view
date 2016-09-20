@@ -17,8 +17,8 @@
 // .SECTION Description
 // vtkSMStateLocator allow a hierarchical way of finding a message state.
 
-#ifndef __vtkSMStateLocator_h
-#define __vtkSMStateLocator_h
+#ifndef vtkSMStateLocator_h
+#define vtkSMStateLocator_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -47,7 +47,6 @@ public:
   // their is no more chance for them to be reused inside the session.
   void InitGarbageCollector(vtkSMSession*, vtkUndoStack*);
 
-//BTX
   // Description:
   // Fill the provided State message with the state found inside the current
   // locator or one of its parent. The method return true if the state was
@@ -101,7 +100,7 @@ private:
 
   class vtkInternal;
   vtkInternal* Internals;
-//ETX
+
 };
 
 #endif

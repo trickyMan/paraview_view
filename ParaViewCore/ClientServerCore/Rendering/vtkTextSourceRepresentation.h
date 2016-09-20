@@ -19,8 +19,8 @@
 // server nodes). The content of this entry in the table is shown as text on the
 // rendering nodes.
 
-#ifndef __vtkTextSourceRepresentation_h
-#define __vtkTextSourceRepresentation_h
+#ifndef vtkTextSourceRepresentation_h
+#define vtkTextSourceRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
@@ -61,7 +61,6 @@ public:
     vtkInformationRequestKey* request_type,
     vtkInformation* inInfo, vtkInformation* outInfo);
 
-//BTX
 protected:
   vtkTextSourceRepresentation();
   ~vtkTextSourceRepresentation();
@@ -98,7 +97,7 @@ protected:
 private:
   vtkTextSourceRepresentation(const vtkTextSourceRepresentation&); // Not implemented
   void operator=(const vtkTextSourceRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

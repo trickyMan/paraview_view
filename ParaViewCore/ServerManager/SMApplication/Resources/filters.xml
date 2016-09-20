@@ -434,8 +434,6 @@
           <Property function="Normal"
                     name="Normal" />
         </PropertyGroup>
-        <PropertyGroup label="Slice Widget"
-                       type="Handle"></PropertyGroup>
       </Hints>
     </SourceProxy>
     <SourceProxy class="vtkAMRResampleFilter"
@@ -1807,8 +1805,7 @@ found and the point will be rejected.</Documentation>
                             default_values="0 0 0"
                             label="Low Point"
                             name="LowPoint"
-                            number_of_elements="3"
-                            panel_visibility="never">
+                            number_of_elements="3" >
         <BoundsDomain default_mode="min"
                       mode="normal"
                       name="range">
@@ -1825,8 +1822,7 @@ found and the point will be rejected.</Documentation>
                             default_values="0 0 1"
                             label="High Point"
                             name="HighPoint"
-                            number_of_elements="3"
-                            panel_visibility="never">
+                            number_of_elements="3" >
         <BoundsDomain default_mode="max"
                       mode="normal"
                       name="range">
@@ -1838,14 +1834,13 @@ found and the point will be rejected.</Documentation>
         <Documentation>This property defines the other end of the direction
         vector (large scalar values).</Documentation>
       </DoubleVectorProperty>
+      <PropertyGroup panel_widget="InteractiveLine">
+        <Property function="Point1WorldPosition" name="LowPoint" />
+        <Property function="Point2WorldPosition" name="HighPoint" />
+        <Property function="Input" name="Input" />
+      </PropertyGroup>
+
       <Hints>
-        <PropertyGroup label="Elevation"
-                       type="Line">
-          <Property function="Point1WorldPosition"
-                    name="LowPoint" />
-          <Property function="Point2WorldPosition"
-                    name="HighPoint" />
-        </PropertyGroup>
       </Hints>
       <!-- End ElevationFilter -->
     </SourceProxy>
@@ -2384,6 +2379,62 @@ array.
       <!-- End FeatureEdges -->
     </SourceProxy>
     <!-- ==================================================================== -->
+    <SourceProxy name="ForceTime"
+                 class="vtkForceTime"
+                 label="Force Time">
+      <Documentation>
+        Filter used to explicitly request a specific time from the pipeline.
+      </Documentation>
+      <InputProperty
+         name="Input"
+         command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources"/>
+          <Group name="filters"/>
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkDataSet"/>
+        </DataTypeDomain>
+        <Documentation>
+          This property specifies the input to the ForceTime filter.
+        </Documentation>
+      </InputProperty>
+      <IntVectorProperty name="IgnorePipelineTime"
+                         command="SetIgnorePipelineTime"
+                         number_of_elements="1"
+                         animatable="1"
+                         default_values="1">
+        <BooleanDomain  name="bool"/>
+        <Documentation>
+          If set to 0, this filter will do nothing, only shallow copy the
+          input to the output. If set to 1, this filter will always request the
+          ForcedTime to the pipeline, ignoring time requests.
+        </Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty
+        name="ForcedTime"
+        command="SetForcedTime"
+        number_of_elements="1"
+        animatable="1"
+        default_values="0.0">
+        <DoubleRangeDomain name="range"/>
+        <Documentation>
+          This property specifies the time to request.
+          If the IgnorePipelineTime property is set, then this value will override any time request in the VTK pipeline.
+        </Documentation>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="enabled_state"
+                                   property="IgnorePipelineTime"
+                                   value="1" />
+        </Hints>
+      </DoubleVectorProperty>
+      <Hints>
+        <ShowInMenu category="Temporal" />
+      </Hints>
+      <!-- End ForceTime -->
+    </SourceProxy>
+    <!-- ==================================================================== -->
     <SourceProxy class="vtkImageGradient"
                  label="Gradient"
                  name="Gradient">
@@ -2485,6 +2536,15 @@ array.
         <Documentation>This property lists the name of the scalar array from
         which to compute the gradient.</Documentation>
       </StringVectorProperty>
+      <IntVectorProperty command="SetComputeGradient"
+                         default_values="1"
+                         name="ComputeGradient"
+                         number_of_elements="1"
+                         panel_visibility="advanced">
+        <BooleanDomain name="bool" />
+        <Documentation>When this flag is on, the gradient filter will compute
+        the gradient of the input array.</Documentation>
+      </IntVectorProperty>
       <StringVectorProperty command="SetResultArrayName"
                             default_values="Gradients"
                             name="ResultArrayName"
@@ -2503,8 +2563,25 @@ array.
         calculations (and is therefore faster). The error contains some
         smoothing of the output data and some possible errors on the boundary.
         This parameter has no effect when performing the gradient of cell
-        data.</Documentation>
+        data or when the input grid is not a vtkUnstructuredGrid.</Documentation>
       </IntVectorProperty>
+      <IntVectorProperty command="SetComputeDivergence"
+                         default_values="0"
+                         name="ComputeDivergence"
+                         number_of_elements="1"
+                         panel_visibility="advanced">
+        <BooleanDomain name="bool" />
+        <Documentation>When this flag is on, the gradient filter will compute
+        the divergence of a 3 component array.</Documentation>
+      </IntVectorProperty>
+      <StringVectorProperty command="SetDivergenceArrayName"
+                            default_values="Divergence"
+                            name="DivergenceArrayName"
+                            number_of_elements="1"
+                            panel_visibility="advanced">
+        <Documentation>This property provides a name for the output array
+        containing the divergence vector.</Documentation>
+      </StringVectorProperty>
       <IntVectorProperty command="SetComputeVorticity"
                          default_values="0"
                          name="ComputeVorticity"
@@ -6686,7 +6763,7 @@ array.
       </IntVectorProperty>
       <IntVectorProperty animateable="0"
                          command="SetOutputPointsPrecision"
-                         default_values="0"
+                         default_values="2"
                          name="OutputPointsPrecision"
                          number_of_elements="1"
                          panel_visibility="advanced" >
@@ -6800,12 +6877,10 @@ cluttred.
         <DataTypeDomain name="input_type">
           <DataType value="vtkDataSet" />
         </DataTypeDomain>
-        <InputArrayDomain attribute_type="point"
-                          name="input_array1"
+        <InputArrayDomain name="input_array1"
                           number_of_components="1"
                           optional="1" />
-        <InputArrayDomain attribute_type="point"
-                          name="input_array2"
+        <InputArrayDomain name="input_array2"
                           number_of_components="3"
                           optional="1" />
         <Documentation>
@@ -6840,17 +6915,25 @@ dataset from which the points are selecetd to be glyphed.
         placed at the points in the input dataset.</Documentation>
       </InputProperty>
       <StringVectorProperty command="SetInputArrayToProcess"
+                            default_values="0"
                             element_types="0 0 0 0 2"
                             name="Scalars"
                             number_of_elements="5">
         <ArrayListDomain attribute_type="Scalars"
                          input_domain_name="input_array1"
-                         name="array_list">
+                         name="array_list"
+                         none_string="None">
           <RequiredProperties>
             <Property function="Input"
                       name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
+        <FieldDataDomain name="field_list">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="Input" />
+          </RequiredProperties>
+        </FieldDataDomain>
         <Documentation>
 Select the input array to be treated as the active **Scalars**.  You
 can scale the glyphs using the selected scalars by setting the **Scale
@@ -6865,12 +6948,19 @@ Mode** property to **scalar**.
         <!-- default value=1 so normals go to the right place -->
         <ArrayListDomain attribute_type="Vectors"
                          input_domain_name="input_array2"
-                         name="array_list">
+                         name="array_list"
+                         none_string="None">
           <RequiredProperties>
             <Property function="Input"
                       name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
+        <FieldDataDomain name="field_list">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="Input" />
+          </RequiredProperties>
+        </FieldDataDomain>
         <Documentation>
 Select the input array to be treated as the active **Vectors**.  You can
 scale the glyphs using the selected vectors by setting the **Scale
@@ -7891,8 +7981,7 @@ source.</Documentation>
       <DoubleVectorProperty command="SetLocation"
                             default_values="0.0 0.0 0.0"
                             name="Location"
-                            number_of_elements="3"
-                            panel_visibility="never">
+                            number_of_elements="3">
         <Documentation>Select the location of interest in 3D space.</Documentation>
         <BoundsDomain default_mode="mid"
                       mode="normal"
@@ -7903,12 +7992,12 @@ source.</Documentation>
           </RequiredProperties>
         </BoundsDomain>
       </DoubleVectorProperty>
-
+      <PropertyGroup label="Location Paramaters" panel_widget="InteractiveHandle">
+        <Property function="WorldPosition" name="Location" />
+        <Property function="Input" name="Input" />
+      </PropertyGroup>
       <Hints>
         <Visibility replace_input="2" />
-        <PropertyGroup type="Handle">
-          <Property function="WorldPosition" name="Location" />
-        </PropertyGroup>
       </Hints>
 
       <!-- End ProbePoint -->
@@ -8173,7 +8262,7 @@ source.</Documentation>
                  name="ImageResampling">
       <Documentation long_help="Sample data attributes using a 3D image as probing mesh."
                      short_help="Sample data values using a 3D image."/>
-
+      <Deprecated deprecated_in="5.1" to_remove_in="5.2">Please use "Resample To Image" instead instead of "ImageResampling" filter.</Deprecated>
       <InputProperty command="SetInputConnection" name="Input">
         <ProxyGroupDomain name="groups">
           <Group name="sources" />
@@ -8244,8 +8333,7 @@ source.</Documentation>
                         name="input_type">
           <DataType value="vtkDataSet" />
         </DataTypeDomain>
-        <InputArrayDomain attribute_type="any"
-                          name="input_array"
+        <InputArrayDomain name="input_array"
                           number_of_components="3" />
         <Documentation>This property specifies the input to the Stream Tracer
         filter.</Documentation>
@@ -9285,15 +9373,16 @@ source.</Documentation>
         <Documentation>Compute vorticity and angular rotation of particles as
         they progress</Documentation>
       </IntVectorProperty>
-      <IntVectorProperty command="SetDisableResetCache"
-                         default_values="0"
-                         name="DisableResetCache"
-                         number_of_elements="1"
-                         panel_visibility="never">
-        <BooleanDomain name="bool" />
-        <Documentation>Prevents cache from getting reset so that new computation
-          always start from previous results.</Documentation>
-      </IntVectorProperty>
+      <DoubleVectorProperty command="SetTerminalSpeed"
+                            default_values="0.000000000001"
+                            label="Terminal Speed"
+                            name="TerminalSpeed"
+                            number_of_elements="1"
+                            panel_visibility="advanced" >
+        <DoubleRangeDomain name="range" />
+        <Documentation>This property specifies the terminal speed, below which
+        particle advection/integration is terminated.</Documentation>
+      </DoubleVectorProperty>
     </SourceProxy>
     <!-- ==================================================================== -->
     <SourceProxy class="vtkStreaklineFilter"
@@ -10522,39 +10611,6 @@ source.</Documentation>
       <!-- End OrderedCompositeDistributor -->
     </SourceProxy>
     <!-- ==================================================================== -->
-    <SourceProxy class="vtkPVUpdateSuppressor"
-                 executive="vtkUpdateSuppressorPipeline"
-                 name="UpdateSuppressor2">
-      <InputProperty command="SetInputConnection"
-                     name="Input">
-        <ProxyGroupDomain name="groups">
-          <Group name="sources" />
-          <Group name="filters" />
-        </ProxyGroupDomain>
-        <Documentation>Set the input to the Update Suppressor
-        filter.</Documentation>
-      </InputProperty>
-      <Property command="ForceUpdate"
-                name="ForceUpdate" />
-      <IntVectorProperty command="SetEnabled"
-                         default_values="1"
-                         name="Enabled"
-                         number_of_elements="1">
-        <BooleanDomain name="bool" />
-        <Documentation>Toggle whether the update suppressor is
-        enabled.</Documentation>
-      </IntVectorProperty>
-      <DoubleVectorProperty command="SetUpdateTime"
-                            default_values="none"
-                            immediate_update="1"
-                            is_internal="1"
-                            name="UpdateTime"
-                            number_of_elements="1">
-        <DoubleRangeDomain name="range" />
-      </DoubleVectorProperty>
-      <!-- End UpdateSuppressor2 -->
-    </SourceProxy>
-    <!-- ==================================================================== -->
     <SourceProxy class="vtkPVCacheKeeper"
                  executive="vtkPVCacheKeeperPipeline"
                  name="CacheKeeper">
@@ -11215,11 +11271,51 @@ source.</Documentation>
         <Documentation>Choose arrays whose entries will be used to form
         observations for statistical analysis.</Documentation>
       </StringVectorProperty>
+      <IntVectorProperty command="SetUseSilvermanRule"
+                         default_values="1"
+                         name="UseSilvermanRule"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>This flag indicates kernel width must be automatically
+        computed using Silverman's rules (sigma*n^(-1/(d+4))).</Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty command="SetKernelWidth"
+                         default_values="1"
+                         name="KernelWidth"
+                         number_of_elements="1">
+        <DoubleRangeDomain name="range" />
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="UseSilvermanRule"
+                                   value="0" />
+          <!-- show this widget when UseSilvermanRule==0 -->
+        </Hints>
+        <Documentation>Specify the kernel width used to compute the HDR.
+        </Documentation>
+      </DoubleVectorProperty>
+      <IntVectorProperty command="SetGridSize"
+                         default_values="100"
+                         name="GridSize"
+                         number_of_elements="1">
+        <IntRangeDomain min="1" name="grid_range"/>
+        <Documentation>Width and height of the grid image to perform the PCA on.
+        </Documentation>
+      </IntVectorProperty>
+      <IntVectorProperty command="SetUserQuantile"
+                         default_values="95"
+                         name="UserQuantile"
+                         number_of_elements="1">
+        <IntRangeDomain min="0" max="100" name="thresold_range"/>
+        <Documentation>
+        </Documentation>
+      </IntVectorProperty>
       <IntVectorProperty command="SetTransposeTable"
                          default_values="1"
                          name="TransposeTable"
                          label="Process the transposed of the input table"
-                         number_of_elements="1">
+                         number_of_elements="1"
+                         panel_visibility="advanced">
         <BooleanDomain name="bool" />
         <Documentation>This flag indicates if the input table must
         be transposed first.</Documentation>
@@ -11227,28 +11323,11 @@ source.</Documentation>
       <IntVectorProperty command="SetRobustPCA"
                          default_values="0"
                          name="RobustPCA"
-                         number_of_elements="1">
+                         number_of_elements="1"
+                         panel_visibility="never">
         <BooleanDomain name="bool" />
         <Documentation>This flag indicates if the PCA should be run
         in robust mode or not.</Documentation>
-      </IntVectorProperty>
-      <DoubleVectorProperty command="SetSigma"
-                         default_values="1"
-                         name="Sigma"
-                         label="HDR smoothing parameter"
-                         number_of_elements="1">
-        <DoubleRangeDomain name="range" />
-        <Documentation>Specify the smoothing parameter of the
-        HDR.</Documentation>
-      </DoubleVectorProperty>
-      <IntVectorProperty command="SetGridSize"
-                         default_values="100"
-                         name="GridSize"
-                         number_of_elements="1">
-        <IntRangeDomain min="1" name="grid_range"/>
-        <Documentation>
-          Width and height of the grid image to perform the PCA on.
-        </Documentation>
       </IntVectorProperty>
       <!-- View can be used to specify the preferred view for the proxy -->
       <Hints>
@@ -11998,6 +12077,11 @@ source.</Documentation>
                   name="input_type">
             <DataType value="vtkDataSet" />
           </Domain>
+        </Property>
+        <Property name="GlyphMode"
+                  id="2429.GlyphMode"
+                  number_of_elements="1">
+          <Element index="0" value="0"/>
         </Property>
         <Property id="2429.Scalars"
                   name="Scalars"
@@ -14190,17 +14274,11 @@ source.</Documentation>
           <NoDefault />
         </Hints>
       </StringVectorProperty>
-      <Hints>
-        <!--
-          YoungsMaterialInterface uses a custom panel that creates custom
-          widgets for these two properties so we hide them from the
-          auto-generated part of the panel.
-        -->
-        <Property name="OrderingArrays"
-                  show="0" />
-        <Property name="NormalArrays"
-                  show="0" />
-      </Hints>
+      <PropertyGroup panel_widget="YoungsMaterial">
+        <Property name="VolumeFractionArrays" function="VolumeFractionArrays" />
+        <Property name="OrderingArrays" function="OrderingArrays" />
+        <Property name="NormalArrays" function="NormalArrays" />
+      </PropertyGroup>
       <!-- End of YoungsMaterialInterface -->
     </SourceProxy>
     <!-- ==================================================================== -->
@@ -14540,7 +14618,81 @@ source.</Documentation>
         <Documentation>This property specifies the 3D coordinates for the
         center of the rotation.</Documentation>
       </DoubleVectorProperty>
+      <IntVectorProperty command="SetComputeRotationsOnTheFly"
+                         default_values="1"
+                         name="ComputeRotationsOnTheFly"
+                         number_of_elements="1"
+                         panel_visibility="default">
+        <Documentation>
+        Specify whether the rotations should be computed on-the-fly, which is
+        compute intensive, or if the arrays should be explicitly generated and
+        stored, at the cost of using more memory.
+        </Documentation>
+        <BooleanDomain name="bool" />
+      </IntVectorProperty>
+
       <!-- End AngularPeriodicFilter -->
+    </SourceProxy>
+    <!-- ==================================================================== -->
+    <SourceProxy class="vtkResampleToImage"
+                 label="Resample To Image"
+                 name="ResampleToImage">
+      <Documentation long_help="Sample attributes using a 3D image as probing mesh."
+                     short_help="Sample attributes using a 3D image."/>
+
+      <InputProperty command="SetInputConnection" name="Input">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkDataSet" />
+        </DataTypeDomain>
+        <Documentation>This property specifies the dataset whose data will
+        be probed</Documentation>
+      </InputProperty>
+      <IntVectorProperty command="SetUseInputBounds"
+                         default_values="1"
+                         name="UseInputBounds"
+                         number_of_elements="1"
+                         panel_visibility="default">
+        <Documentation>
+        Use input bounds or custom ones?
+        </Documentation>
+        <BooleanDomain name="bool" />
+      </IntVectorProperty>
+      <IntVectorProperty command="SetSamplingDimensions"
+                         default_values="100 100 100"
+                         name="SamplingDimensions"
+                         number_of_elements="3"
+                         panel_visibility="default">
+                         <IntRangeDomain name="range" min="1 1 1"/>
+        <Documentation>
+        How many linear samples we want along each axis
+        </Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty command="SetSamplingBounds"
+                         default_values="0 1 0 1 0 1"
+                         name="SamplingBounds"
+                         number_of_elements="6"
+                         panel_visibility="default">
+        <BoundsDomain name="bounds">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="Input" />
+          </RequiredProperties>
+        </BoundsDomain>
+        <Documentation>
+        Custom probing bounds
+        </Documentation>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="UseInputBounds"
+                                   value="0" />
+        </Hints>
+      </DoubleVectorProperty>
+      <!-- End vtkResampleToImage -->
     </SourceProxy>
   </ProxyGroup>
 </ServerManagerConfiguration>

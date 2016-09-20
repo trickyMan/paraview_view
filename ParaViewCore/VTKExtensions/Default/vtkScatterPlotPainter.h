@@ -23,8 +23,8 @@
 // .SECTION See Also
 // vtkGlyph3D
 
-#ifndef __vtkScatterPlotPainter_h
-#define __vtkScatterPlotPainter_h
+#ifndef vtkScatterPlotPainter_h
+#define vtkScatterPlotPainter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPainter.h"
@@ -153,7 +153,6 @@ protected:
   virtual void RenderInternal(vtkRenderer *renderer, vtkActor *actor, 
                        unsigned long typeflags, bool forceCompileOnly);
 
-  //BTX
 protected:
   vtkScatterPlotPainter();
   virtual ~vtkScatterPlotPainter();
@@ -207,7 +206,7 @@ protected:
 private:
   vtkScatterPlotPainter(const vtkScatterPlotPainter&); // Not implemented.
   void operator=(const vtkScatterPlotPainter&); // Not implemented.
-  //ETX
+
 };
 
 #endif

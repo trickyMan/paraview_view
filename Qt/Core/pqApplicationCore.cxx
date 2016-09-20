@@ -371,23 +371,37 @@ vtkPVXMLElement* pqApplicationCore::saveState()
 }
 
 //-----------------------------------------------------------------------------
-void pqApplicationCore::loadState(const char* filename, pqServer* server)
+void pqApplicationCore::loadState(
+  const char* filename, pqServer* server, vtkSMStateLoader* loader)
 {
   if (!server || !filename)
     {
-    return ;
+    return;
     }
 
-  vtkPVXMLParser* parser = vtkPVXMLParser::New();
-  parser->SetFileName(filename);
-  parser->Parse();
-  this->loadState(parser->GetRootElement(), server);
-  parser->Delete();
+  QFile qfile(filename);
+  if (qfile.open(QIODevice::ReadOnly|QIODevice::Text))
+    {
+    this->loadStateFromString(qfile.readAll().data(), server, loader);
+    }
 }
 
 //-----------------------------------------------------------------------------
+void pqApplicationCore::loadStateFromString(
+  const char* xmlcontents, pqServer* server, vtkSMStateLoader* loader)
+{
+  vtkPVXMLParser* parser = vtkPVXMLParser::New();
+  if (xmlcontents && parser->Parse(xmlcontents))
+    {
+    this->loadState(parser->GetRootElement(), server, loader);
+    }
+  parser->Delete();
+}
+
+
+//-----------------------------------------------------------------------------
 void pqApplicationCore::loadState(
-  vtkPVXMLElement* rootElement, pqServer* server)
+  vtkPVXMLElement* rootElement, pqServer* server, vtkSMStateLoader* loader)
 {
   if (!server || !rootElement)
     {
@@ -427,13 +441,34 @@ void pqApplicationCore::loadState(
       }
     }
   END_UNDO_EXCLUDE();
+  this->loadStateIncremental(rootElement, server, loader);
+}
 
+//-----------------------------------------------------------------------------
+void pqApplicationCore::loadStateIncremental(
+  const QString& filename, pqServer* server, vtkSMStateLoader* loader)
+{
+  if (!server || filename.isEmpty())
+    {
+    return ;
+    }
+  vtkPVXMLParser* parser = vtkPVXMLParser::New();
+  parser->SetFileName(filename.toLatin1().data());
+  parser->Parse();
+  this->loadStateIncremental(parser->GetRootElement(), server, loader);
+  parser->Delete();
+}
+
+//-----------------------------------------------------------------------------
+void pqApplicationCore::loadStateIncremental(
+  vtkPVXMLElement* rootElement, pqServer* server, vtkSMStateLoader* loader)
+{
   emit this->aboutToLoadState(rootElement);
 
   // TODO: this->LoadingState cannot be relied upon.
   this->LoadingState = true;
   vtkSMSessionProxyManager* pxm = server->proxyManager();
-  pxm->LoadXMLState(rootElement);
+  pxm->LoadXMLState(rootElement, loader);
   this->LoadingState = false;
 }
 

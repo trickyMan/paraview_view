@@ -23,8 +23,8 @@
 // interpreter instances. However ParaView no longer has need for that and hence
 // that functionality is no longer made public.
 
-#ifndef __vtkClientServerInterpreterInitializer_h
-#define __vtkClientServerInterpreterInitializer_h
+#ifndef vtkClientServerInterpreterInitializer_h
+#define vtkClientServerInterpreterInitializer_h
 
 #include "vtkObject.h"
 #include "vtkPVCommonModule.h" // needed for export macro
@@ -55,8 +55,6 @@ public:
   // vtkClientServerInterpreterInitializer the first time it is called.
   static vtkClientServerInterpreterInitializer* GetInitializer();
 
-
-//BTX
   typedef void (*InterpreterInitializationCallback)(vtkClientServerInterpreter*);
 
   // Description:
@@ -84,7 +82,7 @@ private:
 
   class vtkInternals;
   vtkInternals *Internals;
-//ETX
+
 };
 
 #endif

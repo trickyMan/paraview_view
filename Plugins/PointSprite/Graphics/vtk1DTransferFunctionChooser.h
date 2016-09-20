@@ -29,8 +29,8 @@
 // .SECTION Description
 // Chooses between vtk1DLookupTableTransferFunction and vtk1DGaussianTransferFunction
 
-#ifndef __vtk1DTransferFunctionChooser_h
-#define __vtk1DTransferFunctionChooser_h
+#ifndef vtk1DTransferFunctionChooser_h
+#define vtk1DTransferFunctionChooser_h
 
 #include "vtkPointSpriteGraphicsModule.h" //needed for exports
 #include "vtk1DTransferFunction.h"
@@ -46,12 +46,11 @@ public:
   vtkTypeMacro(vtk1DTransferFunctionChooser, vtk1DTransferFunction);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  //BTX
   enum
   {
   LookupTable = 0, Gaussian = 1
   };
-  //ETX
+
   // 0 : LookupTable
   // 1 : Gaussian
   vtkSetMacro(TransferFunctionMode, int);

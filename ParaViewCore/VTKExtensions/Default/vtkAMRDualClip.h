@@ -20,8 +20,8 @@
 // cells are decimated.  I use a variation of degenerate points/cells
 // used for level transitions.
 
-#ifndef __vtkAMRDualClip_h
-#define __vtkAMRDualClip_h
+#ifndef vtkAMRDualClip_h
+#define vtkAMRDualClip_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMultiBlockDataSetAlgorithm.h"
@@ -96,7 +96,6 @@ protected:
   // Needed for copying cell data to point data.
   vtkUnstructuredGrid* Mesh;
 
-  //BTX
   virtual int RequestData(vtkInformation *, vtkInformationVector **, vtkInformationVector *);
 
   void InitializeCopyAttributes(vtkNonOverlappingAMR *hbdsInput, vtkDataSet* mesh);
@@ -152,7 +151,7 @@ protected:
 private:
   vtkAMRDualClip(const vtkAMRDualClip&);  // Not implemented.
   void operator=(const vtkAMRDualClip&);  // Not implemented.
-  //ETX
+
 };
 
 #endif

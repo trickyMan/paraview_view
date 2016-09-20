@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqStandardViewFrameActionsImplementation_h
-#define __pqStandardViewFrameActionsImplementation_h
+#ifndef pqStandardViewFrameActionsImplementation_h
+#define pqStandardViewFrameActionsImplementation_h
 
 #include "pqViewFrameActionsInterface.h"
 #include "pqApplicationComponentsModule.h" // needed for export macros
@@ -41,6 +41,7 @@ class pqContextView;
 class pqRenderView;
 class pqSpreadSheetView;
 class QAction;
+class QActionGroup;
 class QShortcut;
 class QWidget;
 
@@ -125,13 +126,18 @@ protected slots:
   /// A slot called when an interactive selection is toggled
   void interactiveSelectionToggled(bool checked);
 
-
 protected:
   /// called to setup empty frame.
   virtual void setupEmptyFrame(QWidget* frame);
 
   /// called to add view type independent actions first.
   virtual void addGenericActions(pqViewFrame* frame, pqView* view);
+
+  /// called to add view type independent actions first.
+  virtual QActionGroup* addSelectionModifierActions(pqViewFrame* frame, pqView* view);
+
+  /// called to add a separator in the action bar
+  virtual void addSeparator(pqViewFrame* frame, pqView* view);
 
   /// called to add context view actions.
   virtual void addContextViewActions(pqViewFrame* frame, pqContextView* chart_view);
@@ -144,7 +150,7 @@ protected:
 
   /// check the XML hints to see if a button with the given name
   /// should be added to the view frame
-  bool isButtonVisible(const std::string & buttonName, pqView* view);
+  virtual bool isButtonVisible(const std::string & buttonName, pqView* view);
 
   struct ViewType
     {

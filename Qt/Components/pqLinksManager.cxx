@@ -92,7 +92,7 @@ void pqLinksManager::addLink()
 
       if(inP->IsA("vtkSMRenderViewProxy") && outP->IsA("vtkSMRenderViewProxy"))
         {
-        model->addCameraLink(editor.linkName(), inP, outP);
+        model->addCameraLink(editor.linkName(), inP, outP, editor.interactiveViewLinkChecked());
         }
       else
         {
@@ -106,6 +106,10 @@ void pqLinksManager::addLink()
                                 editor.selectedProperty1(),
                                 editor.selectedProxy2(),
                                 editor.selectedProperty2());
+      }
+    else if (editor.linkType() == pqLinksModel::Selection)
+      {
+      model->addSelectionLink(editor.linkName(), editor.selectedProxy1(), editor.selectedProxy2());
       }
     }
 }
@@ -128,7 +132,7 @@ void pqLinksManager::editLink()
 
       if(inP->IsA("vtkSMRenderViewProxy") && outP->IsA("vtkSMRenderViewProxy"))
         {
-        model->addCameraLink(editor.linkName(), inP, outP);
+        model->addCameraLink(editor.linkName(), inP, outP, editor.interactiveViewLinkChecked());
         }
       else
         {
@@ -142,6 +146,10 @@ void pqLinksManager::editLink()
                                 editor.selectedProperty1(),
                                 editor.selectedProxy2(),
                                 editor.selectedProperty2());
+      }
+    else if (editor.linkType() == pqLinksModel::Selection)
+      {
+      model->addSelectionLink(editor.linkName(), editor.selectedProxy1(), editor.selectedProxy2());
       }
     }
 }

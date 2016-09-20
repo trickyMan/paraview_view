@@ -17,8 +17,8 @@
 // vtkPVContextView adopts vtkContextView so that it can be used in ParaView
 // configurations.
 
-#ifndef __vtkPVContextView_h
-#define __vtkPVContextView_h
+#ifndef vtkPVContextView_h
+#define vtkPVContextView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVView.h"
@@ -30,6 +30,7 @@ class vtkChart;
 class vtkChartRepresentation;
 class vtkContextInteractorStyle;
 class vtkContextView;
+class vtkCSVExporter;
 class vtkInformationIntegerKey;
 class vtkRenderWindow;
 class vtkRenderWindowInteractor;
@@ -115,7 +116,13 @@ public:
   // convert the selection, as appropriate.
   vtkSelection* GetSelection();
 
-//BTX
+  // Description:
+  // Export the contents of this view using the exporter.
+  // Called vtkChartRepresentation::Export() on all visible representations.
+  // This is expected to called only on the client side after a render/update.
+  // Thus all data is expected to available on the local process.
+  virtual bool Export(vtkCSVExporter* exporter);
+
 protected:
   vtkPVContextView();
   ~vtkPVContextView();
@@ -159,7 +166,7 @@ private:
 
   template <class T>
   vtkSelection* GetSelectionImplementation(T* chart);
-//ETX
+
 };
 
 #endif

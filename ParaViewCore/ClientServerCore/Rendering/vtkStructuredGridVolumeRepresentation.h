@@ -24,8 +24,8 @@
 // order using the unstructured grid. In which case, however data will be
 // transferred among processing.
 
-#ifndef __vtkStructuredGridVolumeRepresentation_h
-#define __vtkStructuredGridVolumeRepresentation_h
+#ifndef vtkStructuredGridVolumeRepresentation_h
+#define vtkStructuredGridVolumeRepresentation_h
 
 #include "vtkUnstructuredGridVolumeRepresentation.h"
 
@@ -55,7 +55,6 @@ public:
   virtual int ProcessViewRequest(vtkInformationRequestKey* request_type,
     vtkInformation* inInfo, vtkInformation* outInfo);
 
-//BTX
 protected:
   vtkStructuredGridVolumeRepresentation();
   ~vtkStructuredGridVolumeRepresentation();
@@ -73,7 +72,7 @@ protected:
 private:
   vtkStructuredGridVolumeRepresentation(const vtkStructuredGridVolumeRepresentation&); // Not implemented
   void operator=(const vtkStructuredGridVolumeRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -29,8 +29,8 @@
 // like vtkSMParaViewPipelineController, this class also uses vtkObjectFactory
 // mechanisms to enable overriding by clients at compile time.
 
-#ifndef __vtkSMParaViewPipelineControllerWithRendering_h
-#define __vtkSMParaViewPipelineControllerWithRendering_h
+#ifndef vtkSMParaViewPipelineControllerWithRendering_h
+#define vtkSMParaViewPipelineControllerWithRendering_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMParaViewPipelineController.h"
@@ -130,7 +130,6 @@ public:
   // Register layout proxy.
   virtual bool RegisterLayoutProxy(vtkSMProxy* proxy, const char* proxyname=NULL);
 
-//BTX
 protected:
   vtkSMParaViewPipelineControllerWithRendering();
   ~vtkSMParaViewPipelineControllerWithRendering();
@@ -143,7 +142,7 @@ private:
   void operator=(const vtkSMParaViewPipelineControllerWithRendering&); // Not implemented
   static bool HideScalarBarOnHide;
   static bool InheritRepresentationProperties;
-//ETX
+
 };
 
 #endif

@@ -23,16 +23,15 @@
 // .SECTION See Also
 // vtkSMDomain vtkSMStringVectorProperty
 
-#ifndef __vtkSMStringListDomain_h
-#define __vtkSMStringListDomain_h
+#ifndef vtkSMStringListDomain_h
+#define vtkSMStringListDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDomain.h"
 #include <vector> //  needed for vector.
 class vtkStdString;
-//BTX
+
 struct vtkSMStringListDomainInternals;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMStringListDomain : public vtkSMDomain
 {

@@ -26,8 +26,8 @@
 // Once the factory has been configured, the API to create writers, get
 // available writers etc. can be used.
 
-#ifndef __vtkSMWriterFactory_h
-#define __vtkSMWriterFactory_h
+#ifndef vtkSMWriterFactory_h
+#define vtkSMWriterFactory_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -106,7 +106,7 @@ public:
   // the begining of the application's execution before any sessions are
   // created.
   static void AddWriterToWhitelist(const char* writerxmlgroup, const char* writerxmlname);
-//BTX
+
 protected:
   vtkSMWriterFactory();
   ~vtkSMWriterFactory();
@@ -117,7 +117,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

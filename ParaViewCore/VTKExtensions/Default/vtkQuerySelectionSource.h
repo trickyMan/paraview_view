@@ -22,8 +22,8 @@
 // the operator and (0,10) are the values. A query can have additional
 // qualifiers such as the process id, block id, amr level, amr block.
 
-#ifndef __vtkQuerySelectionSource_h
-#define __vtkQuerySelectionSource_h
+#ifndef vtkQuerySelectionSource_h
+#define vtkQuerySelectionSource_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkSelectionAlgorithm.h"
@@ -71,7 +71,6 @@ public:
   vtkSetMacro(Inverse, int);
   vtkGetMacro(Inverse, int);
 
-//BTX
 protected:
   vtkQuerySelectionSource();
   ~vtkQuerySelectionSource();
@@ -101,7 +100,7 @@ private:
   vtkInternals* Internals;
 
   int Inverse;
-//ETX
+
 };
 
 #endif

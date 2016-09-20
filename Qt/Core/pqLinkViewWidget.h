@@ -29,12 +29,14 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =========================================================================*/
-#ifndef __pqLinkViewWidget_h
-#define __pqLinkViewWidget_h
+#ifndef pqLinkViewWidget_h
+#define pqLinkViewWidget_h
 
 #include <QWidget>
 #include <pqCoreModule.h>
+
 class pqRenderView;
+class QCheckBox;
 class QLineEdit;
 
 /// a popup window that helps the user select another view
@@ -57,6 +59,7 @@ protected:
 private:
   pqRenderView* RenderView;
   QLineEdit* LineEdit;
+  QCheckBox* InteractiveViewLinkCheckBox;
 };
 
 #endif

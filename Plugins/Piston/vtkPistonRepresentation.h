@@ -17,8 +17,8 @@
 // vtkPistonRepresentation is a representation for showing vtkPistonDataObjects.
 // It uses vtkPistonMapper to draw the data while keeping it on the GPU.
 
-#ifndef __vtkPistonRepresentation_h
-#define __vtkPistonRepresentation_h
+#ifndef vtkPistonRepresentation_h
+#define vtkPistonRepresentation_h
 
 #include "vtkPVDataRepresentation.h"
 
@@ -45,7 +45,6 @@ public:
   // representation of false, all view passes are ignored.
   virtual void SetVisibility(bool val);
 
-//BTX
 protected:
   vtkPistonRepresentation();
   ~vtkPistonRepresentation();
@@ -99,7 +98,7 @@ private:
 
   char* DebugString;
   vtkSetStringMacro(DebugString);
-//ETX
+
 };
 
 #endif

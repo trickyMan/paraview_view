@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
 
-#ifndef __pqItemViewSearchWidgetEventPlayer_h
-#define __pqItemViewSearchWidgetEventPlayer_h
+#ifndef pqItemViewSearchWidgetEventPlayer_h
+#define pqItemViewSearchWidgetEventPlayer_h
 
 #include "pqComponentsModule.h" // needed for EXPORT macro.
 #include "pqWidgetEventPlayer.h"
@@ -45,6 +45,7 @@ public:
   pqItemViewSearchWidgetEventPlayer(QObject* parent=0);
   ~pqItemViewSearchWidgetEventPlayer();
 
+  using Superclass::playEvent;
   bool playEvent(QObject* object, const QString& command, const QString&
     arguments, bool& error);
 

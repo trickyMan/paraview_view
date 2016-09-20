@@ -14,8 +14,8 @@
 =========================================================================*/
 // .NAME vtkMultiSliceContextItem
 
-#ifndef __vtkMultiSliceContextItem_h
-#define __vtkMultiSliceContextItem_h
+#ifndef vtkMultiSliceContextItem_h
+#define vtkMultiSliceContextItem_h
 
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
 #include "vtkContextItem.h"
@@ -56,7 +56,6 @@ public:
   // is being updated between mouse-press/release events.
   int GetActiveSliceIndex();
 
-//BTX
   // Description:
   // Return true if the supplied x, y coordinate is inside the item.
   virtual bool Hit(const vtkContextMouseEvent &mouse);
@@ -129,7 +128,7 @@ private:
 
   struct vtkInternal;
   vtkInternal* Internal;
-//ETX
+
 };
 
 #endif

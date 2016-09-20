@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqSpreadSheetView_h 
-#define __pqSpreadSheetView_h
+#ifndef pqSpreadSheetView_h
+#define pqSpreadSheetView_h
 
 #include "pqView.h"
 
@@ -83,6 +83,9 @@ protected slots:
 
   /// Called when checkbox "Show Only Selected Elements" is updated
   void onSelectionOnly();
+
+  /// Called when the "Font Size" property is updated
+  void onFontSizeChanged();
 
   /// Create a QWidget for the view's viewport.
   virtual QWidget* createWidget();

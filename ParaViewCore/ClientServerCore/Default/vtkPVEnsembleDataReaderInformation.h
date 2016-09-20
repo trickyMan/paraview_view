@@ -17,8 +17,8 @@
 // .SECTION Description
 // Gather information about data files from vtkEnsembleDataReader.
 
-#ifndef __vtkPVEnsembleDataReaderInformation_h
-#define __vtkPVEnsembleDataReaderInformation_h
+#ifndef vtkPVEnsembleDataReaderInformation_h
+#define vtkPVEnsembleDataReaderInformation_h
 
 #include "vtkPVClientServerCoreDefaultModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -35,12 +35,10 @@ public:
   // Transfer information about a single object into this object.
   virtual void CopyFromObject(vtkObject*);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*);
   virtual void CopyFromStream(const vtkClientServerStream*);
-  //ETX
 
   // Description:
   // Get number of files contained in the ensemble.

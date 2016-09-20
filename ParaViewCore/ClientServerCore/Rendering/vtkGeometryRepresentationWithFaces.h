@@ -18,8 +18,8 @@
 // support for rendering back and front faces separately (with different
 // visibility and properties).
 
-#ifndef __vtkGeometryRepresentationWithFaces_h
-#define __vtkGeometryRepresentationWithFaces_h
+#ifndef vtkGeometryRepresentationWithFaces_h
+#define vtkGeometryRepresentationWithFaces_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkGeometryRepresentation.h"
@@ -62,7 +62,6 @@ public:
   void SetBackfaceDiffuseColor(double r, double g, double b);
   void SetBackfaceOpacity(double val);
 
-//BTX
 protected:
   vtkGeometryRepresentationWithFaces();
   ~vtkGeometryRepresentationWithFaces();
@@ -99,7 +98,7 @@ protected:
 private:
   vtkGeometryRepresentationWithFaces(const vtkGeometryRepresentationWithFaces&); // Not implemented
   void operator=(const vtkGeometryRepresentationWithFaces&); // Not implemented
-//ETX
+
 };
 
 #endif

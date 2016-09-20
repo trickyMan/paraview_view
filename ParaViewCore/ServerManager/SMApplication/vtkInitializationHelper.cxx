@@ -238,6 +238,7 @@ void vtkInitializationHelper::Initialize(int argc, char**argv,
   // These are always loaded (not merely located).
   vtkNew<vtkPVPluginLoader> loader;
   loader->LoadPluginsFromPluginSearchPath();
+  loader->LoadPluginsFromPluginConfigFile();
 
   vtkInitializationHelper::SaveUserSettingsFileDuringFinalization = false;
   // Load settings files on client-processes.
@@ -370,7 +371,7 @@ std::string vtkInitializationHelper::GetUserSettingsDirectory()
 {
   std::string organizationName(vtkInitializationHelper::GetOrganizationName());
   std::string applicationName(vtkInitializationHelper::GetApplicationName());
-#if defined(WIN32)
+#if defined(_WIN32)
   const char* appData = getenv("APPDATA");
   if (!appData)
     {

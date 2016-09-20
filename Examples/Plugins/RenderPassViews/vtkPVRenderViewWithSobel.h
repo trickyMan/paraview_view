@@ -18,8 +18,8 @@
 // subclasses that use a image-processing render pass for processing the image
 // before rendering it on the screen.
 
-#ifndef __vtkPVRenderViewWithSobel_h
-#define __vtkPVRenderViewWithSobel_h
+#ifndef vtkPVRenderViewWithSobel_h
+#define vtkPVRenderViewWithSobel_h
 
 #include "vtkPVRenderView.h"
 
@@ -36,7 +36,6 @@ public:
   // @CallOnAllProcessess
   virtual void Initialize(unsigned int id);
 
-//BTX
 protected:
   vtkPVRenderViewWithSobel();
   ~vtkPVRenderViewWithSobel();
@@ -44,7 +43,7 @@ protected:
 private:
   vtkPVRenderViewWithSobel(const vtkPVRenderViewWithSobel&); // Not implemented
   void operator=(const vtkPVRenderViewWithSobel&); // Not implemented
-//ETX
+
 };
 
 #endif

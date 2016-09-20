@@ -13,8 +13,8 @@
 
 =========================================================================*/
 
-#ifndef _vtkMoleculeRepresentation_h
-#define _vtkMoleculeRepresentation_h
+#ifndef vtkMoleculeRepresentation_h
+#define vtkMoleculeRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
@@ -38,7 +38,6 @@ public:
   vtkGetMacro(MoleculeRenderMode, int)
   void SetMoleculeRenderMode(int mode);
 
-//BTX
 protected:
   vtkMoleculeRepresentation();
   ~vtkMoleculeRepresentation();
@@ -56,7 +55,7 @@ protected:
 private:
   vtkMoleculeRepresentation(const vtkMoleculeRepresentation&); // Not implemented
   void operator=(const vtkMoleculeRepresentation&); // Not implemented
-//ETX
+
 };
 
-#endif // _vtkMoleculeRepresentation_h
+#endif // vtkMoleculeRepresentation_h

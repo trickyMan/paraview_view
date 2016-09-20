@@ -18,8 +18,8 @@
 // add push-API specific to vtkXMLPVAnimationWriter to add representations while
 // assigning them unique names consistently across all processes.
 
-#ifndef __vtkSIXMLAnimationWriterRepresentationProperty_h
-#define __vtkSIXMLAnimationWriterRepresentationProperty_h
+#ifndef vtkSIXMLAnimationWriterRepresentationProperty_h
+#define vtkSIXMLAnimationWriterRepresentationProperty_h
 
 #include "vtkPVAnimationModule.h" //needed for exports
 #include "vtkSIInputProperty.h"
@@ -31,7 +31,6 @@ public:
   vtkTypeMacro(vtkSIXMLAnimationWriterRepresentationProperty, vtkSIInputProperty);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSIXMLAnimationWriterRepresentationProperty();
   ~vtkSIXMLAnimationWriterRepresentationProperty();
@@ -44,7 +43,7 @@ protected:
 private:
   vtkSIXMLAnimationWriterRepresentationProperty(const vtkSIXMLAnimationWriterRepresentationProperty&); // Not implemented
   void operator=(const vtkSIXMLAnimationWriterRepresentationProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

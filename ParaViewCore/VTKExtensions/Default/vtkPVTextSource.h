@@ -17,8 +17,8 @@
 // .SECTION Description
 // vtkPVTextSource is used to generate a table with a single string. 
 
-#ifndef __vtkPVTextSource_h
-#define __vtkPVTextSource_h
+#ifndef vtkPVTextSource_h
+#define vtkPVTextSource_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkTableAlgorithm.h"
@@ -35,7 +35,7 @@ public:
   vtkSetStringMacro(Text);
   vtkGetStringMacro(Text);
   
-// BTX
+
 protected:
   vtkPVTextSource();
   ~vtkPVTextSource();
@@ -51,7 +51,7 @@ protected:
 private:
   vtkPVTextSource(const vtkPVTextSource&); // Not implemented
   void operator=(const vtkPVTextSource&); // Not implemented
-//ETX
+
 };
 
 #endif

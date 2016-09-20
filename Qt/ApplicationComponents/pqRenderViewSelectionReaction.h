@@ -29,12 +29,13 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqRenderViewSelectionReaction_h
-#define __pqRenderViewSelectionReaction_h
+#ifndef pqRenderViewSelectionReaction_h
+#define pqRenderViewSelectionReaction_h
 
-#include "pqReaction.h"
+#include "pqSelectionReaction.h"
 #include <QPointer>
 #include <QCursor>
+#include <QTimer>
 #include "vtkWeakPointer.h"
 
 class pqRenderView;
@@ -49,10 +50,10 @@ class vtkObject;
 /// at most 1 view (and 1 type of selection) is in selection-mode at any given
 /// time.
 class PQAPPLICATIONCOMPONENTS_EXPORT pqRenderViewSelectionReaction :
-  public pqReaction
+  public pqSelectionReaction
 {
   Q_OBJECT
-  typedef pqReaction Superclass;
+  typedef pqSelectionReaction Superclass;
 public:
   enum SelectionMode
     {
@@ -68,13 +69,15 @@ public:
     ZOOM_TO_BOX,
     CLEAR_SELECTION,
     SELECT_SURFACE_CELLS_INTERACTIVELY,
-    SELECT_SURFACE_POINTS_INTERACTIVELY
+    SELECT_SURFACE_POINTS_INTERACTIVELY,
+    SELECT_SURFACE_POINTS_TOOLTIP
     };
 
   /// If \c view is NULL, this reaction will track the active-view maintained by
   /// pqActiveObjects.
   pqRenderViewSelectionReaction(
-    QAction* parentAction, pqRenderView* view, SelectionMode mode);
+    QAction* parentAction, pqRenderView* view, SelectionMode mode,
+    QActionGroup* modifierGroup = NULL);
   virtual ~pqRenderViewSelectionReaction();
 
 signals:
@@ -103,6 +106,13 @@ private slots:
   /// render view to previous interaction mode.
   void endSelection();
 
+  /// makes the pre-selection.
+  void preSelection();
+
+  /// callback called for mouse stop events when in 'interactive selection'
+  /// modes.
+  void onMouseStop();
+
 private:
   /// callback called when the vtkPVRenderView is done with selection.
   void selectionChanged(vtkObject*, unsigned long, void* calldata);
@@ -116,14 +126,26 @@ private:
   void onLeftButtonRelease();
   void onWheelRotate();
 
+  // Get the current state of selection modifier
+  int getSelectionModifier();
+
+  // Check this selection is compatible with another type of selection
+  bool isCompatible(SelectionMode mode);
+
+  // Display/hide the tooltip of the selected point in mode SELECT_SURFACE_POINTS_TOOLTIP.
+  void UpdateTooltip();
+
 private:
   Q_DISABLE_COPY(pqRenderViewSelectionReaction);
   QPointer<pqRenderView> View;
   SelectionMode Mode;
+  bool DisableSelectionModifiers;
   int PreviousRenderViewMode;
   vtkWeakPointer<vtkObject> ObservedObject;
   unsigned long ObserverIds[4];
   QCursor ZoomCursor;
+  QTimer MouseMovingTimer;
+  bool MouseMoving;
 
   static QPointer<pqRenderViewSelectionReaction> ActiveReaction;
 

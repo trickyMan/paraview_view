@@ -18,18 +18,19 @@
 // vtkSMRenderViewProxy is a 3D view consisting for a render window and two
 // renderers: 1 for 3D geometry and 1 for overlayed 2D geometry.
 
-#ifndef __vtkSMRenderViewProxy_h
-#define __vtkSMRenderViewProxy_h
+#ifndef vtkSMRenderViewProxy_h
+#define vtkSMRenderViewProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMViewProxy.h"
 #include "vtkNew.h" // needed for vtkInteractorObserver.
 class vtkCamera;
 class vtkCollection;
+class vtkFloatArray;
 class vtkIntArray;
 class vtkRenderer;
 class vtkRenderWindow;
-class vtkRenderWindowInteractor;
+class vtkRenderWinwInteractor;
 class vtkSMDataDeliveryManager;
 class vtkSMViewProxyInteractorHelper;
 
@@ -186,7 +187,10 @@ public:
   // monitor timer events etc.
   vtkSMViewProxyInteractorHelper* GetInteractorHelper();
 
-//BTX
+  // Description:
+  // Access to the Z buffer.
+  vtkFloatArray* CaptureDepthBuffer();
+
 protected:
   vtkSMRenderViewProxy();
   ~vtkSMRenderViewProxy();
@@ -253,7 +257,7 @@ private:
   void operator=(const vtkSMRenderViewProxy&); // Not implemented
 
   vtkNew<vtkSMViewProxyInteractorHelper> InteractorHelper;
-//ETX
+
 };
 
 #endif

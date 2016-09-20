@@ -41,9 +41,6 @@ vtkPVDataRepresentation::vtkPVDataRepresentation()
   this->UpdateTimeValid = false;
   this->UpdateTime = 0.0;
 
-  this->UseCache = false;
-  this->CacheKey = 0.0;
-
   this->ForceUseCache = false;
   this->ForcedCacheKey = 0.0;
 
@@ -143,8 +140,8 @@ int vtkPVDataRepresentation::RequestUpdateTime(
       {
       if (this->UpdateTimeValid)
         {
-        vtkStreamingDemandDrivenPipeline::SetUpdateTimeStep(
-          inputVector[cc]->GetInformationObject(kk),
+        inputVector[cc]->GetInformationObject(kk)->Set(
+          vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP(),
           this->UpdateTime);
         }
       }
@@ -167,17 +164,18 @@ int vtkPVDataRepresentation::RequestUpdateExtent(vtkInformation* request,
     {
     for (int kk=0; kk < inputVector[cc]->GetNumberOfInformationObjects(); kk++)
       {
-      vtkStreamingDemandDrivenPipeline::SetUpdateExtent(
-            inputVector[cc]->GetInformationObject(kk),
-            controller->GetLocalProcessId(),
-            controller->GetNumberOfProcesses(), /*ghost-levels*/ 0);
-      inputVector[cc]->GetInformationObject(kk)->Set(
-            vtkStreamingDemandDrivenPipeline::EXACT_EXTENT(), 1);
+      vtkInformation* info = inputVector[cc]->GetInformationObject(kk);
+      info->Set(vtkStreamingDemandDrivenPipeline::UPDATE_PIECE_NUMBER(),
+        controller->GetLocalProcessId());
+      info->Set(vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_PIECES(),
+        controller->GetNumberOfProcesses());
+      info->Set(vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_GHOST_LEVELS(),
+        0);
+      info->Set(vtkStreamingDemandDrivenPipeline::EXACT_EXTENT(), 1);
       if (this->UpdateTimeValid)
         {
-        vtkStreamingDemandDrivenPipeline::SetUpdateTimeStep(
-              inputVector[cc]->GetInformationObject(kk),
-              this->UpdateTime);
+        info->Set(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP(),
+          this->UpdateTime);
         }
       }
     }
@@ -231,14 +229,85 @@ vtkAlgorithmOutput* vtkPVDataRepresentation::GetInternalOutputPort(int port,
 }
 
 //----------------------------------------------------------------------------
+bool vtkPVDataRepresentation::AddToView(vtkView* view)
+{
+  if (this->View != NULL)
+    {
+    vtkWarningMacro("Added representation has a non-null 'View'. "
+      "A representation cannot be added to two views at the same time!");
+    }
+  this->View = view;
+  return this->Superclass::AddToView(view);
+}
+
+//----------------------------------------------------------------------------
+bool vtkPVDataRepresentation::RemoveFromView(vtkView* view)
+{
+  if (this->View == view)
+    {
+    this->View = NULL;
+    }
+  return this->Superclass::RemoveFromView(view);
+}
+
+//----------------------------------------------------------------------------
+vtkView* vtkPVDataRepresentation::GetView() const
+{
+  return this->View;
+}
+
+//----------------------------------------------------------------------------
+double vtkPVDataRepresentation::GetCacheKey()
+{
+  if (this->ForceUseCache)
+    {
+    return this->ForcedCacheKey;
+    }
+  if (vtkPVView* pvview = vtkPVView::SafeDownCast(this->View))
+    {
+    return pvview->GetCacheKey();
+    }
+  return 0.0;
+}
+
+//----------------------------------------------------------------------------
+bool vtkPVDataRepresentation::GetUseCache()
+{
+  if (this->ForceUseCache)
+    {
+    return true;
+    }
+
+  if (vtkPVView* pvview = vtkPVView::SafeDownCast(this->View))
+    {
+    return pvview->GetUseCache();
+    }
+  return false;
+}
+
+#if !defined(VTK_LEGACY_REMOVE)
+//----------------------------------------------------------------------------
+void vtkPVDataRepresentation::SetUseCache(bool)
+{
+  VTK_LEGACY_BODY(vtkPVDataRepresentation::SetUseCache, "ParaView 5.0");
+}
+#endif
+
+#if !defined(VTK_LEGACY_REMOVE)
+//----------------------------------------------------------------------------
+void vtkPVDataRepresentation::SetCacheKey(double)
+{
+  VTK_LEGACY_BODY(vtkPVDataRepresentation::SetCacheKey, "ParaView 5.0");
+}
+#endif
+
+//----------------------------------------------------------------------------
 void vtkPVDataRepresentation::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
   os << indent << "Visibility: " << this->Visibility << endl;
   os << indent << "UpdateTimeValid: " << this->UpdateTimeValid << endl;
   os << indent << "UpdateTime: " << this->UpdateTime << endl;
-  os << indent << "UseCache: " << this->UseCache << endl;
-  os << indent << "CacheKey: " << this->CacheKey << endl;
   os << indent << "ForceUseCache: " << this->ForceUseCache << endl;
   os << indent << "ForcedCacheKey: " << this->ForcedCacheKey << endl;
 }

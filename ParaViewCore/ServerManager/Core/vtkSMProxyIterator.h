@@ -19,15 +19,13 @@
 // .SECTION See Also
 // vtkSMProxy vtkSMProxyManager
 
-#ifndef __vtkSMProxyIterator_h
-#define __vtkSMProxyIterator_h
+#ifndef vtkSMProxyIterator_h
+#define vtkSMProxyIterator_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
 
-//BTX
 struct vtkSMProxyIteratorInternals;
-//ETX
 
 class vtkSMProxy;
 class vtkSMSession;
@@ -54,7 +52,7 @@ public:
   void Begin();
 
   // Description:
-  // Go to the beginning of one group.
+  // Go to the beginning of one group, and set mode to iterate over one group.
   void Begin(const char* groupName);
 
   // Description:
@@ -94,14 +92,12 @@ public:
   vtkGetMacro(SkipPrototypes, bool);
   vtkBooleanMacro(SkipPrototypes, bool);
 
-//BTX
   enum TraversalMode
   {
     GROUPS_ONLY=0,
     ONE_GROUP=1,
     ALL=2
   };
-//ETX
 
 protected:
   vtkSMProxyIterator();

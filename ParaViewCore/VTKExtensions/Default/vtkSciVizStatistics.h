@@ -31,8 +31,8 @@
 // Thanks to David Thompson and Philippe Pebay from Sandia National Laboratories 
 // for implementing this class. Updated by Philippe Pebay, Kitware SAS 2012
 
-#ifndef __vtkSciVizStatistics_h
-#define __vtkSciVizStatistics_h
+#ifndef vtkSciVizStatistics_h
+#define vtkSciVizStatistics_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkTableAlgorithm.h"
@@ -86,7 +86,6 @@ public:
   vtkSetClampMacro(TrainingFraction,double,0.0,1.0);
   vtkGetMacro(TrainingFraction,double);
 
-  //BTX
   /**\brief Possible tasks the filter can perform.
     *
     * The MODEL_AND_ASSESS task is not recommended;
@@ -102,7 +101,6 @@ public:
     ASSESS_INPUT,     //!< Assess the input dataset using a statistical model from input port 1
     MODEL_AND_ASSESS  //!< Create a statistical model of the input dataset and use it to assess the dataset. This is a bad idea.
     };
-  //ETX
 
   // Description:
   // Set/get whether this filter should create a model of the input or assess the input or both.
@@ -177,4 +175,4 @@ private:
   void operator = ( const vtkSciVizStatistics& ); // Not implemented.
 };
 
-#endif // __vtkSciVizStatistics_h
+#endif // vtkSciVizStatistics_h

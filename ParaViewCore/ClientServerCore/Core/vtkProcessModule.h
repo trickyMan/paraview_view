@@ -16,12 +16,14 @@
 // ParaView processes.
 // vtkProcessModule is the process initialization and session management core
 // for ParaView processes.
-#ifndef __vtkProcessModule_h
-#define __vtkProcessModule_h
+#ifndef vtkProcessModule_h
+#define vtkProcessModule_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
 #include "vtkSmartPointer.h" // needed for vtkSmartPointer.
+
+#include <string> // for std::string
 
 class vtkMultiProcessController;
 class vtkNetworkAccessManager;
@@ -210,7 +212,20 @@ public:
   // implies that satellites process same code as the root node. This is
   // applicable only for PROCESS_BATCH.
   vtkGetMacro(SymmetricMPIMode, bool);
-//BTX
+
+  // Description:
+  // The full path to the current executable that is running (or empty if unknown).
+  std::string GetProgramPath() const
+  {
+    return this->ProgramPath;
+  }
+  // Description:
+  // The directory containing the current executable (or empty if unknown).
+  std::string GetSelfDir() const
+  {
+    return this->SelfDir;
+  }
+
 protected:
   vtkProcessModule();
   ~vtkProcessModule();
@@ -235,6 +250,11 @@ protected:
   // session id is ever repeated.
   vtkIdType MaxSessionId;
 
+  // Description:
+  // Sets the executable path of the process so that ParaView can, e.g., set up
+  // paths for Python properly.
+  void SetExecutablePath(const std::string& path);
+
 protected:
   vtkProcessModuleInternals* Internals;
 
@@ -247,10 +267,12 @@ private:
   vtkProcessModule(const vtkProcessModule&); // Not implemented.
   void operator=(const vtkProcessModule&); // Not implemented.
 
+  void DetermineExecutablePath(int argc, char** argv);
+
   // Helper to initialize Python environment. This doesn't initialize Python
   // but simply sets up the environment so when Python is initialized, it can
-  // find ParaView modules. This does nothing is not build with Python support.
-  bool InitializePythonEnvironment(int argc, char** argv);
+  // find ParaView modules. This does nothing if not build with Python support.
+  bool InitializePythonEnvironment();
 
   static ProcessTypes ProcessType;
 
@@ -269,7 +291,10 @@ private:
   bool MultipleSessionsSupport;
 
   vtkIdType EventCallDataSessionId;
-//ETX
+
+  std::string ProgramPath;
+  std::string SelfDir;
+
 };
 
-#endif //__vtkProcessModule_h
+#endif //vtkProcessModule_h

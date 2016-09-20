@@ -18,8 +18,8 @@
 // those that are used to communicate between data-server,render-server and
 // client. This is an abstract class.
 
-#ifndef __vtkPVSession_h
-#define __vtkPVSession_h
+#ifndef vtkPVSession_h
+#define vtkPVSession_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkSession.h"
@@ -102,7 +102,6 @@ public:
   // CleanupPendingProgress() block.
   bool GetPendingProgress();
 
-//BTX
 protected:
   vtkPVSession();
   ~vtkPVSession();
@@ -132,7 +131,7 @@ private:
   // This flags ensures that while we are waiting for an previous progress-pair
   // to finish, we don't start new progress-pairs.
   bool InCleanupPendingProgress;
-//ETX
+
 };
 
 #endif

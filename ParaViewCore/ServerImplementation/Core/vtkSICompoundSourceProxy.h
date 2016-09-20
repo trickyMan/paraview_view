@@ -19,8 +19,8 @@
 // It provides the mapping to the exposed output port to the underneath
 // internal sub-proxy.
 
-#ifndef __vtkSICompoundSourceProxy_h
-#define __vtkSICompoundSourceProxy_h
+#ifndef vtkSICompoundSourceProxy_h
+#define vtkSICompoundSourceProxy_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSISourceProxy.h"
@@ -38,7 +38,6 @@ public:
   // Returns the vtkAlgorithmOutput for an output port, if valid.
   virtual vtkAlgorithmOutput* GetOutputPort(int port);
 
-//BTX
 protected:
   vtkSICompoundSourceProxy();
   ~vtkSICompoundSourceProxy();
@@ -57,7 +56,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

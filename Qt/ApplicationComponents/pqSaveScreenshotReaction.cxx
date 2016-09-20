@@ -7,7 +7,7 @@
    All rights reserved.
 
    ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2. 
+   under the terms of the ParaView license version 1.2.
 
    See License_v1.2.txt for the full ParaView license.
    A copy of this license can be obtained by contacting
@@ -36,13 +36,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pqFileDialog.h"
 #include "pqImageUtil.h"
 #include "pqPVApplicationCore.h"
-#include "pqRenderViewBase.h"
 #include "pqSaveSnapshotDialog.h"
 #include "pqSettings.h"
+#include "pqStereoModeHelper.h"
 #include "pqTabbedMultiViewWidget.h"
 #include "pqView.h"
 #include "vtkImageData.h"
 #include "vtkSmartPointer.h"
+#include "vtkSMProxy.h"
 #include "vtkSMSessionProxyManager.h"
 
 #include <QDebug>
@@ -73,16 +74,6 @@ void pqSaveScreenshotReaction::updateEnableState()
 //-----------------------------------------------------------------------------
 void pqSaveScreenshotReaction::saveScreenshot()
 {
-  pqTabbedMultiViewWidget* viewManager = qobject_cast<pqTabbedMultiViewWidget*>(
-    pqApplicationCore::instance()->manager("MULTIVIEW_WIDGET"));
-  if (!viewManager)
-    {
-    qCritical("Could not locate pqTabbedMultiViewWidget. "
-      "If using custom-widget as the "
-      "central widget, you cannot use pqSaveScreenshotReaction.");
-    return;
-    }
-
   pqView* view = pqActiveObjects::instance().activeView();
   if (!view)
     {
@@ -92,7 +83,12 @@ void pqSaveScreenshotReaction::saveScreenshot()
 
   pqSaveSnapshotDialog ssDialog(pqCoreUtilities::mainWidget());
   ssDialog.setViewSize(view->getSize());
-  ssDialog.setAllViewsSize(viewManager->clientSize());
+
+  pqTabbedMultiViewWidget* viewManager = qobject_cast<pqTabbedMultiViewWidget*>(
+    pqApplicationCore::instance()->manager("MULTIVIEW_WIDGET"));
+  ssDialog.setAllViewsSize(
+    viewManager ? viewManager->clientSize() : view->getSize());
+  ssDialog.setEnableSaveAllViews(viewManager != 0);
 
   if (ssDialog.exec() != QDialog::Accepted)
     {
@@ -104,7 +100,7 @@ void pqSaveScreenshotReaction::saveScreenshot()
   pqSettings* settings = pqApplicationCore::instance()->settings();
   if (settings->contains("extensions/ScreenshotExtension"))
     {
-    lastUsedExt = 
+    lastUsedExt =
       settings->value("extensions/ScreenshotExtension").toString();
     }
 
@@ -151,11 +147,10 @@ void pqSaveScreenshotReaction::saveScreenshot()
     chosenPalette->Delete();
     }
 
-  int stereo = ssDialog.getStereoMode();
-  if (stereo)
-    {
-    pqRenderViewBase::setStereo(stereo);
-    }
+  QScopedPointer<pqStereoModeHelper> helper(
+    ssDialog.saveAllViews()?
+    new pqStereoModeHelper(ssDialog.getStereoMode(), view->getServer()) :
+    new pqStereoModeHelper(ssDialog.getStereoMode(), view));
 
   pqSaveScreenshotReaction::saveScreenshot(file,
     size, ssDialog.quality(), ssDialog.saveAllViews());
@@ -164,18 +159,6 @@ void pqSaveScreenshotReaction::saveScreenshot()
   if (clone)
     {
     colorPalette->Copy(clone);
-    }
-
-  // restore stereo
-  if (stereo)
-    {
-    pqRenderViewBase::setStereo(0);
-    }
-
-  // check if need to render to clear the changes we did
-  // while saving the screenshot.
-  if (clone || stereo)
-    {
     pqApplicationCore::instance()->render();
     }
 }
@@ -184,17 +167,10 @@ void pqSaveScreenshotReaction::saveScreenshot()
 void pqSaveScreenshotReaction::saveScreenshot(
   const QString& filename, const QSize& size, int quality, bool all_views)
 {
-  if (all_views)
-    {
-    pqTabbedMultiViewWidget* viewManager = qobject_cast<pqTabbedMultiViewWidget*>(
+  pqTabbedMultiViewWidget* viewManager = qobject_cast<pqTabbedMultiViewWidget*>(
       pqApplicationCore::instance()->manager("MULTIVIEW_WIDGET"));
-    if (!viewManager)
-      {
-      qCritical("Could not locate pqTabbedMultiViewWidget. "
-        "If using custom-widget as the "
-        "central widget, you cannot use pqSaveScreenshotReaction.");
-      return;
-      }
+  if (all_views && viewManager)
+    {
     if (!viewManager->writeImage(filename, size.width(), size.height(), quality))
       {
       qCritical() << "Save Image failed.";

@@ -46,9 +46,11 @@ set_source_files_properties(
   vtkGenericIOUtilities.cxx
   WRAP_EXCLUDE
   )
-
+set_source_files_properties(
+  vtkGenericIOUtilities
+  PROPERTIES WRAP_EXCLUDE_PYTHON 1)
 vtk_module_library(vtkPVVTKExtensionsCosmoTools ${Module_SRCS})
-target_link_libraries(vtkPVVTKExtensionsCosmoTools
+vtk_module_link_libraries(vtkPVVTKExtensionsCosmoTools
                       LINK_PRIVATE
                         ${CosmoToolsExternalLibs}
                         pthread

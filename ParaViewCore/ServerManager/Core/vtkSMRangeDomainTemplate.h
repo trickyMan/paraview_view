@@ -38,11 +38,17 @@
 // vtkSMRangeDomainTemplate provides a mechanism to control how the default
 // value for any property can be determined using the domain either the min, max
 // or mid of the range. One can do that using the "default_mode" attribute in
-// XML with valid values as "min", "max" or "mid". If none is specified, "mid"
-// is assumed.
+// XML with valid values as "min", "max", "mid", or a comma separated sequence
+// of the three e.g "min,max,min". If none is specified, "mid" is assumed.
+// The comma-separated sequence can be used to set a different mode for each
+// component of the property i.e. "min,max,min" means set element 0 as min,
+// element 1 as max and element 2 and min. If the number of elements on the
+// property is less than the number of default specified, the last value is
+// assumed to be repeated. Thus, "min,max,min" is same as the regular expression
+// "min,max,min(,min)*".
 
-#ifndef __vtkSMRangeDomainTemplate_h
-#define __vtkSMRangeDomainTemplate_h
+#ifndef vtkSMRangeDomainTemplate_h
+#define vtkSMRangeDomainTemplate_h
 
 #include "vtkSMDomain.h"
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
@@ -121,14 +127,13 @@ public:
 
   // Description:
   // Get the default-mode that controls how SetDefaultValues() behaves.
-  int GetDefaultMode();
+  DefaultModes GetDefaultMode(unsigned int index=0);
 
   // Description:
   // Set the property's default value based on the domain. How the value is
   // determined using the range is controlled by DefaultMode.
   virtual int SetDefaultValues(vtkSMProperty*, bool use_unchecked_values);
 
-//BTX
 protected:
   vtkSMRangeDomainTemplate();
   ~vtkSMRangeDomainTemplate();
@@ -180,9 +185,8 @@ protected:
       this->DomainModified();
       }
     }
-
-  int DefaultMode;
-
+  std::vector<DefaultModes> DefaultModeVector;
+  DefaultModes DefaultDefaultMode;
 private:
   vtkSMRangeDomainTemplate(const vtkSMRangeDomainTemplate&); // Not implemented
   void operator=(const vtkSMRangeDomainTemplate&); // Not implemented
@@ -190,7 +194,7 @@ private:
   bool GetComputedDefaultValue(unsigned int index, T& value);
 
   std::vector<vtkEntry> Entries;
-//ETX
+
 };
 
 #if !defined(VTK_NO_EXPLICIT_TEMPLATE_INSTANTIATION)
@@ -201,7 +205,7 @@ private:
 # define VTK_SM_RANGE_DOMAIN_TEMPLATE_INSTANTIATE(T)
 #endif // !defined(VTK_NO_EXPLICIT_TEMPLATE_INSTANTIATION)
 
-#endif // !defined(__vtkSMRangeDomainTemplate_h)
+#endif // !defined(vtkSMRangeDomainTemplate_h)
 
 // This portion must be OUTSIDE the include blockers.  Each
 // vtkSMRangeDomainTemplate subclass uses this to give its instantiation

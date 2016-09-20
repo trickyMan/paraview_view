@@ -15,8 +15,8 @@
 // .NAME vtkSMTextWidgetRepresentationProxy 
 // .SECTION Description
 
-#ifndef __vtkSMTextWidgetRepresentationProxy_h
-#define __vtkSMTextWidgetRepresentationProxy_h
+#ifndef vtkSMTextWidgetRepresentationProxy_h
+#define vtkSMTextWidgetRepresentationProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMNewWidgetRepresentationProxy.h"
@@ -31,7 +31,7 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   
 protected:
-//BTX
+
   vtkSMTextWidgetRepresentationProxy();
   ~vtkSMTextWidgetRepresentationProxy();
   
@@ -45,7 +45,7 @@ protected:
 private:
   vtkSMTextWidgetRepresentationProxy(const vtkSMTextWidgetRepresentationProxy&); // Not implemented
   void operator=(const vtkSMTextWidgetRepresentationProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

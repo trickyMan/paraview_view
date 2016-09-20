@@ -17,6 +17,7 @@
 #include "vtkCommand.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
+#include "vtkPVInstantiator.h"
 #include "vtkPVProxyDefinitionIterator.h"
 #include "vtkPVXMLElement.h"
 #include "vtkSmartPointer.h"
@@ -26,6 +27,7 @@
 #include "vtkSMPropertyIterator.h"
 #include "vtkSMPropertyLink.h"
 #include "vtkSMProxyDefinitionManager.h"
+#include "vtkSMProxyInitializationHelper.h"
 #include "vtkSMProxyIterator.h"
 #include "vtkSMProxyListDomain.h"
 #include "vtkSMProxyProperty.h"
@@ -49,7 +51,9 @@ class vtkSMParaViewPipelineController::vtkInternals
 public:
   typedef std::map<void*, vtkTimeStamp> TimeStampsMap;
   TimeStampsMap InitializationTimeStamps;
+  std::set<void*> ProxiesBeingUnRegistered;
 };
+
 
 namespace
 {
@@ -106,7 +110,38 @@ namespace
       }
     return NULL;
     }
+
+  class vtkPrepareForUnregisteringScopedObj
+  {
+    void* Proxy;
+    std::set<void*> &ProxiesBeingUnRegistered;
+  public:
+    vtkPrepareForUnregisteringScopedObj(void* proxy, std::set<void*>& theset) :
+      Proxy(proxy),
+      ProxiesBeingUnRegistered(theset)
+      {
+      this->ProxiesBeingUnRegistered.insert(this->Proxy);
+      }
+    ~vtkPrepareForUnregisteringScopedObj()
+      {
+      this->ProxiesBeingUnRegistered.erase(this->Proxy);
+      }
+  private:
+    vtkPrepareForUnregisteringScopedObj(const vtkPrepareForUnregisteringScopedObj&);
+    void operator=(const vtkPrepareForUnregisteringScopedObj&);
+  };
 }
+
+//---------------------------------------------------------------------------------------------------------
+// This macros makes it easier to avoid running into unregistering loops due to dependency cycles
+// when unregistering proxies. Any concrete method that unregisters proxies should simply call this macro.
+#define PREPARE_FOR_UNREGISTERING(arg)\
+  if (!arg) { return false; } \
+if (this->Internals->ProxiesBeingUnRegistered.find(arg) != this->Internals->ProxiesBeingUnRegistered.end()) \
+{ \
+  return true; \
+} \
+vtkPrepareForUnregisteringScopedObj __tmp(arg, this->Internals->ProxiesBeingUnRegistered);
 
 vtkObjectFactoryNewMacro(vtkSMParaViewPipelineController);
 //----------------------------------------------------------------------------
@@ -190,10 +225,6 @@ void vtkSMParaViewPipelineController::RegisterProxiesForProxyListDomains(
     for (unsigned int cc=0, max=pld->GetNumberOfProxies(); cc < max; cc++)
       {
       vtkSMProxy* plproxy = pld->GetProxy(cc);
-
-      // Handle proxy-list hints.
-      this->ProcessProxyListProxyHints(proxy, plproxy);
-
       this->PostInitializeProxy(plproxy);
       pxm->RegisterProxy(groupname.c_str(), iter->GetKey(), plproxy);
       }
@@ -272,76 +303,6 @@ bool vtkSMParaViewPipelineController::SetupGlobalPropertiesLinks(vtkSMProxy* pro
       }
     }
   return true;
-}
-
-namespace vtkSMParaViewPipelineControllerNS
-{
-  //---------------------------------------------------------------------------
-  class vtkSMLinkObserver : public vtkCommand
-  {
-public:
-  vtkWeakPointer<vtkSMProperty> Output;
-  typedef vtkCommand Superclass;
-  virtual const char* GetClassNameInternal() const
-    { return "vtkSMLinkObserver"; }
-  static vtkSMLinkObserver* New()
-    {
-    return new vtkSMLinkObserver();
-    }
-  virtual void Execute(vtkObject* caller, unsigned long event, void* calldata)
-    {
-    (void)event;
-    (void)calldata;
-    vtkSMProperty* input = vtkSMProperty::SafeDownCast(caller);
-    if (input && this->Output)
-      {
-      // this will copy both checked and unchecked property values.
-      this->Output->Copy(input);
-      }
-    }
-
-  static void LinkProperty(vtkSMProperty* input,
-    vtkSMProperty* output)
-    {
-    if (input && output)
-      {
-      vtkSMLinkObserver* observer = vtkSMLinkObserver::New();
-      observer->Output = output;
-      input->AddObserver(vtkCommand::PropertyModifiedEvent, observer);
-      input->AddObserver(vtkCommand::UncheckedPropertyModifiedEvent, observer);
-      observer->FastDelete();
-      output->Copy(input);
-      }
-    }
-  };
-
-}
-
-//----------------------------------------------------------------------------
-void vtkSMParaViewPipelineController::ProcessProxyListProxyHints(
-  vtkSMProxy* parent, vtkSMProxy* plproxy)
-{
-  vtkPVXMLElement* proxyListElement = plproxy->GetHints()?
-    plproxy->GetHints()->FindNestedElementByName("ProxyList") : NULL;
-  if (!proxyListElement)
-    {
-    return;
-    }
-  for (unsigned int cc=0, max = proxyListElement->GetNumberOfNestedElements();
-    cc < max; ++cc)
-    {
-    vtkPVXMLElement* child = proxyListElement->GetNestedElement(cc);
-    if (child && child->GetName() && strcmp(child->GetName(), "Link") == 0)
-      {
-      const char* name = child->GetAttribute("name");
-      const char* linked_with = child->GetAttribute("with_property");
-      if (name && linked_with)
-        {
-        vtkSMParaViewPipelineControllerNS::vtkSMLinkObserver::LinkProperty(
-          parent->GetProperty(linked_with), plproxy->GetProperty(name));
-        }
-      }
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -615,10 +576,7 @@ bool vtkSMParaViewPipelineController::RegisterPipelineProxy(
 //----------------------------------------------------------------------------
 bool vtkSMParaViewPipelineController::UnRegisterPipelineProxy(vtkSMProxy* proxy)
 {
-  if (!proxy)
-    {
-    return false;
-    }
+  PREPARE_FOR_UNREGISTERING(proxy);
 
   vtkSMSessionProxyManager* pxm = proxy->GetSessionProxyManager();
   const char* _proxyname = pxm->GetProxyName("sources", proxy);
@@ -696,10 +654,7 @@ bool vtkSMParaViewPipelineController::RegisterViewProxy(
 bool vtkSMParaViewPipelineController::UnRegisterViewProxy(
   vtkSMProxy* proxy, bool unregister_representations/*=true*/)
 {
-  if (!proxy)
-    {
-    return false;
-    }
+  PREPARE_FOR_UNREGISTERING(proxy);
 
   vtkSMSessionProxyManager* pxm = proxy->GetSessionProxyManager();
   const char* _proxyname = pxm->GetProxyName("views", proxy);
@@ -787,10 +742,7 @@ bool vtkSMParaViewPipelineController::RegisterRepresentationProxy(vtkSMProxy* pr
 //----------------------------------------------------------------------------
 bool vtkSMParaViewPipelineController::UnRegisterRepresentationProxy(vtkSMProxy* proxy)
 {
-  if (!proxy)
-    {
-    return false;
-    }
+  PREPARE_FOR_UNREGISTERING(proxy);
 
   vtkSMSessionProxyManager* pxm = proxy->GetSessionProxyManager();
   std::string groupname("representations");
@@ -885,10 +837,7 @@ bool vtkSMParaViewPipelineController::RegisterAnimationProxy(vtkSMProxy* proxy)
 //----------------------------------------------------------------------------
 bool vtkSMParaViewPipelineController::UnRegisterAnimationProxy(vtkSMProxy* proxy)
 {
-  if (!proxy)
-    {
-    return false;
-    }
+  PREPARE_FOR_UNREGISTERING(proxy);
 
   vtkSMSessionProxyManager* pxm = proxy->GetSessionProxyManager();
   const char* _proxyname = pxm->GetProxyName("animation", proxy);
@@ -975,6 +924,10 @@ void vtkSMParaViewPipelineController::UpdateSettingsProxies(vtkSMSession* sessio
       if (proxy)
         {
         this->InitializeProxy(proxy);
+        if (strcmp(iter->GetProxyName(), "RenderViewSettings") == 0)
+          {
+          this->HandleLZ4Issue(proxy);
+          }
         pxm->RegisterProxy(iter->GetGroupName(), iter->GetProxyName(), proxy);
         proxy->UpdateVTKObjects();
         proxy->Delete();
@@ -1050,6 +1003,10 @@ bool vtkSMParaViewPipelineController::PostInitializeProxy(vtkSMProxy* proxy)
 
   // ensure everything is up-to-date.
   proxy->UpdateVTKObjects();
+
+  // If InitializationHelper is specified for the proxy. Use it
+  // for extra initialization.
+  this->ProcessInitializationHelper(proxy, ts);
 
   // FIXME: need to figure out how we should really deal with this.
   // We don't reset properties on custom filter.
@@ -1225,6 +1182,7 @@ bool vtkSMParaViewPipelineController::UnRegisterProxy(vtkSMProxy* proxy)
     return false;
     }
 
+
   SM_SCOPED_TRACE(CleanupAccessor).arg("proxy", proxy);
 
   // determine what type of proxy is this, based on that, we can finalize it.
@@ -1251,6 +1209,8 @@ bool vtkSMParaViewPipelineController::UnRegisterProxy(vtkSMProxy* proxy)
     }
   else
     {
+    PREPARE_FOR_UNREGISTERING(proxy);
+
     const char* known_groups[] = {
       "lookup_tables", "piecewise_functions", "layouts", NULL };
     for (int cc=0; known_groups[cc] != NULL; ++cc)
@@ -1276,6 +1236,65 @@ bool vtkSMParaViewPipelineController::UnRegisterProxy(vtkSMProxy* proxy)
       }
     }
   return false;
+}
+
+//----------------------------------------------------------------------------
+void vtkSMParaViewPipelineController::HandleLZ4Issue(vtkSMProxy* renderViewSettings)
+{
+  vtkSMProperty* compressorConfig = renderViewSettings->GetProperty("CompressorConfig");
+  if (!compressorConfig)
+    {
+    return;
+    }
+
+  if (vtkPVXMLElement* hints = compressorConfig->GetHints())
+    {
+    if (hints->FindNestedElementByName("SupportsLZ4") != NULL)
+      {
+      return;
+      }
+    }
+
+  // We're dealing with an server that doesn't support LZ4. If the default is to
+  // use LZ4 change it to not use LZ4.
+  vtkSMPropertyHelper helper(compressorConfig);
+  if (strncmp(helper.GetAsString(), "vtkLZ4Compressor", strlen("vtkLZ4Compressor")) != 0)
+    {
+    return;
+    }
+  std::string newvalue("vtkSquirtCompressor");
+  newvalue += helper.GetAsString() + strlen("vtkLZ4Compressor");
+  helper.Set(newvalue.c_str());
+  vtkWarningMacro(
+    "You have connected to a server that doesn't support 'LZ4' compression for delivering "
+    "remotely rendered images to the client. 'LZ4' is your current default "
+    "(and recommended) compression mode. Switching to 'SQUIRT'. "
+    "Remote rendering that uses translucent surfaces or volumes will have artifacts "
+    "with SQUIRT. Switch to zlib or no compression to avoid those, if needed.");
+  renderViewSettings->UpdateVTKObjects();
+}
+
+//----------------------------------------------------------------------------
+void vtkSMParaViewPipelineController::ProcessInitializationHelper(
+  vtkSMProxy* proxy, unsigned long initializationTimeStamp)
+{
+  vtkPVXMLElement* hints = proxy->GetHints();
+  for (unsigned int cc=0, max=(hints?hints->GetNumberOfNestedElements():0); cc < max; ++cc)
+    {
+    vtkPVXMLElement* child = hints->GetNestedElement(cc);
+    if (child &&
+        strcmp(child->GetName(), "InitializationHelper") == 0 &&
+        child->GetAttribute("class") != NULL)
+      {
+      const char* className = child->GetAttribute("class");
+      vtkSmartPointer<vtkObject> obj;
+      obj.TakeReference(vtkPVInstantiator::CreateInstance(className));
+      if (vtkSMProxyInitializationHelper* helper = vtkSMProxyInitializationHelper::SafeDownCast(obj))
+        {
+        helper->PostInitializeProxy(proxy, child, initializationTimeStamp);
+        }
+      }
+    }
 }
 
 //----------------------------------------------------------------------------

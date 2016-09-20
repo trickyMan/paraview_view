@@ -18,8 +18,8 @@
 // vtkPVEnvironmentInformation can be used to get values of environment
 // variables.
 
-#ifndef __vtkPVEnvironmentInformation_h
-#define __vtkPVEnvironmentInformation_h
+#ifndef vtkPVEnvironmentInformation_h
+#define vtkPVEnvironmentInformation_h
 
 #include "vtkPVClientServerCoreDefaultModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -36,13 +36,10 @@ public:
   // The object must be a vtkPVEnvironmentInformationHelper.
   virtual void CopyFromObject(vtkObject* object);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*);
   virtual void CopyFromStream(const vtkClientServerStream*);
-
-  //ETX
 
   // Description:
   // Get the value of an environment variable

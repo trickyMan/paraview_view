@@ -17,8 +17,8 @@
 // .SECTION Description
 // vtkSMBagChartSeriesListDomain extends vtkSMChartSeriesListDomain to
 // setup defaults specific for bag plot representations.
-#ifndef __vtkSMBagChartSeriesListDomain_h
-#define __vtkSMBagChartSeriesListDomain_h
+#ifndef vtkSMBagChartSeriesListDomain_h
+#define vtkSMBagChartSeriesListDomain_h
 
 #include "vtkSMChartSeriesListDomain.h"
 #include "vtkPVServerManagerRenderingModule.h" // needed for exports
@@ -37,7 +37,6 @@ public:
   // Set the default values for the property.
   virtual int SetDefaultValues(vtkSMProperty*, bool use_unchecked_values);
 
-//BTX
 protected:
   vtkSMBagChartSeriesListDomain();
   ~vtkSMBagChartSeriesListDomain();
@@ -49,7 +48,7 @@ protected:
 private:
   vtkSMBagChartSeriesListDomain(const vtkSMBagChartSeriesListDomain&); // Not implemented
   void operator=(const vtkSMBagChartSeriesListDomain&); // Not implemented
-//ETX
+
 };
 
 #endif

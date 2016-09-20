@@ -18,8 +18,8 @@
 // vtkClientServerSynchronizedRenderers except that it optionally uses image
 // compressors to compress the image before transmitting.
 
-#ifndef __vtkPVClientServerSynchronizedRenderers_h
-#define __vtkPVClientServerSynchronizedRenderers_h
+#ifndef vtkPVClientServerSynchronizedRenderers_h
+#define vtkPVClientServerSynchronizedRenderers_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkSynchronizedRenderers.h"
@@ -47,7 +47,6 @@ public:
   // user settings.
   virtual void ConfigureCompressor(const char *stream);
 
-//BTX
 protected:
   vtkPVClientServerSynchronizedRenderers();
   ~vtkPVClientServerSynchronizedRenderers();
@@ -67,6 +66,7 @@ protected:
   void Decompress(vtkUnsignedCharArray* input, vtkUnsignedCharArray* outputBuffer);
 
   virtual void MasterEndRender();
+  virtual void SlaveStartRender();
   virtual void SlaveEndRender();
 
   vtkImageCompressor* Compressor;
@@ -74,7 +74,7 @@ protected:
 private:
   vtkPVClientServerSynchronizedRenderers(const vtkPVClientServerSynchronizedRenderers&); // Not implemented
   void operator=(const vtkPVClientServerSynchronizedRenderers&); // Not implemented
-//ETX
+
 };
 
 #endif

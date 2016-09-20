@@ -61,11 +61,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // .NAME vtkACosmoReader - Adaptively read a binary cosmology data file
 //
 
-#ifndef __vtkACosmoReader_h
-#define __vtkACosmoReader_h
+#ifndef vtkACosmoReader_h
+#define vtkACosmoReader_h
 
 #include "vtkMultiBlockDataSetAlgorithm.h" // Base class
 #include "vtkPVVTKExtensionsCosmoToolsModule.h" // For export macro
+#include "vtkMultiBlockDataSetAlgorithm.h"
 
 // C/C++ includes
 #include <string> // For C++ string
@@ -176,15 +177,12 @@ protected:
 
   vtkMultiBlockDataSet *MetaData;
 
-
-// BTX
   struct block_t; // defined in the implementation
 
   std::vector< int > NBlocks; // Number of blocks at level "i"
   std::vector< block_t > ParticleBlocks; // stores block info for each block
   std::vector< int > RequestedBlocks; // list of blocks to load
   std::set<std::string> FileNames;
-// ETX
 
 private:
   vtkACosmoReader(const vtkACosmoReader&);  // Not implemented.

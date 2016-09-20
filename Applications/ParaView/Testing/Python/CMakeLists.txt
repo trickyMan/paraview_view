@@ -46,6 +46,7 @@ paraview_add_test_python(
   TestPythonViewScript.py
   TestColorHistogram.py
   TestClipCylinder.py
+  TestLineChartLabelPrefix.py
 )
 
 paraview_add_test_pvbatch(
@@ -57,6 +58,7 @@ paraview_add_test_pvbatch(
 # in parallel.
 set(PVBATCH_TESTS
   StructuredGridVolumeRendering.py
+  PLYWriter.py
   )
 foreach (tfile IN LISTS PVBATCH_TESTS)
   get_filename_component(test ${tfile} NAME_WE)

@@ -19,8 +19,8 @@
 // time. If more than one representation is added to this view, only the first
 // visible representation will be shown.
 
-#ifndef __vtkSpreadSheetView_h
-#define __vtkSpreadSheetView_h
+#ifndef vtkSpreadSheetView_h
+#define vtkSpreadSheetView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVView.h"
@@ -125,7 +125,6 @@ public:
   // Allow user to clear the cache if he needs to.
   void ClearCache();
 
-//BTX
   // INTERNAL METHOD. Don't call directly.
   void FetchBlockCallback(vtkIdType blockindex);
 
@@ -168,7 +167,7 @@ private:
   bool SomethingUpdated;
 
   unsigned long RMICallbackTag;
-//ETX
+
 };
 
 #endif

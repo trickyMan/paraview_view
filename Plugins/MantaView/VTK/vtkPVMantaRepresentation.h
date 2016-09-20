@@ -64,8 +64,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // with the manta versions of those so that the object can be drawn
 // in a manta renderer within a PVMantaView
 
-#ifndef __vtkPVMantaRepresentation_h
-#define __vtkPVMantaRepresentation_h
+#ifndef vtkPVMantaRepresentation_h
+#define vtkPVMantaRepresentation_h
 
 #include "vtkGeometryRepresentationWithFaces.h"
 #include "vtkMantaModule.h"
@@ -99,7 +99,6 @@ public:
   void SetAllowDataMaterial(bool);
   bool GetAllowDataMaterial();
 
-//BTX
 protected:
   vtkPVMantaRepresentation();
   ~vtkPVMantaRepresentation();
@@ -109,7 +108,6 @@ private:
   vtkPVMantaRepresentation(const vtkPVMantaRepresentation&); // Not implemented.
   void operator=(const vtkPVMantaRepresentation&); // Not implemented.
 
-//ETX
 };
 
 

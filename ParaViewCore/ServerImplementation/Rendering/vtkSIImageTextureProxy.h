@@ -18,8 +18,8 @@
 // applications to create textures from image files where the image file is
 // present on only one process, say client, but is needed for rendering on the
 // render server and the data server.
-#ifndef __vtkSIImageTextureProxy_h
-#define __vtkSIImageTextureProxy_h
+#ifndef vtkSIImageTextureProxy_h
+#define vtkSIImageTextureProxy_h
 
 #include "vtkPVServerImplementationRenderingModule.h" //needed for exports
 #include "vtkSISourceProxy.h"
@@ -33,7 +33,6 @@ public:
   vtkTypeMacro(vtkSIImageTextureProxy, vtkSISourceProxy);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSIImageTextureProxy();
   ~vtkSIImageTextureProxy();
@@ -45,7 +44,7 @@ protected:
 private:
   vtkSIImageTextureProxy(const vtkSIImageTextureProxy&); // Not implemented
   void operator=(const vtkSIImageTextureProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -22,8 +22,8 @@
 // translator is to be used, it simply uses vtkKdTreeGenerator. Otherwise, it
 // lets the vtkPKdTree build the optimal partitioning for the data.
 
-#ifndef __vtkKdTreeManager_h
-#define __vtkKdTreeManager_h
+#ifndef vtkKdTreeManager_h
+#define vtkKdTreeManager_h
 
 #include "vtkObject.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -71,7 +71,6 @@ public:
   // Rebuilds the KdTree.
   void GenerateKdTree();
 
-//BTX
 protected:
   vtkKdTreeManager();
   ~vtkKdTreeManager();
@@ -99,7 +98,6 @@ private:
   class vtkDataObjectSet;
   vtkDataObjectSet* DataObjects;
 
-//ETX
 };
 
 #endif

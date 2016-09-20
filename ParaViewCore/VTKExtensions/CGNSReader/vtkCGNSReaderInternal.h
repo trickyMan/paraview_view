@@ -24,10 +24,8 @@
 // .SECTION Thanks
 // Thanks to .
 
-#ifndef __CGNS_READER_INTERNAL__
-#define __CGNS_READER_INTERNAL__
-
-#include "vtkPVConfig.h"     // For PARAVIEW_USE_MPI
+#ifndef vtkCGNSReaderInternal_h
+#define vtkCGNSReaderInternal_h
 
 #include <cgnslib.h> // DataType, and other definition
 #include <cgns_io.h> // Low level IO for fast parsing
@@ -41,9 +39,7 @@
 #include "vtkPoints.h"
 #include "vtkIdTypeArray.h"
 
-#ifdef PARAVIEW_USE_MPI
 #include "vtkMultiProcessController.h"
-#endif
 
 namespace CGNSRead
 {
@@ -265,9 +261,7 @@ public:
   // print object debugging purpose
   void PrintSelf(std::ostream& os);
 
-#ifdef PARAVIEW_USE_MPI
   void Broadcast ( vtkMultiProcessController* controller, int rank );
-#endif
 
   // Description
   // Constructor/Destructor
@@ -471,5 +465,5 @@ int get_XYZ_mesh(const int cgioNum, const std::vector<double>& gridChildId,
 
 }
 
-#endif //__CGNS_READER_INTERNAL__
+#endif //vtkCGNSReaderInternal_h
 // VTK-HeaderTest-Exclude: vtkCGNSReaderInternal.h

@@ -18,8 +18,8 @@
 // vtkNetworkAccessManager that uses tcp/ip sockets for communication between
 // processes. It supports urls that use "tcp" as their protocol specifier.
 
-#ifndef __vtkTCPNetworkAccessManager_h
-#define __vtkTCPNetworkAccessManager_h
+#ifndef vtkTCPNetworkAccessManager_h
+#define vtkTCPNetworkAccessManager_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkNetworkAccessManager.h"
@@ -89,7 +89,6 @@ public:
   // Returns true is the manager is currently waiting for any connections.
   virtual bool GetPendingConnectionsPresent();
 
-//BTX
 protected:
   vtkTCPNetworkAccessManager();
   ~vtkTCPNetworkAccessManager();
@@ -117,7 +116,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

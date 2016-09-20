@@ -18,8 +18,8 @@
 // vtkSMFunctionalBagChartSeriesSelectionDomain extends vtkSMChartSeriesSelectionDomain to
 // handle default values visibility for bags and outliers.
 
-#ifndef __vtkSMFunctionalBagChartSeriesSelectionDomain_h
-#define __vtkSMFunctionalBagChartSeriesSelectionDomain_h
+#ifndef vtkSMFunctionalBagChartSeriesSelectionDomain_h
+#define vtkSMFunctionalBagChartSeriesSelectionDomain_h
 
 #include "vtkSMChartSeriesSelectionDomain.h"
 #include "vtkPVServerManagerRenderingModule.h" // needed for exports
@@ -37,7 +37,6 @@ public:
   // Returns the default visibility for a series given its name.
   virtual bool GetDefaultSeriesVisibility(const char*);
 
-//BTX
 protected:
   vtkSMFunctionalBagChartSeriesSelectionDomain();
   ~vtkSMFunctionalBagChartSeriesSelectionDomain();
@@ -51,7 +50,6 @@ private:
   vtkSMFunctionalBagChartSeriesSelectionDomain(const vtkSMFunctionalBagChartSeriesSelectionDomain&); // Not implemented
   void operator=(const vtkSMFunctionalBagChartSeriesSelectionDomain&); // Not implemented
 
-//ETX
 };
 
 #endif

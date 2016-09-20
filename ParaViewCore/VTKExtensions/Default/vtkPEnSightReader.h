@@ -30,8 +30,8 @@
 // </verbatim>
 
 
-#ifndef __vtkPEnSightReader_h
-#define __vtkPEnSightReader_h
+#ifndef vtkPEnSightReader_h
+#define vtkPEnSightReader_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPGenericEnSightReader.h"
@@ -61,8 +61,6 @@ class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPEnSightReader : public vtkPGenericEnS
  public:
   vtkTypeMacro(vtkPEnSightReader, vtkPGenericEnSightReader);
   void PrintSelf(ostream& os, vtkIndent indent);
-
-  //BTX
 
   //----------------------------------------------------------------------------
   // PointIds and CellIds must be stored in a different way:
@@ -471,7 +469,7 @@ class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPEnSightReader : public vtkPGenericEnS
               if( (n >= this->ImplicitSplitDimensionBeginIndex) && (n < this->ImplicitSplitDimensionEndIndex) )
                 {
                 vtkIdType nn = n;
-                array->SetTupleValue(index,&nn);
+                array->SetTypedTuple(index,&nn);
                 index++;
                 }
               }
@@ -498,7 +496,7 @@ class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPEnSightReader : public vtkPGenericEnS
               min = ii;
             if( ii > max )
               max = ii;
-            array->SetTupleValue(id, &ii);
+            array->SetTypedTuple(id, &ii);
             }
           }
         return array;
@@ -569,7 +567,6 @@ class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPEnSightReader : public vtkPGenericEnS
     BLOCK       = 1,
     ELEMENT     = 2
   };
-  //ETX
 
   // Description:
   // Get the Measured file name. Made public to allow access from
@@ -863,9 +860,7 @@ class VTKPVVTKEXTENSIONSDEFAULT_EXPORT vtkPEnSightReader : public vtkPGenericEnS
 
   int GhostLevels;
 
-//BTX
   std::map<std::string, std::map<int, long> > FileOffsets;
-//ETX
 
  private:
   vtkPEnSightReader(const vtkPEnSightReader&);  // Not implemented.

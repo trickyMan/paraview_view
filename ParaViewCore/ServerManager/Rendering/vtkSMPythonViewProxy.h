@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkSMPythonViewProxy is a view proxy for the vtkPythonView.
 
-#ifndef __vtkSMPythonViewProxy_h
-#define __vtkSMPythonViewProxy_h
+#ifndef vtkSMPythonViewProxy_h
+#define vtkSMPythonViewProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMViewProxy.h"
@@ -45,7 +45,6 @@ public:
   // Returns true if the most recent render indeed employed low-res rendering.
   virtual bool LastRenderWasInteractive();
 
-//BTX
 protected:
   vtkSMPythonViewProxy();
   ~vtkSMPythonViewProxy();
@@ -57,8 +56,7 @@ protected:
 private:
   vtkSMPythonViewProxy(const vtkSMPythonViewProxy&); // Not implemented
   void operator=(const vtkSMPythonViewProxy&); // Not implemented
-//ETX
 
 };
 
-#endif // __vtkSMPythonViewProxy_h
+#endif // vtkSMPythonViewProxy_h

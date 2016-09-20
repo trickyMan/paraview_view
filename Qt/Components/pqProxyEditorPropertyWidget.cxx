@@ -50,8 +50,7 @@ pqProxyEditorPropertyWidget::pqProxyEditorPropertyWidget(
 {
   this->setShowLabel(false);
 
-  QPushButton *button = new QPushButton(
-    QString("Edit %1 ...").arg(smproperty->GetXMLLabel()), this);
+  QPushButton *button = new QPushButton("Edit", this);
   button->setObjectName("PushButton");
   this->connect(button, SIGNAL(clicked()), SLOT(buttonClicked()));
   button->setEnabled(false);
@@ -63,6 +62,7 @@ pqProxyEditorPropertyWidget::pqProxyEditorPropertyWidget(
     smproperty->GetHints()->FindNestedElementByName("ProxyEditorPropertyWidget") : NULL)
     {
     this->Checkbox = new QCheckBox(this);
+    this->Checkbox->setText(tr(smproperty->GetXMLLabel()));
     this->Checkbox->setEnabled(false);
     this->Checkbox->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     this->PropertyName = hints->GetAttributeOrDefault("property", "");
@@ -144,7 +144,7 @@ void pqProxyEditorPropertyWidget::buttonClicked()
   if (this->Editor == NULL)
     {
     this->Editor = new pqProxyWidgetDialog(this->ProxyToEdit.GetPointer(), this);
-    this->Editor->setEnableSearchBar(true);
+    this->Editor->setEnableSearchBar(this->Editor->hasAdvancedProperties());
     this->Editor->setSettingsKey(
       QString("pqProxyEditorPropertyWidget.%1.%2")
         .arg(this->proxy()->GetXMLName())

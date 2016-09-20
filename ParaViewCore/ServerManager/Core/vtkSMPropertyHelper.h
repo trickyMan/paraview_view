@@ -54,8 +54,8 @@
 // This class is not wrapped, hence not available in any of the wrapped
 // languagues such as python.
 
-#ifndef __vtkSMPropertyHelper_h
-#define __vtkSMPropertyHelper_h
+#ifndef vtkSMPropertyHelper_h
+#define vtkSMPropertyHelper_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -222,10 +222,15 @@ public:
   void SetUseUnchecked(bool val) { this->UseUnchecked = val; }
   bool GetUseUnchecked() { return this->UseUnchecked; }
 
+  // Description:
+  // Copy property values from another vtkSMPropertyHelper. This only
+  // works for compatible properties and currently only supported for numeric
+  // vtkSMVectorProperty subclasses.
+  bool Copy(vtkSMPropertyHelper& source);
+
 protected:
   void setUseUnchecked(bool useUnchecked) { this->UseUnchecked = useUnchecked; }
 
-//BTX
 private:
   vtkSMPropertyHelper(const vtkSMPropertyHelper&); // Not implemented
   void operator=(const vtkSMPropertyHelper&); // Not implemented
@@ -237,7 +242,8 @@ private:
   template<typename T> void SetProperty(unsigned int index, T value);
   template<typename T> void SetPropertyArray(const T *values, unsigned int count);
   void SetPropertyArrayIdType(const vtkIdType *values, unsigned int count);
- 
+  template<typename T> bool CopyInternal(vtkSMPropertyHelper& source);
+
   enum PType {
     INT,
     DOUBLE,
@@ -264,7 +270,7 @@ private:
     vtkSMProxyProperty *ProxyProperty;
     vtkSMInputProperty *InputProperty;
     };
-//ETX
+
 };
 
 

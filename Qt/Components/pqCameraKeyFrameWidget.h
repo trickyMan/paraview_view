@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqCameraKeyFrameWidget_h 
-#define __pqCameraKeyFrameWidget_h
+#ifndef pqCameraKeyFrameWidget_h
+#define pqCameraKeyFrameWidget_h
 
 #include <QWidget>
 #include "pqComponentsModule.h"
@@ -81,9 +81,6 @@ private slots:
   /// called when the user clicks on an item in the left pane.
   void changeCurrentPage();
 
-  /// update the visibility and points in the spline widget.
-  void updateSplineWidget();
-
 private:
   pqCameraKeyFrameWidget(const pqCameraKeyFrameWidget&); // Not implemented.
   void operator=(const pqCameraKeyFrameWidget&); // Not implemented.
@@ -93,5 +90,3 @@ private:
 };
 
 #endif
-
-

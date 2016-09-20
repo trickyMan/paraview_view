@@ -17,8 +17,8 @@
 // .SECTION Description
 // Gather information about cache size from vtkCacheSizeKeeper.
 
-#ifndef __vtkPVCacheSizeInformation_h
-#define __vtkPVCacheSizeInformation_h
+#ifndef vtkPVCacheSizeInformation_h
+#define vtkPVCacheSizeInformation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVInformation.h"
@@ -38,12 +38,10 @@ public:
   // Merge another information object.
   virtual void AddInformation(vtkPVInformation*);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*);
   virtual void CopyFromStream(const vtkClientServerStream*);
-  //ETX
 
   vtkGetMacro(CacheSize, unsigned long);
   vtkSetMacro(CacheSize, unsigned long);

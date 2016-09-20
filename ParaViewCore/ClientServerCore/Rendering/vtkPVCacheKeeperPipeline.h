@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkPVCacheKeeperPipeline_h
-#define __vtkPVCacheKeeperPipeline_h
+#ifndef vtkPVCacheKeeperPipeline_h
+#define vtkPVCacheKeeperPipeline_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkCompositeDataPipeline.h"
@@ -30,7 +30,6 @@ public:
   vtkTypeMacro(vtkPVCacheKeeperPipeline, vtkCompositeDataPipeline);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkPVCacheKeeperPipeline();
   ~vtkPVCacheKeeperPipeline();
@@ -40,7 +39,7 @@ protected:
 private:
   vtkPVCacheKeeperPipeline(const vtkPVCacheKeeperPipeline&); // Not implemented
   void operator=(const vtkPVCacheKeeperPipeline&); // Not implemented
-//ETX
+
 };
 
 #endif

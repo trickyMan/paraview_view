@@ -26,6 +26,9 @@
 // information. The output of this filter will always be a single vtkPolyData 
 // that contains exactly one point and one cell (a VTK_VERTEX).
 
+#ifndef vtkMinMax_h
+#define vtkMinMax_h
+
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPolyDataAlgorithm.h"
 
@@ -43,14 +46,14 @@ public:
   //Description:
   //Selects the operation to perform on the data.
   //min/max, sum...
-  //BTX
+
   enum Operations
     {
       MIN = 0,
       MAX = 1,
       SUM = 2
     };
-  //ETX
+
   vtkSetClampMacro(Operation, int, MIN, SUM);
   vtkGetMacro(Operation, int);
   void SetOperation(const char *op);
@@ -107,3 +110,5 @@ private:
   void operator=(const vtkMinMax&); // Not implemented.
 
 };
+
+#endif

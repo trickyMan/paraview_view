@@ -16,8 +16,8 @@
 // corresponding to a scalar bar or color legend in a Render View.
 // .SECTION Description
 
-#ifndef __vtkSMScalarBarWidgetRepresentationProxy_h
-#define __vtkSMScalarBarWidgetRepresentationProxy_h
+#ifndef vtkSMScalarBarWidgetRepresentationProxy_h
+#define vtkSMScalarBarWidgetRepresentationProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMNewWidgetRepresentationProxy.h"
@@ -55,7 +55,6 @@ public:
     return self? self->PlaceInView(view) : false;
     }
 
-//BTX
 protected:
   vtkSMScalarBarWidgetRepresentationProxy();
   ~vtkSMScalarBarWidgetRepresentationProxy();
@@ -73,7 +72,7 @@ protected:
 private:
   vtkSMScalarBarWidgetRepresentationProxy(const vtkSMScalarBarWidgetRepresentationProxy&); // Not implemented
   void operator=(const vtkSMScalarBarWidgetRepresentationProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

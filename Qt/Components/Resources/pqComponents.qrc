@@ -162,6 +162,8 @@
     <file>Icons/pqRotate16.png</file>
     <file>Icons/pqRotate24.png</file>
     <file>Icons/pqRotate32.png</file>
+    <file>Icons/pqRotateCameraCCW24.png</file>
+    <file>Icons/pqRotateCameraCW24.png</file>
     <file>Icons/pqRuler16.png</file>
     <file>Icons/pqSave16.png</file>
     <file>Icons/pqSave24.png</file>
@@ -173,14 +175,14 @@
     <file>Icons/pqSelect16.png</file>
     <file>Icons/pqSelect24.png</file>
     <file>Icons/pqSelect32.png</file>
-    <file>Icons/pqSelectChart16.png</file>
-    <file>Icons/pqSelectChartMinus16.png</file>
-    <file>Icons/pqSelectChartPlus16.png</file>
-    <file>Icons/pqSelectChartPolygon16.png</file>
-    <file>Icons/pqSelectChartToggle16.png</file>
-    <file>Icons/pqSelectFrustPoints24.png</file>
-    <file>Icons/pqSelectSurfPoints24.png</file>
     <file>Icons/pqSelectBlock24.png</file>
+    <file>Icons/pqSelectChart16.png</file>
+    <file>Icons/pqSelectChartPolygon16.png</file>
+    <file>Icons/pqSelectFrustPoints24.png</file>
+    <file>Icons/pqSelectMinus16.png</file>
+    <file>Icons/pqSelectPlus16.png</file>
+    <file>Icons/pqSelectSurfPoints24.png</file>
+    <file>Icons/pqSelectToggle16.png</file>
     <file>Icons/pqServer16.png</file>
     <file>Icons/pqServer22.png</file>
     <file>Icons/pqServer32.png</file>
@@ -206,6 +208,7 @@
     <file>Icons/pqStep24.png</file>
     <file>Icons/pqStreamTracer24.png</file>
     <file>Icons/pqStructuredGrid16.png</file>
+    <file>Icons/pqSurfaceHoveringPoint.png</file>
     <file>Icons/pqSurfaceSelectionCell24.png</file>
     <file>Icons/pqSurfaceSelectionCellInteractive.png</file>
     <file>Icons/pqSurfaceSelectionPointInteractive.png</file>
@@ -292,5 +295,6 @@
     <file>Icons/pvIcon64.png</file>
     <file>Icons/pvIcon96.png</file>
     <file>Icons/pvIcon512.png</file>
+    <file>Icons/pdf.png</file>
   </qresource>
 </RCC>

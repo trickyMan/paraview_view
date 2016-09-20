@@ -17,8 +17,8 @@
 // vtkPVSingleOutputExtractSelection extends to vtkPVExtractSelection to simply
 // hide the second output-port. This is the filter used in ParaView GUI.
 
-#ifndef __vtkPVSingleOutputExtractSelection_h
-#define __vtkPVSingleOutputExtractSelection_h
+#ifndef vtkPVSingleOutputExtractSelection_h
+#define vtkPVSingleOutputExtractSelection_h
 
 #include "vtkPVClientServerCoreDefaultModule.h" //needed for exports
 #include "vtkPVExtractSelection.h"
@@ -30,7 +30,6 @@ public:
   vtkTypeMacro(vtkPVSingleOutputExtractSelection, vtkPVExtractSelection);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkPVSingleOutputExtractSelection();
   ~vtkPVSingleOutputExtractSelection();
@@ -38,7 +37,7 @@ protected:
 private:
   vtkPVSingleOutputExtractSelection(const vtkPVSingleOutputExtractSelection&); // Not implemented
   void operator=(const vtkPVSingleOutputExtractSelection&); // Not implemented
-//ETX
+
 };
 
 #endif

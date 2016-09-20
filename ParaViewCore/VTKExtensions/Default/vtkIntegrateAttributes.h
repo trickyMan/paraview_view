@@ -22,8 +22,8 @@
 // for this point and cell will contain the integration results
 // for the corresponding input attributes.
 
-#ifndef __vtkIntegrateAttributes_h
-#define __vtkIntegrateAttributes_h
+#ifndef vtkIntegrateAttributes_h
+#define vtkIntegrateAttributes_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkUnstructuredGridAlgorithm.h"
@@ -44,7 +44,6 @@ public:
 
   void SetController(vtkMultiProcessController *controller);
 
-//BTX
 protected:
   vtkIntegrateAttributes();
   ~vtkIntegrateAttributes();
@@ -153,7 +152,7 @@ public:
      IntegrateAttrInfo=2000,
      IntegrateAttrData
    };
-//ETX
+
 };
 
 #endif

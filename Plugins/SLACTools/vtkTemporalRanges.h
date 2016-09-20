@@ -32,8 +32,8 @@
 // set.
 //
 
-#ifndef __vtkTemporalRanges_h
-#define __vtkTemporalRanges_h
+#ifndef vtkTemporalRanges_h
+#define vtkTemporalRanges_h
 
 #include "vtkTableAlgorithm.h"
 
@@ -49,7 +49,6 @@ public:
   static vtkTemporalRanges *New();
   virtual void PrintSelf(ostream &os, vtkIndent indent);
 
-//BTX
   enum {
     AVERAGE_ROW,
     MINIMUM_ROW,
@@ -57,7 +56,6 @@ public:
     COUNT_ROW,
     NUMBER_OF_ROWS
   };
-//ETX
 
 protected:
   vtkTemporalRanges();
@@ -98,4 +96,4 @@ private:
   void operator=(const vtkTemporalRanges &);    // Not implemented
 };
 
-#endif //__vtkTemporalRanges_h
+#endif //vtkTemporalRanges_h

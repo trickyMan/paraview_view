@@ -22,9 +22,9 @@
 #include "vtkPVDataInformation.h"
 #include "vtkPVXMLElement.h"
 #include "vtkSmartPointer.h"
-#include "vtkSMProperty.h"
 #include "vtkSMPropertyHelper.h"
 #include "vtkSMPropertyIterator.h"
+#include "vtkSMProxyProperty.h"
 #include "vtkSMProxySelectionModel.h"
 #include "vtkSMPVRepresentationProxy.h"
 #include "vtkSMSessionProxyManager.h"
@@ -172,6 +172,13 @@ namespace
         // LookupTable/ScalarOpacityFunction properties. How are those to be
         // copied over esp. since they depend on how ColorArrayName property was
         // copied.
+        continue;
+        }
+      if (vtkSMProxyProperty::SafeDownCast(source))
+        {
+        // HACK: we skip proxy properties. Without this change, the properties
+        // like GlyphType end up inheriting the value from the upstream
+        // representation, which is incorrect.
         continue;
         }
       if (dest && source &&
@@ -655,15 +662,6 @@ bool vtkSMParaViewPipelineControllerWithRendering::RegisterViewProxy(
       activeLayout->FastDelete();
       }
     }
-  if (activeLayout)
-    {
-    // ensure that we "access" the layout, before the view is created, other the
-    // trace ends up incorrect (this is needed since RegisterViewProxy() results
-    // in the Qt client assigning a frame for the view, if the Qt client didn't
-    // do that, this code will get a lot simpler.
-    SM_SCOPED_TRACE(EnsureLayout).arg(activeLayout);
-    }
-
   bool retval = this->Superclass::RegisterViewProxy(proxy, proxyname);
   if (activeLayout)
     {

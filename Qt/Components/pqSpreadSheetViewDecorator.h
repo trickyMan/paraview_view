@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqSpreadSheetViewDecorator_h 
-#define __pqSpreadSheetViewDecorator_h
+#ifndef pqSpreadSheetViewDecorator_h
+#define pqSpreadSheetViewDecorator_h
 
 #include <QObject>
 #include "pqComponentsModule.h"
@@ -47,13 +47,19 @@ class PQCOMPONENTS_EXPORT pqSpreadSheetViewDecorator : public QObject
 {
   Q_OBJECT
   typedef QObject Superclass;
+  Q_PROPERTY(bool allowChangeOfSource READ allowChangeOfSource WRITE setAllowChangeOfSource)
 public:
   pqSpreadSheetViewDecorator(pqSpreadSheetView* view);
   ~pqSpreadSheetViewDecorator();
-
-public:
   void setPrecision(int);
   void setFixedRepresentation(bool);
+
+  /// Returns whether the user should allowed to interactive change the source.
+  /// being shown in the view. `true` by default.
+  bool allowChangeOfSource() const;
+
+  /// Set whether the user should be allowed to change the source interactively.
+  void setAllowChangeOfSource(bool val);
 
 protected slots:
   void currentIndexChanged(pqOutputPort*);

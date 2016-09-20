@@ -28,8 +28,8 @@
 // needs to be passed down the pipeline for image data, keeping the code here
 // simple.
 
-#ifndef __vtkResampledAMRImageSource_h
-#define __vtkResampledAMRImageSource_h
+#ifndef vtkResampledAMRImageSource_h
+#define vtkResampledAMRImageSource_h
 
 #include "vtkTrivialProducer.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -78,7 +78,6 @@ public:
   bool NeedsInitialization() const
     { return (this->MTime > this->InitializationTime); }
 
-//BTX
 protected:
   vtkResampledAMRImageSource();
   ~vtkResampledAMRImageSource();
@@ -100,7 +99,7 @@ private:
   void operator=(const vtkResampledAMRImageSource&); // Not implemented
 
   vtkTimeStamp InitializationTime;
-//ETX
+
 };
 
 #endif

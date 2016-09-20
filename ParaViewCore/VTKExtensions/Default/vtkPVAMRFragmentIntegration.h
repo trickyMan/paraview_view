@@ -20,8 +20,8 @@
 // .SEE vtkAMRFragmentIntegration
 //
 
-#ifndef __vtkPVAMRFragmentIntegration_h
-#define __vtkPVAMRFragmentIntegration_h
+#ifndef vtkPVAMRFragmentIntegration_h
+#define vtkPVAMRFragmentIntegration_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkAMRFragmentIntegration.h"
@@ -61,7 +61,6 @@ public:
 
   void SetContourConnection (vtkAlgorithmOutput*);
 
-  //BTX
   virtual int RequestData(vtkInformation*, vtkInformationVector**,
                           vtkInformationVector*);
 
@@ -69,11 +68,9 @@ private:
   vtkPVAMRFragmentIntegration(const vtkPVAMRFragmentIntegration&);  // Not implemented.
   void operator=(const vtkPVAMRFragmentIntegration&);    // Not implemented.
 
-  //ETX
-
 protected:
   double VolumeFractionSurfaceValue;
   vtkPVAMRFragmentIntegrationInternal* Implementation;
 };
 
-#endif // __vtkPVAMRFragmentIntegration_h
+#endif // vtkPVAMRFragmentIntegration_h

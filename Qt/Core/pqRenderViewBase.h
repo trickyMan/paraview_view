@@ -29,12 +29,12 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqRenderViewBase_h 
-#define __pqRenderViewBase_h
+#ifndef pqRenderViewBase_h
+#define pqRenderViewBase_h
 
 #include "pqView.h"
 #include "pqSMProxy.h" //needed for pqSMProxy.
-
+#include "vtkSetGet.h" // needed for VTK_LEGACY.
 class pqTimer;
 
 /// pqRenderViewBase is an abstract base class for all render-view based views.
@@ -77,7 +77,10 @@ public:
   /// that used for vtkRenderWindow::SetStereoType.
   /// This does not request a render, the caller must explicitly call render on
   /// the views.
-  static void setStereo(int mode);
+  /// @deprecated Use pqStereoModeHelper instead, which provides a more
+  /// convenient mechanism for application code to temporarily change stereo
+  /// mode on all render views.
+  VTK_LEGACY(static void setStereo(int mode));
 
 protected slots:
   virtual void initializeAfterObjectsCreated();

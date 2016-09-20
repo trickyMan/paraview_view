@@ -22,8 +22,8 @@
 // External logic must explicitly calls InvalidateCachedSelection() to ensure
 // that the cache is not reused.
 
-#ifndef __vtkPVHardwareSelector_h
-#define __vtkPVHardwareSelector_h
+#ifndef vtkPVHardwareSelector_h
+#define vtkPVHardwareSelector_h
 
 #include "vtkOpenGLHardwareSelector.h"
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
@@ -63,7 +63,6 @@ public:
   // communicate between all active processes.
   void SetSynchronizedWindows(vtkPVSynchronizedRenderWindows*);
 
-//BTX
 protected:
   vtkPVHardwareSelector();
   ~vtkPVHardwareSelector();
@@ -84,6 +83,8 @@ protected:
   // Return false if CaptureBuffers() is false
   bool PrepareSelect();
 
+  virtual void SavePixelBuffer(int passNo);
+
   vtkTimeStamp CaptureTime;
   int UniqueId;
   vtkWeakPointer<vtkPVSynchronizedRenderWindows> SynchronizedWindows;
@@ -93,7 +94,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

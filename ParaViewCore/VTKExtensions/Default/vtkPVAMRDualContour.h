@@ -20,8 +20,8 @@
 // .SEE vtkAMRDualContour
 //
 
-#ifndef __vtkPVAMRDualContour_h
-#define __vtkPVAMRDualContour_h
+#ifndef vtkPVAMRDualContour_h
+#define vtkPVAMRDualContour_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkAMRDualContour.h"
@@ -49,7 +49,6 @@ public:
   vtkGetMacro(VolumeFractionSurfaceValue, double);
   vtkSetMacro(VolumeFractionSurfaceValue, double);
 
-  //BTX
   virtual int RequestData(vtkInformation*, vtkInformationVector**,
                           vtkInformationVector*);
 
@@ -57,11 +56,9 @@ private:
   vtkPVAMRDualContour(const vtkPVAMRDualContour&);  // Not implemented.
   void operator=(const vtkPVAMRDualContour&);    // Not implemented.
 
-  //ETX
-
 protected:
   double VolumeFractionSurfaceValue;
   vtkPVAMRDualContourInternal* Implementation;
 };
 
-#endif // __vtkPVAMRDualContour_h
+#endif // vtkPVAMRDualContour_h

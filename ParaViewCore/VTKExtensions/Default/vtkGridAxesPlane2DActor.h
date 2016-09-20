@@ -17,17 +17,16 @@
 // vtkGridAxesPlane2DActor is designed for use by vtkGridAxes2DActor to render
 // the wireframe for the grid plane. It can also be used directly to render such
 // a wireframe in a renderer.
-#ifndef __vtkGridAxesPlane2DActor_h
-#define __vtkGridAxesPlane2DActor_h
+#ifndef vtkGridAxesPlane2DActor_h
+#define vtkGridAxesPlane2DActor_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkProp3D.h"
 
-#include "vtkGridAxesHelper.h"
-#include "vtkNew.h"
-#include "vtkSmartPointer.h"
-#include "vtkVector.h"
-#include <deque>
+#include "vtkGridAxesHelper.h" // For face enumeration
+#include "vtkNew.h" // For member variables
+#include "vtkSmartPointer.h" // For member variables
+#include <deque> // For keeping track of tick marks
 
 class vtkActor;
 class vtkCellArray;
@@ -154,7 +153,6 @@ public:
   virtual int HasTranslucentPolygonalGeometry();
   virtual void ReleaseGraphicsResources(vtkWindow *);
 
-//BTX
 protected:
   vtkGridAxesPlane2DActor(vtkGridAxesHelper* helper=NULL);
   ~vtkGridAxesPlane2DActor();
@@ -207,7 +205,6 @@ private:
   typedef std::pair<vtkVector3d, vtkVector3d> LineSegmentType;
   std::deque<LineSegmentType> LineSegments;
 
-//ETX
 };
 
 #endif

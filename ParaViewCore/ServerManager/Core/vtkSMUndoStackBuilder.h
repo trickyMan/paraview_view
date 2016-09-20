@@ -23,8 +23,8 @@
 // use PushToStack(). 
 // Applications can subclass vtkSMUndoStackBuilder to record GUI related
 // changes and add them to the undo stack.
-#ifndef __vtkSMUndoStackBuilder_h
-#define __vtkSMUndoStackBuilder_h
+#ifndef vtkSMUndoStackBuilder_h
+#define vtkSMUndoStackBuilder_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -104,8 +104,6 @@ public:
   vtkSetMacro(IgnoreAllChanges, bool);
   vtkGetMacro(IgnoreAllChanges, bool);
 
-//BTX
-
   // Record a state change on a RemoteObject
   virtual void OnStateChange( vtkSMSession* session,
                               vtkTypeUInt32 globalId,
@@ -145,7 +143,7 @@ protected:
 private:
   vtkSMUndoStackBuilder(const vtkSMUndoStackBuilder&); // Not implemented.
   void operator=(const vtkSMUndoStackBuilder&); // Not implemented.
-//ETX
+
 };
 
 #endif

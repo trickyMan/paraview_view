@@ -17,8 +17,8 @@
 // vtkPVMultiSliceView extends vtkPVRenderView but add meta-data informations
 // used by SliceRepresentation as a data model.
 
-#ifndef __vtkPVMultiSliceView_h
-#define __vtkPVMultiSliceView_h
+#ifndef vtkPVMultiSliceView_h
+#define vtkPVMultiSliceView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVRenderView.h"
@@ -69,7 +69,6 @@ public:
 
   void SetModelTransformationMatrix(vtkMatrix4x4*);
 
-//BTX
 protected:
   vtkPVMultiSliceView();
   ~vtkPVMultiSliceView();
@@ -89,7 +88,7 @@ private:
 
   class vtkSliceInternal;
   vtkSliceInternal* Internal;
-//ETX
+
 };
 
 #endif

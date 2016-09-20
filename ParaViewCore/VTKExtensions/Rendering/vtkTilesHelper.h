@@ -18,8 +18,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkTilesHelper_h
-#define __vtkTilesHelper_h
+#ifndef vtkTilesHelper_h
+#define vtkTilesHelper_h
 
 #include "vtkObject.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -75,7 +75,6 @@ public:
   // Given the rank, returns the tile location.
   void GetTileIndex(int rank, int* tileX, int* tileY);
 
-//BTX
 protected:
   vtkTilesHelper();
   ~vtkTilesHelper();
@@ -87,7 +86,7 @@ protected:
 private:
   vtkTilesHelper(const vtkTilesHelper&); // Not implemented
   void operator=(const vtkTilesHelper&); // Not implemented
-//ETX
+
 };
 
 #endif

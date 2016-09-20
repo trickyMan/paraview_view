@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqStreamingTestingEventPlayer_h
-#define __pqStreamingTestingEventPlayer_h
+#ifndef pqStreamingTestingEventPlayer_h
+#define pqStreamingTestingEventPlayer_h
 
 #include "pqWidgetEventPlayer.h"
 #include "pqApplicationComponentsModule.h"
@@ -50,6 +50,7 @@ class PQAPPLICATIONCOMPONENTS_EXPORT pqStreamingTestingEventPlayer : public pqWi
 
 public:
   pqStreamingTestingEventPlayer(QObject* p) : Superclass(p) { }
+  using Superclass::playEvent;
   virtual bool playEvent(QObject*,
     const QString& command, const QString& arguments, bool& error);
 

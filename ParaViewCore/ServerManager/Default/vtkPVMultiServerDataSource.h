@@ -16,8 +16,8 @@
 // .SECTION Description
 // VTK class that handle the fetch of remote data
 
-#ifndef __vtkMultiServerDataSource_h
-#define __vtkMultiServerDataSource_h
+#ifndef vtkPVMultiServerDataSource_h
+#define vtkPVMultiServerDataSource_h
 
 #include "vtkPVServerManagerDefaultModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
@@ -41,7 +41,6 @@ public:
   // Method that need to be called when the data has changed and need to be updated...
   virtual void FetchData(vtkDataObject* dataObjectToFill);
 
-//BTX
 protected:
   vtkPVMultiServerDataSource();
   ~vtkPVMultiServerDataSource();
@@ -72,7 +71,7 @@ private:
 
   struct vtkInternal;
   vtkInternal* Internal;
-//ETX
+
 };
 
 #endif

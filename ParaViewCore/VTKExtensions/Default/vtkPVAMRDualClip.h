@@ -20,8 +20,8 @@
 // .SEE vtkAMRDualClip
 //
 
-#ifndef __vtkPVAMRDualClip_h
-#define __vtkPVAMRDualClip_h
+#ifndef vtkPVAMRDualClip_h
+#define vtkPVAMRDualClip_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkAMRDualClip.h"
@@ -49,15 +49,12 @@ public:
   vtkGetMacro(VolumeFractionSurfaceValue, double);
   vtkSetMacro(VolumeFractionSurfaceValue, double);
 
-  //BTX
   virtual int RequestData(vtkInformation*, vtkInformationVector**,
                           vtkInformationVector*);
 
 private:
   vtkPVAMRDualClip(const vtkPVAMRDualClip&);  // Not implemented.
   void operator=(const vtkPVAMRDualClip&);    // Not implemented.
-
-  //ETX
 
 protected:
 
@@ -66,4 +63,4 @@ protected:
   vtkPVAMRDualClipInternal* Implementation;
 };
 
-#endif // __vtkPVAMRDualClip_h
+#endif // vtkPVAMRDualClip_h

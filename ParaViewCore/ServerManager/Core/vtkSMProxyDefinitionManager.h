@@ -19,8 +19,8 @@
 // should use API on this class to add/update xml definitions to ensure that
 // the xmls are processed/updated correctly on all the processes.
 
-#ifndef __vtkSMProxyDefinitionManager_h
-#define __vtkSMProxyDefinitionManager_h
+#ifndef vtkSMProxyDefinitionManager_h
+#define vtkSMProxyDefinitionManager_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMRemoteObject.h"
@@ -177,8 +177,6 @@ public:
   bool LoadConfigurationXML(vtkPVXMLElement* root);
   bool LoadConfigurationXMLFromString(const char* xmlContent);
 
-//BTX
-
   // Description:
   // This method is used to initialise the object to the given state
   // If the definitionOnly Flag is set to True the proxy won't load the
@@ -197,7 +195,7 @@ protected:
 private:
   vtkSMProxyDefinitionManager(const vtkSMProxyDefinitionManager&); // Not implemented
   void operator=(const vtkSMProxyDefinitionManager&); // Not implemented
-//ETX
+
 };
 
 #endif

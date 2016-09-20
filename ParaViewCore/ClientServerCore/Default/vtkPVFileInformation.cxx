@@ -13,12 +13,15 @@
 
 =========================================================================*/
 #include "vtkPVFileInformation.h"
+#include "vtkPVConfig.h"
 
 #include "vtkClientServerStream.h"
 #include "vtkCollection.h"
 #include "vtkCollectionIterator.h"
 #include "vtkFileSequenceParser.h"
+#include "vtkNew.h"
 #include "vtkObjectFactory.h"
+#include "vtkProcessModule.h"
 #include "vtkPVFileInformationHelper.h"
 #include "vtkSmartPointer.h"
 
@@ -42,7 +45,7 @@
 # define vtkPVServerFileListingGetCWD getcwd
 #endif
 #if defined (__APPLE__)
-#include <ApplicationServices/ApplicationServices.h>
+#include "vtkPVMacFileInformationHelper.h"
 #include <vector>
 #endif
 
@@ -349,7 +352,7 @@ std::string MakeAbsolutePath(const std::string& path,
                             const std::string& working_dir)
 {
   std::string ret = path;
-#if defined(WIN32)
+#if defined(_WIN32)
   if(!IsUncPath(path) && !IsNetworkPath(path))
 #endif
     {
@@ -479,8 +482,30 @@ void vtkPVFileInformation::CopyFromObject(vtkObject* object)
 //-----------------------------------------------------------------------------
 void vtkPVFileInformation::GetSpecialDirectories()
 {
-#if defined (_WIN32)
+  // FIXME: Use vtkPVLibraryInfo (see paraview/paraview!798) once it's available
+  // to get such paths. Hardcoding it for now.
+  if (vtkProcessModule* pm = vtkProcessModule::GetProcessModule())
+    {
+#if defined(_WIN32) || defined(__APPLE__)
+    std::string dataPath = pm->GetSelfDir() + "/../data";
+#else
+    std::string appdir = pm->GetSelfDir();;
+    std::string dataPath = vtksys::SystemTools::GetFilenameName(appdir) == "bin" ?
+      /* w/o shared forwarding */ appdir + "/../share/paraview-" PARAVIEW_VERSION "/data"  :
+      /* w/ shared forwarding  */ appdir + "/../../share/paraview-" PARAVIEW_VERSION "/data";
+#endif
+    dataPath = vtksys::SystemTools::CollapseFullPath(dataPath);
+    if (vtksys::SystemTools::FileIsDirectory(dataPath))
+      {
+      vtkNew<vtkPVFileInformation> info;
+      info->SetFullPath(dataPath.c_str());
+      info->SetName("Examples");
+      info->Type = DIRECTORY;
+      this->Contents->AddItem(info.Get());
+      }
+    }
 
+#if defined (_WIN32)
   // Return favorite directories ...
 
   TCHAR szPath[MAX_PATH];
@@ -542,123 +567,75 @@ void vtkPVFileInformation::GetSpecialDirectories()
 
 #else // _WIN32
 #if defined (__APPLE__ )
-  //-------- Get the List of Mounted Volumes from the System
 
-  int idx = 1;
-  HFSUniStr255 hfsname;
-  FSRef ref;
-  while (noErr == FSGetVolumeInfo(kFSInvalidVolumeRefNum, idx++, NULL,
-      kFSVolInfoNone, NULL, &hfsname, &ref))
+  // Add special directories
+  vtkNew<vtkPVMacFileInformationHelper> helper;
+  vtkSmartPointer<vtkPVFileInformation> info;
+
+  std::string homeDirectory = helper->GetHomeDirectory();
+  if (homeDirectory != "")
     {
-    CFURLRef resolvedUrl = CFURLCreateFromFSRef(NULL, &ref);
-    if (resolvedUrl)
+    // Home directory
+    info = vtkSmartPointer<vtkPVFileInformation>::New();
+    info->SetFullPath(homeDirectory.c_str());
+    info->SetName("Home");
+    info->Type = DIRECTORY;
+    this->Contents->AddItem(info);
+
+    // Desktop directory
+    std::string desktop = helper->GetDesktopDirectory();
+    if (desktop.size() > 0)
       {
-      CFStringRef url;
-      url = CFURLCopyFileSystemPath(resolvedUrl, kCFURLPOSIXPathStyle);
-      if(url)
-        {
-        CFStringRef cfname = CFStringCreateWithCharacters(kCFAllocatorDefault,
-            hfsname.unicode, hfsname.length);
+      info = vtkSmartPointer<vtkPVFileInformation>::New();
+      info->SetFullPath(desktop.c_str());
+      info->SetName("Desktop");
+      info->Type = DIRECTORY;
+      this->Contents->AddItem(info);
+      }
 
-        CFIndex pathSize = CFStringGetLength(url)+1;
-        std::vector<char> pathChars(pathSize, 0);
-        OSStatus pathStatus = CFStringGetCString(url, &pathChars[0], pathSize,
-            kCFStringEncodingASCII);
+    // Documents directory
+    std::string documents = helper->GetDocumentsDirectory();
+    if (documents.size() > 0)
+      {
+      info = vtkSmartPointer<vtkPVFileInformation>::New();
+      info->SetFullPath(documents.c_str());
+      info->SetName("Documents");
+      info->Type = DIRECTORY;
+      this->Contents->AddItem(info);
+      }
 
-        pathSize = CFStringGetLength(cfname)+1;
-        std::vector<char> nameChars(pathSize, 0);
-        OSStatus nameStatus = CFStringGetCString(cfname, &nameChars[0], pathSize,
-            kCFStringEncodingASCII);
-
-        if (pathStatus && nameStatus)
-          {
-          vtkSmartPointer<vtkPVFileInformation> info = vtkSmartPointer<
-              vtkPVFileInformation>::New();
-          info->SetFullPath( &(pathChars.front() ));
-          info->SetName( &(nameChars.front() ));
-          info->Type = DRIVE;
-          this->Contents->AddItem(info);
-          }
-        CFRelease(cfname);
-        }
-      CFRelease(resolvedUrl);
+    // Downloads directory
+    std::string downloads = helper->GetDownloadsDirectory();
+    if (downloads.size() > 0)
+      {
+      info = vtkSmartPointer<vtkPVFileInformation>::New();
+      info->SetFullPath(downloads.c_str());
+      info->SetName("Downloads");
+      info->Type = DIRECTORY;
+      this->Contents->AddItem(info);
       }
     }
-  //-- Read the com.apple.sidebar.plist file to get the user's list of directories
-  CFPropertyListRef p = CFPreferencesCopyAppValue(CFSTR("useritems"),
-      CFSTR("com.apple.sidebarlists"));
-  if (p && CFDictionaryGetTypeID() == CFGetTypeID(p))
-    {
-    CFArrayRef r = (CFArrayRef)(CFDictionaryGetValue((CFDictionaryRef)p,
-        CFSTR("CustomListItems")));
-    if (r && CFArrayGetTypeID() == CFGetTypeID(r))
+
+    // Get the mounted volumes
+    std::vector< vtkPVMacFileInformationHelper::NamePath > volumes = helper->GetMountedVolumes();
+    for (size_t i = 0; i < volumes.size(); ++i)
       {
-      int count = CFArrayGetCount(r);
-      for (int i=0; i<count; i++)
+      std::string name = volumes[i].first;
+      std::string path = volumes[i].second;
+      info = vtkSmartPointer<vtkPVFileInformation>::New();
+
+      // Filter out "home" and "net".
+      if (name == "home" || name == "net")
         {
-        CFDictionaryRef dr = (CFDictionaryRef)CFArrayGetValueAtIndex(r, i);
-        if (dr && CFDictionaryGetTypeID() == CFGetTypeID(dr))
-          {
-          CFStringRef name = 0;
-          CFStringRef url = 0;
-          CFDataRef alias;
-          if (CFDictionaryGetValueIfPresent(dr, CFSTR("Name"),
-              (const void**)&name) && CFDictionaryGetValueIfPresent(dr,
-              CFSTR("Alias"), (const void**)&alias) && name && alias
-              && CFStringGetTypeID() == CFGetTypeID(name) && CFDataGetTypeID()
-              == CFGetTypeID(alias) )
-            {
-            CFIndex dataSize = CFDataGetLength(alias);
-            AliasHandle tAliasHdl = (AliasHandle) NewHandle(dataSize);
-            if (tAliasHdl)
-              {
-              CFDataGetBytes(alias, CFRangeMake( 0, dataSize),
-                  ( UInt8*) *tAliasHdl );
-              FSRef tFSRef;
-              Boolean changed;
-              if (noErr == FSResolveAlias(NULL, tAliasHdl, &tFSRef, &changed))
-                {
-                CFURLRef resolvedUrl = CFURLCreateFromFSRef(NULL, &tFSRef);
-                if (resolvedUrl)
-                  {
-                  url = CFURLCopyFileSystemPath(resolvedUrl,
-                      kCFURLPOSIXPathStyle);
-                  CFRelease(resolvedUrl);
-                  }
-                }
-              DisposeHandle((Handle)tAliasHdl);
-              }
-
-            if(!url || !name)
-              {
-              continue;
-              }
-
-            // now put the name and path into a FileInfo Object
-            CFIndex pathSize = CFStringGetLength(url)+1;
-            std::vector<char> pathChars(pathSize, 0);
-            OSStatus pathStatus = CFStringGetCString(url, &pathChars[0],
-                pathSize, kCFStringEncodingASCII);
-
-            pathSize = CFStringGetLength(name)+1;
-            std::vector<char> nameChars(pathSize, 0);
-            OSStatus nameStatus = CFStringGetCString(name, &nameChars[0],
-                pathSize, kCFStringEncodingASCII);
-
-            if (pathStatus && nameStatus)
-              {
-              vtkSmartPointer<vtkPVFileInformation> info = vtkSmartPointer<
-                  vtkPVFileInformation>::New();
-              info->SetFullPath( &(pathChars.front() ));
-              info->SetName( &(nameChars.front() ));
-              info->Type = DIRECTORY;
-              this->Contents->AddItem(info);
-              }
-            }
-          }
+        continue;
         }
+
+      info->SetFullPath(path.c_str());
+      info->SetName(name.c_str());
+      info->Type = DRIVE;
+      this->Contents->AddItem(info);
       }
-    }
+
 #else
   if(const char* home = getenv("HOME"))
     {

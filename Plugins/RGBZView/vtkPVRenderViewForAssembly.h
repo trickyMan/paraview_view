@@ -30,8 +30,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =========================================================================*/
 
-#ifndef __vtkPVRenderViewForAssembly_h
-#define __vtkPVRenderViewForAssembly_h
+#ifndef vtkPVRenderViewForAssembly_h
+#define vtkPVRenderViewForAssembly_h
 
 #include "vtkPVRenderView.h"
 #include "vtkSmartPointer.h"
@@ -131,7 +131,6 @@ public:
 
   void SetActiveRepresentationForComposite(vtkPVDataRepresentation* r);
 
-//BTX
 protected:
   vtkPVRenderViewForAssembly();
   ~vtkPVRenderViewForAssembly();
@@ -159,7 +158,7 @@ private:
 
   struct vtkInternals;
   vtkInternals* Internal;
-//ETX
+
 };
 
 #endif

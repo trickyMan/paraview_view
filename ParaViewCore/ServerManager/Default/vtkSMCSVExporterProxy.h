@@ -12,13 +12,14 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkSMCSVExporterProxy - exporter used to export the spreadsheet view as
-// a CSV file.
+// .NAME vtkSMCSVExporterProxy - exporter used to export the spreadsheet view
+// and supported chart views as to a CSV file.
 // .SECTION Description
-// vtkSMCSVExporterProxy is used to export the spreadsheet view as a CSV file.
-
-#ifndef __vtkSMCSVExporterProxy_h
-#define __vtkSMCSVExporterProxy_h
+// vtkSMCSVExporterProxy is used to export the certain views to a CSV file.
+// Currently, we support vtkSpreadSheetView and vtkPVXYChartView (which includes
+// Bar/Line/Quartile/Parallel Coordinates views).
+#ifndef vtkSMCSVExporterProxy_h
+#define vtkSMCSVExporterProxy_h
 
 #include "vtkPVServerManagerDefaultModule.h" //needed for exports
 #include "vtkSMExporterProxy.h"
@@ -35,11 +36,10 @@ public:
   virtual void Write();
 
   // Description:
-  // Returns if the view can be exported. 
+  // Returns if the view can be exported.
   // Default implementation return true if the view is a render view.
   virtual bool CanExport(vtkSMProxy*);
 
-//BTX
 protected:
   vtkSMCSVExporterProxy();
   ~vtkSMCSVExporterProxy();
@@ -47,8 +47,7 @@ protected:
 private:
   vtkSMCSVExporterProxy(const vtkSMCSVExporterProxy&); // Not implemented
   void operator=(const vtkSMCSVExporterProxy&); // Not implemented
-//ETX
+
 };
 
 #endif
-

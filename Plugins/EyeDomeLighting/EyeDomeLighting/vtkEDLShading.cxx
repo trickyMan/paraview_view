@@ -917,7 +917,9 @@ void vtkEDLShading::Render(const vtkRenderState *s)
 #endif
 
   if(s->GetFrameBuffer() != NULL)
-    s->GetFrameBuffer()->Bind();
+    {
+    vtkFrameBufferObject::SafeDownCast(s->GetFrameBuffer())->Bind();
+    }
 
   glDrawBuffer(savedDrawBuffer);
 

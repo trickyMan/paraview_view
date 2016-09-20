@@ -17,8 +17,8 @@
 // vtkPVLastSelectionInformation is used to obtain the LastSelection from
 // vtkPVRenderView.
 
-#ifndef __vtkPVLastSelectionInformation_h
-#define __vtkPVLastSelectionInformation_h
+#ifndef vtkPVLastSelectionInformation_h
+#define vtkPVLastSelectionInformation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVSelectionInformation.h"
@@ -32,7 +32,6 @@ public:
 
   virtual void CopyFromObject(vtkObject*);
 
-//BTX
 protected:
   vtkPVLastSelectionInformation();
   ~vtkPVLastSelectionInformation();
@@ -40,7 +39,7 @@ protected:
 private:
   vtkPVLastSelectionInformation(const vtkPVLastSelectionInformation&); // Not implemented
   void operator=(const vtkPVLastSelectionInformation&); // Not implemented
-//ETX
+
 };
 
 #endif

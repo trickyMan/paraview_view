@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkSMOrthographicSliceViewProxy_h
-#define __vtkSMOrthographicSliceViewProxy_h
+#ifndef vtkSMOrthographicSliceViewProxy_h
+#define vtkSMOrthographicSliceViewProxy_h
 
 #include "vtkSMRenderViewProxy.h"
 class vtkSMRepresentationProxy;
@@ -41,7 +41,6 @@ public:
   virtual vtkSMRepresentationProxy* CreateDefaultRepresentation(
     vtkSMProxy* proxy, int outputPort);
 
-//BTX
 protected:
   vtkSMOrthographicSliceViewProxy();
   ~vtkSMOrthographicSliceViewProxy();
@@ -57,7 +56,7 @@ protected:
 private:
   vtkSMOrthographicSliceViewProxy(const vtkSMOrthographicSliceViewProxy&); // Not implemented
   void operator=(const vtkSMOrthographicSliceViewProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -29,14 +29,15 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqScalarBarVisibilityReaction_h
-#define __pqScalarBarVisibilityReaction_h
+#ifndef pqScalarBarVisibilityReaction_h
+#define pqScalarBarVisibilityReaction_h
 
 #include "pqReaction.h"
 #include <QPointer>
 
-class pqTimer;
 class pqDataRepresentation;
+class pqTimer;
+class vtkSMProxy;
 
 /// @ingroup Reactions
 /// Reaction to toggle scalar bar visibility.
@@ -49,6 +50,12 @@ public:
   /// pqActiveObjects automatically.
   pqScalarBarVisibilityReaction(QAction* parent, bool track_active_objects=true);
   virtual ~pqScalarBarVisibilityReaction();
+
+  /// Returns the representation currently being used by the reaction.
+  pqDataRepresentation* representation() const;
+
+  /// Returns the scalar bar for the current representation, if any.
+  vtkSMProxy* scalarBarProxy() const;
 
 public slots:
   /// Set the active representation.

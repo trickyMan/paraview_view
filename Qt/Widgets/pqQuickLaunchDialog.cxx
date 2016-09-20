@@ -7,7 +7,7 @@
    All rights reserved.
 
    ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2. 
+   under the terms of the ParaView license version 1.2.
 
    See License_v1.2.txt for the full ParaView license.
    A copy of this license can be obtained by contacting
@@ -41,6 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QPointer>
 #include <QPushButton>
 #include <QStringList>
+#include <algorithm>
+#include <QtDebug>
 
 class pqQuickLaunchDialog::pqInternal : public Ui::QuickLaunchDialog
 {
@@ -50,6 +52,42 @@ public:
   QString SearchString;
   QPointer<QAction> ActiveAction;
 };
+
+namespace
+{
+  void fillPermutations(QList<QStringList>& list, QStringList words)
+    {
+    list.push_back(words);
+    words.sort();
+    do
+      {
+      list.push_back(words);
+      }
+    while (std::next_permutation(words.begin(), words.end()));
+    }
+
+  void fillSearchSpace(QStringList& searchSpace,
+    const QStringList& searchComponents,
+    const QList<QStringList>& searchExpressions, const QStringList& keys)
+    {
+    foreach (const QStringList& exp, searchExpressions)
+      {
+      QString part = exp.join("\\w*\\W+");
+      QRegExp regExp("^" + part, Qt::CaseInsensitive);
+      searchSpace += keys.filter(regExp);
+      }
+
+    // Now build up the list of matches to the search components disregarding
+    // word order and proximity entirely.
+    // (BUG #0016116).
+    QStringList filteredkeys = keys;
+    foreach (const QString &component, searchComponents)
+      {
+      filteredkeys = filteredkeys.filter(QRegExp(component, Qt::CaseInsensitive));
+      }
+    searchSpace += filteredkeys;
+    }
+}
 
 //-----------------------------------------------------------------------------
 pqQuickLaunchDialog::pqQuickLaunchDialog(QWidget* p):
@@ -78,7 +116,7 @@ pqQuickLaunchDialog::~pqQuickLaunchDialog()
 //-----------------------------------------------------------------------------
 bool pqQuickLaunchDialog::eventFilter (QObject *watched, QEvent *evt)
 {
-  if (evt->type() == QEvent::KeyPress) 
+  if (evt->type() == QEvent::KeyPress)
     {
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(evt);
     int key = keyEvent->key();
@@ -163,16 +201,35 @@ void pqQuickLaunchDialog::updateSearch()
     return;
     }
 
-  QStringList searchComponents = this->Internal->SearchString.split(" ",
-    QString::SkipEmptyParts);
+  const QStringList keys = this->Internal->Items.keys();
+  const QStringList searchComponents = this->Internal->SearchString.split(" ", QString::SkipEmptyParts);
 
-  QStringList searchSpace = this->Internal->Items.keys();
+  QList<QStringList> searchExpressions;
+  fillPermutations(searchExpressions, searchComponents);
 
-  foreach (QString component, searchComponents)
+  QStringList searchSpace;
+  fillSearchSpace(searchSpace, searchComponents, searchExpressions, keys);
+
+  QStringList fuzzySearchComponents;
+  foreach (const QString& word, searchComponents)
     {
-    searchSpace = searchSpace.filter(component, Qt::CaseInsensitive);
+    QString newword;
+    for (int cc=0; cc < word.size(); cc++)
+      {
+      newword += word[cc];
+      newword += "\\w*";
+      }
+    fuzzySearchComponents.push_back(newword);
     }
 
+  searchExpressions.clear();
+  fillPermutations(searchExpressions, fuzzySearchComponents);
+  fillSearchSpace(searchSpace, fuzzySearchComponents, searchExpressions, keys);
+
+  searchSpace.removeDuplicates();
+
+  int currentRow = -1;
+  int i = 0;
   foreach (QString key, searchSpace)
     {
     QListWidgetItem *item = new QListWidgetItem(this->Internal->Items[key]);
@@ -181,9 +238,17 @@ void pqQuickLaunchDialog::updateSearch()
       {
       item->setFlags(item->flags()&~Qt::ItemIsEnabled);
       }
+    else
+      {
+      if (currentRow == -1)
+        {
+        currentRow = i;
+        }
+      }
     this->Internal->options->addItem(item);
+    i++;
     }
-  this->Internal->options->setCurrentRow(0);
+  this->Internal->options->setCurrentRow(currentRow);
 }
 
 //-----------------------------------------------------------------------------
@@ -197,7 +262,7 @@ void pqQuickLaunchDialog::currentRowChanged(int row)
     {
     return;
     }
-  QAction* action = this->Internal->Actions[item->data(Qt::UserRole).toString()]; 
+  QAction* action = this->Internal->Actions[item->data(Qt::UserRole).toString()];
   if (action)
     {
     this->Internal->selection->setText(action->text());

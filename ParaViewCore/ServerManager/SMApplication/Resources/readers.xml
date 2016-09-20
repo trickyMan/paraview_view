@@ -2675,7 +2675,10 @@
                             panel_visibility="default">
         <FileListDomain name="files" />
         <Documentation>This property specifies the .q (solution) file name for
-        the PLOT3D reader.</Documentation>
+          the PLOT3D reader.</Documentation>
+        <Hints>
+          <FileChooser extensions="q" file_description="Solution files" />
+        </Hints>
       </StringVectorProperty>
       <StringVectorProperty animateable="0"
                             command="SetFunctionFileName"
@@ -3185,8 +3188,79 @@
         <ReaderFactory extensions="dem"
                        file_description="Digital Elevation Map Files" />
       </Hints>
-      <!-- End DEMReader -->
     </SourceProxy>
+      <!-- End DEMReader -->
+    <SourceProxy class="vtkPTSReader"
+                 label="PTS Reader"
+                 name="PTSReader">
+      <Documentation long_help="Reads a PTS ASCII Point Cloud file."
+                     short_help="Read a pointset in PTS format">The PTS reader
+                     reads  ASCII PTS Point Cloud files containing
+                     points as well as optional intensity and color information. The default
+                     file extension is .pts. This reader produces a
+                     polydata set of a single vertex cell containing all of
+                     the points.</Documentation>
+      <StringVectorProperty animateable="0"
+                            command="SetFileName"
+                            name="FileName"
+                            number_of_elements="1">
+        <FileListDomain name="files" />
+        <Documentation>This property specifies the file name for the PTS
+        (ASCII Point Cloud) reader.</Documentation>
+      </StringVectorProperty>
+      <IntVectorProperty command="SetLimitToMaxNumberOfPoints"
+                         name="LimitNumberOfPointsRead"
+                         default_values="0"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>
+          Limits the number of points read in from file
+        </Documentation>
+      </IntVectorProperty>
+       <IntVectorProperty command="SetMaxNumberOfPoints"
+                         name="MaxNumberOfPoints"
+                         default_values="100000"
+                         number_of_elements="1">
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="LimitNumberOfPointsRead"
+                                   value="1" />
+        </Hints>
+        <Documentation>
+          Specify the max number of point to be read.
+        </Documentation>
+      </IntVectorProperty>
+      <IntVectorProperty command="SetLimitReadToBounds"
+                         name="LimitPointCloudToBounds"
+                         default_values="0"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>
+          Restrict the point to cloud to a specified volume.
+        </Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty animateable="0"
+                            command="SetReadBounds"
+                            name="ReadBounds"
+                            number_of_elements="6"
+                            default_values="0 100 0 100 0 100">
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="LimitPointCloudToBounds"
+                                   value="1" />
+        </Hints>
+        <Documentation>Define the spatial volume that wil restrict the
+        extent of the point cloud [xmin, xmax, ymin, ymax, zmin, zmax]</Documentation>
+
+      </DoubleVectorProperty>
+       <Hints>
+        <ReaderFactory extensions="pts"
+                       file_description="PTS (Point Cloud)  Files" />
+      </Hints>
+    </SourceProxy>
+      <!-- End PTSReader -->
     <SourceProxy class="vtkPVDReader"
                  label="PVD Reader"
                  name="PVDReader">
@@ -4521,14 +4595,14 @@
       </Hints>
       <!-- End pdbreader -->
     </SourceProxy>
-    <SourceProxy class="vtkXYZMolReader"
+    <SourceProxy class="vtkXYZMolReader2"
                  label="XYZ Reader"
                  name="xyzreader">
       <Documentation long_help="Reads XYZ molecular data files into a polygonal dataset."
                      short_help="Read XYZ molecular data files.">The XYZ reader
                      reads XYZ molecular data files. The expected file
                      extension is .xyz. The output of this reader is a
-                     polygonal dataset.</Documentation>
+                     vtkMolecule</Documentation>
       <StringVectorProperty animateable="0"
                             command="SetFileName"
                             name="FileName"
@@ -4538,15 +4612,12 @@
         <Documentation>This property specifies the file name for the XYZ
         reader.</Documentation>
       </StringVectorProperty>
-      <IntVectorProperty animateable="1"
-                         command="SetTimeStep"
-                         default_values="0"
-                         name="TimeStep"
-                         number_of_elements="1">
-        <IntRangeDomain name="range" />
-        <Documentation>This property specifies the timestep the XYZ reader
-        should load.</Documentation>
-      </IntVectorProperty>
+      <DoubleVectorProperty information_only="1"
+                            name="TimestepValues"
+                            repeatable="1">
+        <TimeStepsInformationHelper />
+        <Documentation>Available timestep values.</Documentation>
+      </DoubleVectorProperty>
       <Hints>
         <ReaderFactory extensions="xyz"
                        file_description="XMol Molecule Files" />
@@ -4676,16 +4747,16 @@
       </Hints>
       <!-- End vtkOBJReader -->
     </SourceProxy>
-    <SourceProxy class="vtkGaussianCubeReader"
+    <SourceProxy class="vtkGaussianCubeReader2"
                  label="Gaussian Cube Reader"
                  name="gaussiancubereader">
-      <Documentation long_help="Produce polygonal data by reading a Gaussian Cube file."
+      <Documentation long_help="Produce a vtkMolecule by reading a Gaussian Cube file."
                      short_help="Read Gaussian Cube data files.">The Gaussian
-                     Cube reader produces polygonal data by reading data files
+                     Cube reader produces vtkMolecule data by reading data files
                      produced by the Gaussian software package. The expected
                      file extension is .cube.</Documentation>
       <OutputPort index="0"
-                  name="Output" />
+                  name="Molecule" />
       <OutputPort index="1"
                   name="Gridded Data" />
       <StringVectorProperty animateable="0"
@@ -4697,22 +4768,6 @@
         <Documentation>This property specifies the file name for the Gaussian
         Cube reader.</Documentation>
       </StringVectorProperty>
-      <DoubleVectorProperty command="SetHBScale"
-                            default_values="1.0"
-                            name="HBScale"
-                            number_of_elements="1">
-        <DoubleRangeDomain name="range" />
-        <Documentation>A scaling factor to compute bonds with hydrogen
-        atoms.</Documentation>
-      </DoubleVectorProperty>
-      <DoubleVectorProperty command="SetBScale"
-                            default_values="1.0"
-                            name="BScale"
-                            number_of_elements="1">
-        <DoubleRangeDomain name="range" />
-        <Documentation>A scaling factor to compute bonds between non-hydrogen
-        atoms</Documentation>
-      </DoubleVectorProperty>
       <Hints>
         <ReaderFactory extensions="cube"
                        file_description="Gaussian Cube Files" />
@@ -7097,6 +7152,16 @@
         <Documentation>This property specifies the file name to read. It should
         be an MPAS format NetCDF file ending in .nc.</Documentation>
       </StringVectorProperty>
+      <IntVectorProperty animateable="0"
+                         command="SetUseDimensionedArrayNames"
+                         name="UseDimensionedArrayNames"
+                         number_of_elements="1"
+                         default_values="1"
+                         panel_visibility="never">
+        <BooleanDomain name="bool" />
+        <Documentation>This property ensures that the dimension info is always
+        shown in the ParaView GUI.</Documentation>
+      </IntVectorProperty>
       <StringVectorProperty information_only="1"
                             name="PointArrayInfo">
         <ArraySelectionInformationHelper attribute_name="Point" />
@@ -7137,14 +7202,30 @@
         <Documentation>This property lists which NetCDF dual-grid cell
         variables to load.</Documentation>
       </StringVectorProperty>
-      <IntVectorProperty command="SetProjectLatLon"
-                         default_values="0"
-                         name="ProjectLatLon"
-                         number_of_elements="1">
-        <BooleanDomain name="bool" />
-        <Documentation>This property indicates whether to view the data in the
-        lat/lon projection.</Documentation>
-      </IntVectorProperty>
+      <!-- Dimensions table: -->
+      <!-- Elements are [arrayName] [currentIndex] [dimSize]: -->
+      <StringVectorProperty information_only="1"
+                            name="DimensionInfo"
+                            command="Dimension"
+                            si_class="vtkSIIndexSelectionProperty">
+      </StringVectorProperty>
+      <!-- Elements are [arrayName] [currentIndex]: -->
+      <StringVectorProperty command="SetDimensionCurrentIndex"
+                            name="DimensionCurrentIndex"
+                            label="Extra Dimension Indices"
+                            element_types="2 0"
+                            number_of_elements="2"
+                            number_of_elements_per_command="2"
+                            repeat_command="1"
+                            panel_widget="index_selection">
+        <IndexSelectionDomain name="index_selection">
+          <RequiredProperties>
+            <Property function="Info"
+                      name="DimensionInfo" />
+          </RequiredProperties>
+        </IndexSelectionDomain>
+      </StringVectorProperty>
+      <!-- End dimensions table -->
       <IntVectorProperty command="SetShowMultilayerView"
                          default_values="0"
                          name="ShowMultilayerView"
@@ -7157,6 +7238,37 @@
         center of the sphere. For atmospheric data, the layers correspond to
         data at vertical levels increasing away from the
         center.</Documentation>
+      </IntVectorProperty>
+      <StringVectorProperty command="GetAllDimensions"
+                            information_only="1"
+                            name="DimensionList">
+        <StringArrayHelper />
+      </StringVectorProperty>
+      <StringVectorProperty command="SetVerticalDimension"
+                            name="VerticalDimension"
+                            label="Vertical Dimension"
+                            number_of_elements="1"
+                            default_values="nVertLevels"
+                            panel_visibility="default">
+        <StringListDomain name="array_list">
+          <RequiredProperties>
+            <Property function="ArrayList"
+                      name="DimensionList" />
+          </RequiredProperties>
+        </StringListDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="EnableWidgetDecorator">
+            <Property name="ShowMultilayerView" function="boolean" />
+          </PropertyWidgetDecorator>
+        </Hints>
+      </StringVectorProperty>
+      <IntVectorProperty command="SetProjectLatLon"
+                         default_values="0"
+                         name="ProjectLatLon"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>This property indicates whether to view the data in the
+        lat/lon projection.</Documentation>
       </IntVectorProperty>
       <IntVectorProperty command="SetIsAtmosphere"
                          default_values="0"
@@ -7208,28 +7320,6 @@
         <Documentation>This property specifies where the center will be viewed
         for a lat/lon projection.</Documentation>
       </IntVectorProperty>
-      <IntVectorProperty command="GetVerticalLevelRange"
-                         information_only="1"
-                         name="VerticalLevelRangeInfo">
-        <SimpleIntInformationHelper />
-      </IntVectorProperty>
-      <IntVectorProperty command="SetVerticalLevel"
-                         default_values="0"
-                         name="VerticalLevel"
-                         number_of_elements="1">
-        <IntRangeDomain name="range">
-          <RequiredProperties>
-            <Property function="Range"
-                      name="VerticalLevelRangeInfo" />
-          </RequiredProperties>
-        </IntRangeDomain>
-        <Documentation>This property specifies which vertical level is viewed
-        if not in multilayer view. Only the data for that vertical level will
-        be viewed. The grid is essentially the same for each vertical level,
-        however at some ocean levels, especially the lower ones, due to the
-        topography, the grid becomes more sparse where there is
-        land.</Documentation>
-      </IntVectorProperty>
       <DoubleVectorProperty information_only="1"
                             name="TimestepValues"
                             repeatable="1">
@@ -7265,6 +7355,9 @@
         There can be more than one. If more that one file is specified, the
         reader will switch to file-series mode in which it will pretend that it
         can support time and provide one file per time step.</Documentation>
+        <Hints>
+          <FileChooser extensions="q" file_description="Solution files" />
+        </Hints>
       </StringVectorProperty>
       <SubProxy>
         <Proxy name="Reader"

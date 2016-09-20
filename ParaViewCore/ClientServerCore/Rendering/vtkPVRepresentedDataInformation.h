@@ -17,8 +17,8 @@
 // vtkPVRepresentedDataInformation is a vtkPVDataInformation subclass that knows
 // how to gather rendered data-information from a vtkPVDataRepresentation.
 
-#ifndef __vtkPVRepresentedDataInformation_h
-#define __vtkPVRepresentedDataInformation_h
+#ifndef vtkPVRepresentedDataInformation_h
+#define vtkPVRepresentedDataInformation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataInformation.h"
@@ -34,7 +34,6 @@ public:
   // Transfer information about a single object into this object.
   virtual void CopyFromObject(vtkObject*);
 
-//BTX
 protected:
   vtkPVRepresentedDataInformation();
   ~vtkPVRepresentedDataInformation();
@@ -42,7 +41,7 @@ protected:
 private:
   vtkPVRepresentedDataInformation(const vtkPVRepresentedDataInformation&); // Not implemented
   void operator=(const vtkPVRepresentedDataInformation&); // Not implemented
-//ETX
+
 };
 
 #endif

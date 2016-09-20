@@ -23,8 +23,8 @@
 //#define vtkAMRDualContourDEBUG
 //#define vtkAMRDualContourPROFILE
 
-#ifndef __vtkAMRDualContour_h
-#define __vtkAMRDualContour_h
+#ifndef vtkAMRDualContour_h
+#define vtkAMRDualContour_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMultiBlockDataSetAlgorithm.h"
@@ -115,7 +115,6 @@ protected:
   int TriangulateCap;
   int SkipGhostCopy;
 
-  //BTX
   virtual int RequestData(vtkInformation *, vtkInformationVector **, vtkInformationVector *);
 
   // Description:
@@ -203,7 +202,7 @@ protected:
 private:
   vtkAMRDualContour(const vtkAMRDualContour&);  // Not implemented.
   void operator=(const vtkAMRDualContour&);  // Not implemented.
-  //ETX
+
 };
 
 #endif

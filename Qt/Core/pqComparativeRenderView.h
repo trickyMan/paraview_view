@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqComparativeRenderView_h 
-#define __pqComparativeRenderView_h
+#ifndef pqComparativeRenderView_h
+#define pqComparativeRenderView_h
 
 #include "pqRenderView.h"
 
@@ -62,11 +62,6 @@ public:
 
   /// Returns the root render view in the comparative view.
   virtual vtkSMRenderViewProxy* getRenderViewProxy() const;
-
-  /// This method is temporarily overridden to handle image capture.
-  /// Eventually, we need to move this logic to vtkSMComparativeViewProxy.
-  virtual vtkImageData* captureImage(int magnification);
-  using Superclass::captureImage;
 
 protected slots:
   /// Called when the layout on the comparative vis changes.

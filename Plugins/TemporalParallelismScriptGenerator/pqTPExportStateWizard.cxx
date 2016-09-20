@@ -83,7 +83,7 @@ void pqTPExportStateWizard::customize()
   this->Internals->liveViz->hide();
   this->Internals->rescaleDataRange->hide();
   this->Internals->outputCinema->hide();
-  this->Internals->cinemaContainer->hide();
+  this->Internals->wCinemaTrackSelection->hide();
 }
 
 //-----------------------------------------------------------------------------
@@ -149,23 +149,8 @@ bool pqTPExportStateWizard::getCommandString(QString& command)
     }
   else // we are creating an image so we need to get the proper information from there
     {
-    vtkSMSessionProxyManager* proxyManager =
-        vtkSMProxyManager::GetProxyManager()->GetActiveSessionProxyManager();
-    for(int i=0;i<this->Internals->viewsContainer->count();i++)
-      {
-      pqImageOutputInfo* viewInfo = dynamic_cast<pqImageOutputInfo*>(
-        this->Internals->viewsContainer->widget(i));
-      pqView* view = viewInfo->getView();
-      QSize viewSize = view->getSize();
-      vtkSMViewProxy* viewProxy = view->getViewProxy();
-      QString info = QString(" '%1' : ['%2', '%3', '%4', '%5'],").
-        arg(proxyManager->GetProxyName("views", viewProxy)).
-        arg(viewInfo->getImageFileName()).arg(viewInfo->getMagnification()).
-        arg(viewSize.width()).arg(viewSize.height());
-      rendering_info+= info;
-      }
-    // remove the last comma -- assume that there's at least one view
-    rendering_info.chop(1);
+    QString itemFormat = " '%1' : ['%2', '%5', '%6', '%7']";
+    rendering_info = this->Internals->wViewSelection->getSelectionAsString(itemFormat, false);
     }
 
   QString filters ="ParaView Python State Files (*.py);;All files (*)";
@@ -180,6 +165,13 @@ bool pqTPExportStateWizard::getCommandString(QString& command)
     }
 
   QString filename = file_dialog.getSelectedFiles()[0];
+#ifdef _WIN32
+  // Convert to forward slashes. The issue is that the path is interpreted as a
+  // Python string when passed to the interpreter, so a path such as "C:\tests"
+  // is read as "C:<TAB>ests" which isn't what we want. Since Windows is
+  // flexible anyways, just use Unix separators.
+  filename.replace('\\', '/');
+#endif
 
   // Last Page, export the state.
   pqPythonManager* manager = qobject_cast<pqPythonManager*>(

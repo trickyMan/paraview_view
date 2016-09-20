@@ -117,6 +117,15 @@ A reader should have a general idea of the feature or fix to be developed given 
     * To add data follow [these instructions](https://gitlab.kitware.com/vtk/vtk/blob/master/Documentation/dev/git/data.md),
       from VTK.
 
+    Commit messages must contain a brief description as the first line
+    and a more detailed description of what the commit contains. If
+    the commit contains a new feature, the detailed message must
+    describe the new feature and why it is needed. If the commit
+    contains a bug fix, the detailed message must describe the bug
+    behavior, its underlying cause, and the approach to fix it. If the
+    bug is described in the bug tracker, the commit message must
+    contain a reference to the bug number.
+
 Share a Topic
 -------------
 
@@ -342,12 +351,10 @@ convention, do not request a merge if any `-1` or `Rejected-by:`
 review comments have not been resolved and superseded by at least
 `+1` or `Acked-by:` review comments from the same user.
 
-Caveats:
-* Currently, developers authorized to do a merge request will be limited to those
-who have **Master** privileges on the ParaView Gitlab repository. This preserves the
-spirit of **Gatekeeper Review** in the previous development workflow. This decision
-may be reevaluated in the future and lifted to encourage a more open development
-community.
+Developers are encouraged to merge their own merge requests on review. However,
+please do not merge unless you are available to address any dashboard issues that may
+arise. Developers who repeatedly ignore dashboard issues following their merges may
+loose developer privileges to the repository temporarily (or permanently)!
 
 ### Merge Success ###
 

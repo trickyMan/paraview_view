@@ -16,8 +16,8 @@
 // .SECTION Description
 // Object that managed multi-client communication and provide the group awareness
 
-#ifndef __vtkSICollaborationManager_h
-#define __vtkSICollaborationManager_h
+#ifndef vtkSICollaborationManager_h
+#define vtkSICollaborationManager_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIObject.h"
@@ -30,7 +30,6 @@ public:
   vtkTypeMacro(vtkSICollaborationManager, vtkSIObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
   // Description:
   // Push a new state to the underneath implementation
   // The provided implementation just store the message
@@ -56,7 +55,7 @@ private:
 
   class vtkInternal;
   vtkInternal* Internal;
-//ETX
+
 };
 
-#endif // #ifndef __vtkSICollaborationManager_h
+#endif // #ifndef vtkSICollaborationManager_h

@@ -23,6 +23,9 @@
 // .SECTION Warning
 // This filter may change the output in RequestData().
 
+#ifndef vtkClientServerMoveData_h
+#define vtkClientServerMoveData_h
+
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
 
@@ -69,7 +72,7 @@ public:
   // controller is obtained from the active session.
   void SetController(vtkMultiProcessController*);
   vtkGetObjectMacro(Controller, vtkMultiProcessController);
-//BTX
+
   enum ProcessTypes
     {
     AUTO=0,
@@ -115,5 +118,7 @@ protected:
 private:
   vtkClientServerMoveData(const vtkClientServerMoveData&); // Not implemented.
   void operator=(const vtkClientServerMoveData&); // Not implemented.
-//ETX
+
 };
+
+#endif

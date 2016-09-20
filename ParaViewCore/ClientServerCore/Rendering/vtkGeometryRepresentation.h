@@ -22,15 +22,17 @@
 // The addition of a transformation matrix was supported by CEA/DIF
 // Commissariat a l'Energie Atomique, Centre DAM Ile-De-France, Arpajon, France.
 
-#ifndef __vtkGeometryRepresentation_h
-#define __vtkGeometryRepresentation_h
+#ifndef vtkGeometryRepresentation_h
+#define vtkGeometryRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
 #include "vtkProperty.h" // needed for VTK_POINTS etc.
 
+class vtkCompositeDataDisplayAttributes;
 class vtkCompositePolyDataMapper2;
 class vtkMapper;
+class vtkPiecewiseFunction;
 class vtkPVCacheKeeper;
 class vtkPVGeometryFilter;
 class vtkPVLODActor;
@@ -200,10 +202,20 @@ public:
 
   // Description:
   // Convenience method to get bounds from a dataset/composite dataset.
+  // If a vtkCompositeDataDisplayAttributes \a cdAttributes is provided and
+  // if the input data \a dataObject is vtkCompositeDataSet, only visible
+  // blocks of the data will be used to compute the bounds.
   // Returns true if valid bounds were computed.
-  static bool GetBounds(vtkDataObject* dataObject, double bounds[6]);
+  static bool GetBounds(vtkDataObject* dataObject, double bounds[6],
+                        vtkCompositeDataDisplayAttributes* cdAttributes);
 
-//BTX
+  // Description:
+  // For OSPRay controls sizing of implicit spheres (points) and
+  // cylinders (lines)
+  virtual void SetEnableScaling(int v);
+  virtual void SetScalingArrayName(const char*);
+  virtual void SetScalingFunction(vtkPiecewiseFunction *pwf);
+
 protected:
   vtkGeometryRepresentation();
   ~vtkGeometryRepresentation();
@@ -284,6 +296,7 @@ protected:
   bool RequestGhostCellsIfNeeded;
   double DataBounds[6];
 
+  vtkPiecewiseFunction *PWF;
 private:
   vtkGeometryRepresentation(const vtkGeometryRepresentation&); // Not implemented
   void operator=(const vtkGeometryRepresentation&); // Not implemented
@@ -291,7 +304,7 @@ private:
   friend class vtkSelectionRepresentation;
   char* DebugString;
   vtkSetStringMacro(DebugString);
-//ETX
+
 };
 
 #endif

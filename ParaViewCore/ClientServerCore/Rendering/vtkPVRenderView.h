@@ -20,8 +20,8 @@
 // processes. vtkPVRenderView uses the information about what process it has
 // been created on to decide what part of the "rendering" happens on the
 // process.
-#ifndef __vtkPVRenderView_h
-#define __vtkPVRenderView_h
+#ifndef vtkPVRenderView_h
+#define vtkPVRenderView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVView.h"
@@ -34,7 +34,7 @@ class vtkAlgorithmOutput;
 class vtkCamera;
 class vtkCuller;
 class vtkExtentTranslator;
-class vtkPVGridAxes3DActor;
+class vtkFloatArray;
 class vtkInformationDoubleKey;
 class vtkInformationDoubleVectorKey;
 class vtkInformationIntegerKey;
@@ -48,6 +48,7 @@ class vtkPVAxesWidget;
 class vtkPVCenterAxesActor;
 class vtkPVDataDeliveryManager;
 class vtkPVDataRepresentation;
+class vtkPVGridAxes3DActor;
 class vtkPVHardwareSelector;
 class vtkPVInteractorStyle;
 class vtkPVSynchronizedRenderer;
@@ -59,6 +60,7 @@ class vtkRenderer;
 class vtkTextRepresentation;
 class vtkTexture;
 class vtkTimerLog;
+class vtkWindowToImageFilter;
 
 class VTKPVCLIENTSERVERCORERENDERING_EXPORT vtkPVRenderView : public vtkPVView
 {
@@ -70,6 +72,7 @@ public:
 
   enum InteractionModes
     {
+    INTERACTION_MODE_UNINTIALIZED=-1,
     INTERACTION_MODE_3D=0,
     INTERACTION_MODE_2D, // not implemented yet.
     INTERACTION_MODE_SELECTION,
@@ -333,6 +336,13 @@ public:
   vtkGetMacro(UseOffscreenRendering, bool);
 
   // Description:
+  // Get/Set the EGL device index (graphics card) used for rendering. This needs to
+  // be set before rendering. The graphics card needs to have the right extensions
+  // for this to work.
+  virtual void SetEGLDeviceIndex(int);
+  vtkGetMacro(EGLDeviceIndex, int);
+
+  // Description:
   // Returns if remote-rendering is possible on the current group of processes.
   vtkGetMacro(RemoteRenderingAvailable, bool);
   void RemoteRenderingAvailableOff()
@@ -376,6 +386,9 @@ public:
   static vtkDataObject* GetCurrentStreamedPiece(
     vtkInformation* info, vtkPVDataRepresentation* repr);
 
+  void SetLockBounds(bool nv);
+  vtkGetMacro(LockBounds, bool);
+  
   // Description:
   // Requests the view to deliver the pieces produced by the \c repr to all
   // processes after a gather to the root node to merge the datasets generated
@@ -419,6 +432,18 @@ public:
     }
 
   // Description:
+  // This is an temporary/experimental option and may be removed without notice.
+  // This is intended to be used within some experimental representations that
+  // require that all data being moved around uses a specific mode rather than
+  // the one automatically determined based on the process type.
+  // Set \c flag to -1 to clear. The flag is cleared in every
+  // vtkPVRenderView::Update() call, hence a representation must set it in
+  // vtkPVView::REQUEST_UPDATE() pass if needed each time.
+  // Also note, if the value it set to non-negative and is not equal to vtkMPIMoveData::PASS_THROUGH,
+  // ordered compositing will also be disabled.
+  static void SetForceDataDistributionMode(vtkInformation* info, int flag);
+
+  // Description:
   // Representations that support hardware (render-buffer based) selection,
   // should register the prop that they use for selection rendering. They can do
   // that in the vtkPVDataRepresentation::AddToView() implementation.
@@ -436,6 +461,7 @@ public:
   // Description:
   // Enable/disable showing of annotation for developers.
   void SetShowAnnotation(bool val);
+  vtkSetMacro(UpdateAnnotation, bool);
 
   // Description:
   // Set the vtkPVGridAxes3DActor to use for the view.
@@ -502,6 +528,10 @@ public:
   void SetMultiSamples(int val);
   void SetAlphaBitPlanes(int val);
   void SetStencilCapable(int val);
+
+  //*****************************************************************
+  // Forward to vtkCamera.
+  void SetParallelProjection(int mode);
 
   //*****************************************************************
   // Forwarded to vtkPVInteractorStyle if present on local processes.
@@ -597,7 +627,55 @@ public:
   void AddPropToRenderer(vtkProp* prop);
   void RemovePropFromRenderer(vtkProp* prop);
 
-//BTX
+  // Description:
+  // Tells view that it should draw a particular array component
+  // to the screen such that the pixels can be read back and
+  // decoded to obtain the values.
+  void SetDrawCells(bool choice);
+  void SetArrayNameToDraw(const char *name);
+  void SetArrayNumberToDraw(int fieldAttributeType);
+  void SetArrayComponentToDraw(int comp);
+  void SetScalarRange(double min, double max);
+  void StartCaptureValues();
+  void StopCaptureValues();
+
+  // Description:
+  // Tells views that it should draw the lighting contributions to the
+  // framebuffer.
+  void StartCaptureLuminance();
+  void StopCaptureLuminance();
+
+  // Description:
+  // Access to the Z buffer.
+  void CaptureZBuffer();
+  vtkFloatArray * GetCapturedZBuffer();
+
+  // Description:
+  // Switches between rasterization and ray tracing.
+  void SetEnableOSPRay(bool);
+  bool GetEnableOSPRay();
+  // Description:
+  // Controls whether OSPRay sends casts shadow rays or not.
+  void SetShadows(bool);
+  bool GetShadows();
+  // Description:
+  // Sets the number of occlusion query rays that OSPRay sends at each intersection.
+  void SetAmbientOcclusionSamples(int);
+  int GetAmbientOcclusionSamples();
+  // Description:
+  // Set the number of primary rays that OSPRay shoots per pixel.
+  void SetSamplesPerPixel(int);
+  int GetSamplesPerPixel();
+  // Description:
+  // Set the number of render passes OSPRay takes to accumulate subsampled color results.
+  void SetMaxFrames(int);
+  int GetMaxFrames();
+  // Description:
+  // Dimish or Amplify all lights in the scene.
+  void SetLightScale(double);
+  double GetLightScale();
+    
+
 protected:
   vtkPVRenderView();
   ~vtkPVRenderView();
@@ -709,6 +787,7 @@ protected:
   int InteractiveRenderImageReductionFactor;
   int InteractionMode;
   bool ShowAnnotation;
+  bool UpdateAnnotation;
 
   // 2D and 3D interactor style
   vtkPVInteractorStyle* TwoDInteractorStyle;
@@ -727,6 +806,7 @@ protected:
   vtkBoundingBox GeometryBounds;
 
   bool UseOffscreenRendering;
+  int EGLDeviceIndex;
   bool UseOffscreenRenderingForScreenshots;
   bool UseInteractiveRenderingForScreenshots;
   bool NeedsOrderedCompositing;
@@ -752,11 +832,14 @@ protected:
   // Keeps track of the time when the priority-queue for streaming was
   // generated.
   vtkTimeStamp PriorityQueueBuildTimeStamp;
+
+  bool LockBounds;
 private:
   vtkPVRenderView(const vtkPVRenderView&); // Not implemented
   void operator=(const vtkPVRenderView&); // Not implemented
 
   bool MakingSelection;
+  int PreviousSwapBuffers;
   void OnSelectionChangedEvent();
   void OnPolygonSelectionEvent();
   void FinishSelection(vtkSelection*);
@@ -771,7 +854,8 @@ private:
   bool DistributedRenderingRequiredLOD;
   bool NonDistributedRenderingRequiredLOD;
 
-  int PreviousParallelProjectionStatus;
+  // Cached value for parallel projection set on camera.
+  int ParallelProjection;
 
   class vtkInternals;
   vtkInternals* Internals;
@@ -784,9 +868,11 @@ private:
   int StereoType;
   int ServerStereoType;
   void UpdateStereoProperties();
+
   vtkSmartPointer<vtkCuller> Culler;
   vtkNew<vtkTimerLog> Timer;
-//ETX
+
+  int ForceDataDistributionMode;
 };
 
 #endif

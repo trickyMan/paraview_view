@@ -18,8 +18,8 @@
 // vtkSMSessionClient supports both connecting a pvserver as well as connecting
 // a pvdataserver/pvrenderserver.
 
-#ifndef __vtkSMSessionClient_h
-#define __vtkSMSessionClient_h
+#ifndef vtkSMSessionClient_h
+#define vtkSMSessionClient_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMSession.h"
@@ -87,7 +87,6 @@ public:
   // applicable.
   virtual void Initialize();
 
-//BTX
   // Description:
   // Push the state.
   virtual void PushState(vtkSMMessage* msg);
@@ -96,7 +95,6 @@ public:
     vtkTypeUInt32 location, const vtkClientServerStream& stream,
     bool ignore_errors=false);
   virtual const vtkClientServerStream& GetLastResult(vtkTypeUInt32 location);
-//ETX
 
   // Description:
   // When Connect() is waiting for a server to connect back to the client (in
@@ -175,7 +173,6 @@ public:
   // b = a + 10;
   virtual vtkTypeUInt32 GetNextChunkGlobalUniqueIdentifier(vtkTypeUInt32 chunkSize);
 
-//BTX
   void OnServerNotificationMessageRMI(void* message, int message_length);
 
 protected:
@@ -241,7 +238,7 @@ private:
   int NotBusy;
   vtkTypeUInt32 LastGlobalID;
   vtkTypeUInt32 LastGlobalIDAvailable;
-//ETX
+
 };
 
 #endif

@@ -20,8 +20,8 @@
 // representation can exploit streaming capabilities provided by ParaView's
 // Render View (vtkPVRenderView).
 
-#ifndef __vtkAMROutlineRepresentation_h
-#define __vtkAMROutlineRepresentation_h
+#ifndef vtkAMROutlineRepresentation_h
+#define vtkAMROutlineRepresentation_h
 
 #include "vtkPVDataRepresentation.h"
 #include "vtkSmartPointer.h" // for smart pointer.
@@ -50,7 +50,6 @@ public:
   // representation of false, all view passes are ignored.
   virtual void SetVisibility(bool val);
 
-//BTX
 protected:
   vtkAMROutlineRepresentation();
   ~vtkAMROutlineRepresentation();
@@ -164,7 +163,6 @@ private:
   // longer valid.
   bool InStreamingUpdate;
 
-//ETX
 };
 
 #endif

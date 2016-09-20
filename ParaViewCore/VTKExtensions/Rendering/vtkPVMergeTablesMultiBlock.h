@@ -26,8 +26,8 @@
 // .SECTION TODO
 // We may want to consolidate with vtkPVMergeTable somehow
 
-#ifndef __vtkPVMergeTablesMultiBlock_h
-#define __vtkPVMergeTablesMultiBlock_h
+#ifndef vtkPVMergeTablesMultiBlock_h
+#define vtkPVMergeTablesMultiBlock_h
 
 #include "vtkAlgorithm.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -45,7 +45,6 @@ public:
 
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkPVMergeTablesMultiBlock();
   ~vtkPVMergeTablesMultiBlock();
@@ -62,7 +61,7 @@ protected:
 private:
   vtkPVMergeTablesMultiBlock(const vtkPVMergeTablesMultiBlock&); // Not implemented
   void operator=(const vtkPVMergeTablesMultiBlock&); // Not implemented
-//ETX
+
 };
 
 #endif

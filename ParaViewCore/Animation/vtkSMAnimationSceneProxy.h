@@ -18,8 +18,8 @@
 // client-side VTK-object to call UpdatePropertyInformation() every time that
 // happens.
 
-#ifndef __vtkSMAnimationSceneProxy_h
-#define __vtkSMAnimationSceneProxy_h
+#ifndef vtkSMAnimationSceneProxy_h
+#define vtkSMAnimationSceneProxy_h
 
 #include "vtkPVAnimationModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -53,7 +53,6 @@ public:
     return self? self->FindAnimationCue(animatedProxy, animatedPropertyName) : NULL;
     }
 
-//BTX
 protected:
   vtkSMAnimationSceneProxy();
   ~vtkSMAnimationSceneProxy();
@@ -75,7 +74,7 @@ private:
 
   // Called when vtkSMAnimationScene::UpdateStartEndTimesEvent is fired.
   void OnUpdateStartEndTimesEvent(vtkObject*, unsigned long, void*);
-//ETX
+
 };
 
 #endif

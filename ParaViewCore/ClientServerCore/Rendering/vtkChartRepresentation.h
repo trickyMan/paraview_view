@@ -23,8 +23,8 @@
 // UpdatePipeline() on the representation proxy and then access the delivered
 // vtkTable on the client.
 
-#ifndef __vtkChartRepresentation_h
-#define __vtkChartRepresentation_h
+#ifndef vtkChartRepresentation_h
+#define vtkChartRepresentation_h
 
 #include "vtkPVDataRepresentation.h"
 #include "vtkWeakPointer.h" // needed for vtkWeakPointer
@@ -35,6 +35,7 @@
 #include <map> // needed for map
 
 class vtkChartSelectionRepresentation;
+class vtkCSVExporter;
 class vtkMultiBlockDataSet;
 class vtkPVCacheKeeper;
 class vtkPVContextView;
@@ -132,7 +133,13 @@ public:
   // representation or the conversion cannot be made.
   virtual bool MapSelectionToView(vtkSelection* sel);
 
-//BTX
+  // Description:
+  // Called by vtkPVContextView::Export() to export the representation's data to
+  // a CSV file. Return false on failure which will call the exporting process
+  // to abort and raise an error. Default implementation simply returns false.
+  virtual bool Export(vtkCSVExporter* vtkNotUsed(exporter))
+    { return false; }
+
 protected:
   vtkChartRepresentation();
   ~vtkChartRepresentation();
@@ -212,7 +219,7 @@ private:
 
   vtkTimeStamp PrepareForRenderingTime;
   vtkSmartPointer<vtkChartSelectionRepresentation> DummyRepresentation;
-//ETX
+
 };
 
 #endif

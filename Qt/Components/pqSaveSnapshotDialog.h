@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqSaveSnapshotDialog_h 
-#define __pqSaveSnapshotDialog_h
+#ifndef pqSaveSnapshotDialog_h
+#define pqSaveSnapshotDialog_h
 
 #include <QDialog>
 #include "pqComponentsModule.h"
@@ -52,6 +52,11 @@ public:
 
   /// Returns the quality [0, 100] choosen by the user.
   int quality() const;
+
+  /// Specifiy if the save all views option should be visible or not.
+  /// Default behaviour is to show it. It can be useful to disable the option
+  /// for some custom applications where there is just a single view.
+  void setEnableSaveAllViews(bool enable);
 
   /// Set the default all views size. viewSize is used when used when
   /// saveAllViews is false, while all views size is used when saveAllViews is

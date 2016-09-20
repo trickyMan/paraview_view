@@ -17,8 +17,8 @@
 // vtkSMDeserializerXMLCache is used to deserialize proxies from previously
 // stored XML states.
 
-#ifndef __vtkSMDeserializerXMLCache_h
-#define __vtkSMDeserializerXMLCache_h
+#ifndef vtkSMDeserializerXMLCache_h
+#define vtkSMDeserializerXMLCache_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDeserializerXML.h"
@@ -39,7 +39,6 @@ public:
   // Allow to register a given XML state for a given proxy GlobalId
   virtual void CacheXMLProxyState(vtkTypeUInt32 id, vtkPVXMLElement* xml);
 
-//BTX
 protected:
   vtkSMDeserializerXMLCache();
   ~vtkSMDeserializerXMLCache();
@@ -57,7 +56,7 @@ private:
 
   class vtkInternal;
   vtkInternal* Internals;
-//ETX
+
 };
 
 #endif

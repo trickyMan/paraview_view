@@ -19,8 +19,8 @@
 // to default OpenGL pipeline. Look at vtkPVLightingHelper_s for available
 // GLSL functions.
 
-#ifndef __vtkPVLightingHelper_h
-#define __vtkPVLightingHelper_h
+#ifndef vtkPVLightingHelper_h
+#define vtkPVLightingHelper_h
 
 #include "vtkObject.h"
 #include "vtkShader2.h" // for vtkShader2Type
@@ -48,7 +48,6 @@ public:
   // This must be called before the shader program is bound.
   void PrepareForRendering();
 
-//BTX
 protected:
   vtkPVLightingHelper();
   ~vtkPVLightingHelper();
@@ -59,7 +58,7 @@ protected:
 private:
   vtkPVLightingHelper(const vtkPVLightingHelper&); // Not implemented.
   void operator=(const vtkPVLightingHelper&); // Not implemented.
-//ETX
+
 };
 
 #endif

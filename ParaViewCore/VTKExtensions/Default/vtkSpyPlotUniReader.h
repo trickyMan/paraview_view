@@ -27,8 +27,8 @@ PURPOSE.  See the above copyright notice for more information.
 // cell data
 //-----------------------------------------------------------------------------
 //=============================================================================
-#ifndef __vtkSpyPlotUniReader_h
-#define __vtkSpyPlotUniReader_h
+#ifndef vtkSpyPlotUniReader_h
+#define vtkSpyPlotUniReader_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkObject.h"
@@ -90,8 +90,6 @@ public:
   vtkGetMacro(NumberOfCellFields, int);
 
   double* GetTimeArray();
-
-  const char* GetCellFieldDescription(int field);
 
   // Description:
   // Returns 1 if the grid information contained in the file has

@@ -17,8 +17,8 @@
 // vtkSMContextViewProxy is an abstract base class for all vtkContextView
 // subclasses.
 
-#ifndef __vtkSMContextViewProxy_h
-#define __vtkSMContextViewProxy_h
+#ifndef vtkSMContextViewProxy_h
+#define vtkSMContextViewProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMViewProxy.h"
@@ -39,7 +39,6 @@ public:
   vtkTypeMacro(vtkSMContextViewProxy, vtkSMViewProxy);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
   // Description:
   // Provides access to the vtk chart view.
   vtkContextView* GetContextView();
@@ -47,7 +46,6 @@ public:
   // Description:
   // Provides access to the vtk chart.
   virtual vtkAbstractContextItem* GetContextItem();
-//ETX
 
   // Description:
   // Return the render window from which offscreen rendering and interactor can
@@ -79,8 +77,6 @@ public:
 
   vtkSelection* GetCurrentSelection();
 
-
-//BTX
 protected:
   vtkSMContextViewProxy();
   ~vtkSMContextViewProxy();
@@ -96,6 +92,11 @@ protected:
   // Used to update the axis range properties on each interaction event.
   // This also fires the vtkCommand::InteractionEvent.
   void OnInteractionEvent();
+
+  // Description:
+  // Used to update the legend position on interaction event.
+  // This also fires the vtkCommand::InteractionEvent.
+  void OnLeftButtonReleaseEvent();
 
   // Description:
   // Overridden to update ChartAxes ranges on every render. This ensures that
@@ -128,7 +129,7 @@ private:
   void CopyAxisRangesFromChart();
 
   vtkNew<vtkSMViewProxyInteractorHelper> InteractorHelper;
-//ETX
+
 };
 
 #endif

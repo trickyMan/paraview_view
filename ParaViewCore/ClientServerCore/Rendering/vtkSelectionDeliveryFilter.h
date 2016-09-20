@@ -19,8 +19,8 @@
 // pure-render-server nodes to avoid odd side effects (We can fix this later if
 // the need arises).
 
-#ifndef __vtkSelectionDeliveryFilter_h
-#define __vtkSelectionDeliveryFilter_h
+#ifndef vtkSelectionDeliveryFilter_h
+#define vtkSelectionDeliveryFilter_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkSelectionAlgorithm.h"
@@ -35,7 +35,6 @@ public:
   vtkTypeMacro(vtkSelectionDeliveryFilter, vtkSelectionAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSelectionDeliveryFilter();
   ~vtkSelectionDeliveryFilter();
@@ -50,7 +49,7 @@ protected:
 private:
   vtkSelectionDeliveryFilter(const vtkSelectionDeliveryFilter&); // Not implemented
   void operator=(const vtkSelectionDeliveryFilter&); // Not implemented
-//ETX
+
 };
 
 #endif

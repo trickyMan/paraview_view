@@ -19,8 +19,8 @@
 // multiple input arrays are ranges for area plots. All properties, like color,
 // label etc. are specified collectively.
 
-#ifndef __vtkQuartileChartRepresentation_h
-#define __vtkQuartileChartRepresentation_h
+#ifndef vtkQuartileChartRepresentation_h
+#define vtkQuartileChartRepresentation_h
 
 #include "vtkXYChartRepresentation.h"
 
@@ -52,7 +52,11 @@ public:
   vtkSetMacro(AverageVisibility, bool);
   vtkGetMacro(AverageVisibility, bool);
 
-//BTX
+  // Description:
+  // When set to true, the med curve is rendered.
+  vtkSetMacro(MedianVisibility, bool);
+  vtkGetMacro(MedianVisibility, bool);
+
 protected:
   vtkQuartileChartRepresentation();
   ~vtkQuartileChartRepresentation();
@@ -60,6 +64,7 @@ protected:
   bool QuartileVisibility;
   bool RangeVisibility;
   bool AverageVisibility;
+  bool MedianVisibility;
 
 private:
   vtkQuartileChartRepresentation(const vtkQuartileChartRepresentation&); // Not implemented
@@ -67,7 +72,7 @@ private:
 
   class vtkQCRInternals;
   friend class vtkQCRInternals;
-//ETX
+
 };
 
 #endif

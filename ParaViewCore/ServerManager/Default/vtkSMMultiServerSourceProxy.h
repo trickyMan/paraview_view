@@ -19,8 +19,8 @@
 // when the user want to display a data object that belong to another server
 // into its local built-in view.
 
-#ifndef __vtkSMMultiServerSourceProxy_h
-#define __vtkSMMultiServerSourceProxy_h
+#ifndef vtkSMMultiServerSourceProxy_h
+#define vtkSMMultiServerSourceProxy_h
 
 #include "vtkPVServerManagerDefaultModule.h" //needed for exports
 #include "vtkSMSourceProxy.h"
@@ -41,8 +41,6 @@ public:
   // Description:
   // Return the proxy that is currently binded if any otherwise return NULL;
   virtual vtkSMSourceProxy* GetExternalProxy();
-
-//BTX
 
   // Description:
   // Marks the selection proxies dirty as well as chain to superclass.
@@ -69,7 +67,7 @@ protected:
 private:
   vtkSMMultiServerSourceProxy(const vtkSMMultiServerSourceProxy&); // Not implemented
   void operator=(const vtkSMMultiServerSourceProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -30,8 +30,8 @@
 // \li vtkCommand::UpdateDataEvent -- fired when the check state of any element
 // changes. calldata = vertexid for the element whose check state changed.
 
-#ifndef __vtkSMSILModel_h 
-#define __vtkSMSILModel_h
+#ifndef vtkSMSILModel_h 
+#define vtkSMSILModel_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -48,14 +48,12 @@ public:
   vtkTypeMacro(vtkSMSILModel, vtkSMObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  //BTX
   enum CheckState
     {
     UNCHECKED = 0,
     PARTIAL = 1,
     CHECKED = 2
     };
-  //ETX
 
   // Description:
   // Initialize the model using a SIL.
@@ -146,7 +144,6 @@ public:
   // Locate a vertex with the given name. Returns -1 if the vertex is not found.
   vtkIdType FindVertex(const char* name);
 
-//BTX 
   void GetLeaves(std::set<vtkIdType>& leaves,
     vtkIdType root, bool traverse_cross_edges);
 protected:
@@ -180,7 +177,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

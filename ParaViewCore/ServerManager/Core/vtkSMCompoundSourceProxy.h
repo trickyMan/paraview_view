@@ -29,8 +29,8 @@
 // as well as output ports of the subproxies.
 
 
-#ifndef __vtkSMCompoundSourceProxy_h
-#define __vtkSMCompoundSourceProxy_h
+#ifndef vtkSMCompoundSourceProxy_h
+#define vtkSMCompoundSourceProxy_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMSourceProxy.h"
@@ -126,7 +126,6 @@ public:
   // the returned element will be a top level element.
   vtkPVXMLElement* SaveDefinition(vtkPVXMLElement* root);
 
-//BTX
 protected:
   vtkSMCompoundSourceProxy();
   ~vtkSMCompoundSourceProxy();
@@ -153,7 +152,7 @@ private:
 
   class vtkInternals;
   vtkInternals* CSInternals;
-//ETX
+
 };
 
 #endif

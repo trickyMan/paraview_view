@@ -37,8 +37,8 @@
 // .SECTION See Also
 // vtkExtractSelection vtkSelection
 
-#ifndef __vtkPVExtractSelection_h
-#define __vtkPVExtractSelection_h
+#ifndef vtkPVExtractSelection_h
+#define vtkPVExtractSelection_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkExtractSelection.h"
@@ -64,7 +64,6 @@ public:
   void RemoveAllSelectionsInputs()
     { this->SetInputConnection(1, 0); }
 
-//BTX
 protected:
   vtkPVExtractSelection();
   ~vtkPVExtractSelection();
@@ -96,7 +95,7 @@ private:
 
   // Returns the combined content type for the selection.
   int GetContentType(vtkSelection* sel);
-//ETX
+
 };
 
 #endif

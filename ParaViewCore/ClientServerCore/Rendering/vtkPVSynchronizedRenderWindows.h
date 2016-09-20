@@ -26,8 +26,8 @@
 // If the application is managing calling of vtkRenderWindow::Render() on all
 // processes, then one should disable RenderEventPropagation flag.
 
-#ifndef __vtkPVSynchronizedRenderWindows_h
-#define __vtkPVSynchronizedRenderWindows_h
+#ifndef vtkPVSynchronizedRenderWindows_h
+#define vtkPVSynchronizedRenderWindows_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkObject.h"
@@ -135,7 +135,6 @@ public:
   unsigned long AddRMICallback(vtkRMIFunctionType, void* localArg, int tag);
   bool RemoveRMICallback(unsigned long id);
 
-//BTX
   enum
     {
     SYNC_MULTI_RENDER_WINDOW_TAG = 15002,
@@ -282,7 +281,7 @@ private:
 
   template <class T>
   bool ReduceTemplate(T &size, StandardOperations operation);
-//ETX
+
 };
 
 #endif

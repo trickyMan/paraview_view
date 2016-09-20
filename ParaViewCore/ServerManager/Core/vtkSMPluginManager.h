@@ -20,8 +20,8 @@
 // vtkSMPluginManager supports multiple sessions. Every vtkSMSession registers
 // itself with the vtkSMPluginManager during initialization.
 
-#ifndef __vtkSMPluginManager_h
-#define __vtkSMPluginManager_h
+#ifndef vtkSMPluginManager_h
+#define vtkSMPluginManager_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -84,7 +84,7 @@ public:
     LocalPluginLoadedEvent,
     RemotePluginLoadedEvent
   };
-//BTX
+
 protected:
   vtkSMPluginManager();
   ~vtkSMPluginManager();
@@ -100,7 +100,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

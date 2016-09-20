@@ -21,8 +21,8 @@
 // This class fires vtkCommand::StartInteractionEvent and
 // vtkCommand::EndInteractionEvent to signal start and end of interaction.
 
-#ifndef __vtkPVInteractorStyle_h
-#define __vtkPVInteractorStyle_h
+#ifndef vtkPVInteractorStyle_h
+#define vtkPVInteractorStyle_h
 
 #include "vtkInteractorStyleTrackballCamera.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -68,11 +68,9 @@ public:
   // Removes all manipulators.
   void RemoveAllManipulators();
 
-  //BTX
   // Description:
   // Accessor for the collection of camera manipulators.
   vtkGetObjectMacro(CameraManipulators, vtkCollection);
-  //ETX
 
   // Description:
   // Propagates the center to the manipulators.
@@ -101,9 +99,21 @@ public:
   // Returns the chosen manipulator based on the modifiers.
   virtual vtkCameraManipulator* FindManipulator(int button, int shift, int control);
 
+  // Description
+  // Dolly the renderer's camera to a specific point
+  static void DollyToPosition(double fact, int* position, vtkRenderer* renderer);
+
+  // Description
+  // Translate the renderer's camera
+  static void TranslateCamera(vtkRenderer* renderer, int toX, int toY, int fromX, int fromY);
+
+  using vtkInteractorStyleTrackballCamera::Dolly;
+
 protected:
   vtkPVInteractorStyle();
   ~vtkPVInteractorStyle();
+
+  virtual void Dolly(double factor);
 
   vtkCameraManipulator *CurrentManipulator;
   double CenterOfRotation[3];

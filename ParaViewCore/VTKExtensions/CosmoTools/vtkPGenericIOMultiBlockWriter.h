@@ -15,10 +15,10 @@
 // .NAME vtkPGenericIOMultiBlockWriter 
 // .SECTION Description
 
-#ifndef __vtkPGenericIOMultiBlockWriter_h
-#define __vtkPGenericIOMultiBlockWriter_h
+#ifndef vtkPGenericIOMultiBlockWriter_h
+#define vtkPGenericIOMultiBlockWriter_h
 
-#include "vtkWriter.h" // superclass
+#include "vtkWriter.h"
 #include "vtkPVVTKExtensionsCosmoToolsModule.h" // for export macro
 
 class vtkMultiProcessController;
@@ -33,8 +33,6 @@ public:
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
 
-
-//BTX
 protected:
   vtkPGenericIOMultiBlockWriter();
   ~vtkPGenericIOMultiBlockWriter();
@@ -49,7 +47,7 @@ private:
   vtkMultiProcessController* Controller;
   vtkPGenericIOMultiBlockWriter(const vtkPGenericIOMultiBlockWriter&); // Not implemented.
   void operator=(const vtkPGenericIOMultiBlockWriter&); // Not implemented.
-//ETX
+
 };
 
 #endif

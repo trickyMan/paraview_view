@@ -29,15 +29,13 @@
 //
 // </verbatim>
 
-#ifndef __vtkPEnSightGoldReader_h
-#define __vtkPEnSightGoldReader_h
+#ifndef vtkPEnSightGoldReader_h
+#define vtkPEnSightGoldReader_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPEnSightReader.h"
 
-//BTX
 class UndefPartialInternal;
-//ETX
 
 class vtkMultiBlockDataSet;
 class vtkPoints;

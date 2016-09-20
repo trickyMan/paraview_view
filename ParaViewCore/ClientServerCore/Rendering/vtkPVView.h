@@ -20,8 +20,8 @@
 // parallel rendering, tile-displays and client-server. Even if the view is
 // client-only view, it needs to address these other configuration gracefully.
 
-#ifndef __vtkPVView_h
-#define __vtkPVView_h
+#ifndef vtkPVView_h
+#define vtkPVView_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkView.h"
@@ -169,12 +169,18 @@ public:
   // vtkPVAxesWidget has been cleaned up.
   bool GetLocalProcessSupportsInteraction();
 
-//BTX
   vtkGetMacro(Identifier, unsigned int);
 
 protected:
   vtkPVView();
   ~vtkPVView();
+
+  // Description:
+  // Overridden to check that the representation has View setup properly. Older
+  // implementations of vtkPVDataRepresentations::AddToView() subclasses didn't
+  // call the superclass implementations. We check that that's not the case and
+  // warn.
+  virtual void AddRepresentationInternal(vtkDataRepresentation* rep);
 
   // vtkPVSynchronizedRenderWindows is used to ensure that this view participates
   // in tile-display configurations. Even if your view subclass a simple
@@ -223,7 +229,7 @@ private:
   bool LastRenderOneViewAtATime;
 
   static bool EnableStreaming;
-//ETX
+
 };
 
 #endif

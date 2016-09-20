@@ -16,8 +16,8 @@
 // .SECTION Description
 // Subclasses of this class are used to get information from the server.
 
-#ifndef __vtkPVInformation_h
-#define __vtkPVInformation_h
+#ifndef vtkPVInformation_h
+#define vtkPVInformation_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -39,7 +39,6 @@ public:
   // Merge another information object.
   virtual void AddInformation(vtkPVInformation*);
 
-  //BTX
   // Description:
   // Manage a serialized version of the information.
   virtual void CopyToStream(vtkClientServerStream*) = 0;
@@ -52,7 +51,6 @@ public:
   // controls what output port the data-information is gathered from.
   virtual void CopyParametersToStream(vtkMultiProcessStream&) {};
   virtual void CopyParametersFromStream(vtkMultiProcessStream&) {};
-  //ETX
 
   // Description:
   // Set/get whether to gather information only from the root.

@@ -23,8 +23,8 @@
 // .SECTION Caveats
 // This filter assumes that cells don't share points.
 
-#ifndef __vtkAppendArcLength_h
-#define __vtkAppendArcLength_h
+#ifndef vtkAppendArcLength_h
+#define vtkAppendArcLength_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkPolyDataAlgorithm.h"
@@ -36,7 +36,6 @@ public:
   vtkTypeMacro(vtkAppendArcLength, vtkPolyDataAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkAppendArcLength();
   ~vtkAppendArcLength();
@@ -50,7 +49,7 @@ protected:
 private:
   vtkAppendArcLength(const vtkAppendArcLength&); // Not implemented
   void operator=(const vtkAppendArcLength&); // Not implemented
-//ETX
+
 };
 
 #endif

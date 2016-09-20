@@ -24,8 +24,8 @@
 // words, if you are using render passes, you should not use this class. Your
 // render passes will  be overridden.
 
-#ifndef __vtkIceTSynchronizedRenderers_h
-#define __vtkIceTSynchronizedRenderers_h
+#ifndef vtkIceTSynchronizedRenderers_h
+#define vtkIceTSynchronizedRenderers_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkSynchronizedRenderers.h"
@@ -130,7 +130,7 @@ public:
   // Provides access to the internal vtkIceTCompositePass. Only use this if you
   // know what you're doing.
   vtkGetObjectMacro(IceTCompositePass, vtkIceTCompositePass);
-//BTX
+
 protected:
   vtkIceTSynchronizedRenderers();
   ~vtkIceTSynchronizedRenderers();
@@ -155,7 +155,7 @@ protected:
 private:
   vtkIceTSynchronizedRenderers(const vtkIceTSynchronizedRenderers&); // Not implemented
   void operator=(const vtkIceTSynchronizedRenderers&); // Not implemented
-//ETX
+
 };
 
 #endif

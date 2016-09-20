@@ -7,7 +7,7 @@
    All rights reserved.
 
    ParaView is a free software; you can redistribute it and/or modify it
-   under the terms of the ParaView license version 1.2. 
+   under the terms of the ParaView license version 1.2.
 
    See License_v1.2.txt for the full ParaView license.
    A copy of this license can be obtained by contacting
@@ -40,6 +40,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // ParaView Includes.
 #include "pqApplicationCore.h"
 #include "pqSettings.h"
+#include "pqStereoModeHelper.h"
 #include "vtkPVProxyDefinitionIterator.h"
 #include "vtkRenderWindow.h" // for VTK_STEREO_*
 #include "vtkSMProxyDefinitionManager.h"
@@ -58,11 +59,12 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-pqSaveSnapshotDialog::pqSaveSnapshotDialog(QWidget* _parent, 
+pqSaveSnapshotDialog::pqSaveSnapshotDialog(QWidget* _parent,
   Qt::WindowFlags f):Superclass(_parent, f)
 {
   this->Internal = new pqInternal();
   this->Internal->setupUi(this);
+  this->Internal->stereoMode->addItems(pqStereoModeHelper::availableStereoModes());
 
   this->Internal->AspectRatio = 1.0;
   this->Internal->quality->setMinimum(0);
@@ -126,6 +128,12 @@ pqSaveSnapshotDialog::~pqSaveSnapshotDialog()
   delete this->Internal;
 }
 
+//---------------------------------------------------------------------------
+void pqSaveSnapshotDialog::setEnableSaveAllViews(bool enable)
+{
+  this->Internal->selectedViewOnly->setVisible(enable);
+}
+
 //-----------------------------------------------------------------------------
 void pqSaveSnapshotDialog::setViewSize(const QSize& view_size)
 {
@@ -148,7 +156,7 @@ bool pqSaveSnapshotDialog::saveAllViews() const
 }
 
 //-----------------------------------------------------------------------------
-void pqSaveSnapshotDialog::updateSize() 
+void pqSaveSnapshotDialog::updateSize()
 {
   if (this->saveAllViews())
     {
@@ -166,7 +174,7 @@ void pqSaveSnapshotDialog::updateSize()
     }
 
   QSize curSize = this->viewSize();
-  this->Internal->AspectRatio = 
+  this->Internal->AspectRatio =
     curSize.width()/static_cast<double>(curSize.height());
 }
 
@@ -176,7 +184,7 @@ void pqSaveSnapshotDialog::onLockAspectRatio(bool lock)
   if (lock)
     {
     QSize curSize = this->viewSize();
-    this->Internal->AspectRatio = 
+    this->Internal->AspectRatio =
       curSize.width()/static_cast<double>(curSize.height());
     }
 }
@@ -225,34 +233,9 @@ QString pqSaveSnapshotDialog::palette() const
   return paletteData;
 }
 
-
 //-----------------------------------------------------------------------------
 int pqSaveSnapshotDialog::getStereoMode() const
 {
-  QString stereoMode = this->Internal->stereoMode->currentText();
-  if (stereoMode == "Red-Blue")
-    {
-    return VTK_STEREO_RED_BLUE;
-    }
-  else if (stereoMode == "Interlaced")
-    {
-    return VTK_STEREO_INTERLACED;
-    }
-  else if (stereoMode == "Checkerboard")
-    {
-    return VTK_STEREO_CHECKERBOARD;
-    }
-  else if (stereoMode == "Side By Side Horizontal")
-    {
-    return VTK_STEREO_SPLITVIEWPORT_HORIZONTAL;
-    }
-  else if (stereoMode == "Left Eye Only")
-    {
-    return VTK_STEREO_LEFT;
-    }
-  else if (stereoMode == "Right Eye Only")
-    {
-    return VTK_STEREO_RIGHT;
-    }
-  return 0;
+  return pqStereoModeHelper::stereoMode(
+    this->Internal->stereoMode->currentText());
 }

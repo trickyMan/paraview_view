@@ -17,14 +17,19 @@
 // vtkSurfaceLICRepresentation extends vtkGeometryRepresentation to use surface
 // lic when rendering surfaces.
 
-#ifndef __vtkSurfaceLICRepresentation_h
-#define __vtkSurfaceLICRepresentation_h
+#ifndef vtkSurfaceLICRepresentation_h
+#define vtkSurfaceLICRepresentation_h
 
 #include "vtkGeometryRepresentation.h"
 
-class vtkSurfaceLICPainter;
-class vtkInformationRequestKey;
 class vtkInformation;
+class vtkInformationRequestKey;
+
+#ifndef VTKGL2
+class vtkSurfaceLICPainter;
+#else
+class vtkCompositeSurfaceLICMapper;
+#endif
 
 class VTK_EXPORT vtkSurfaceLICRepresentation : public vtkGeometryRepresentation
 {
@@ -89,7 +94,6 @@ public:
 
   void SelectInputVectors(int, int, int, int attributeMode, const char* name);
 
-//BTX
 protected:
   vtkSurfaceLICRepresentation();
   ~vtkSurfaceLICRepresentation();
@@ -98,14 +102,19 @@ protected:
   // Overridden method to set parameters on vtkProperty and vtkMapper.
   void UpdateColoringParameters();
 
+#ifndef VTKGL2
   vtkSurfaceLICPainter* Painter;
   vtkSurfaceLICPainter* LODPainter;
+#else
+  vtkCompositeSurfaceLICMapper* SurfaceLICMapper;
+  vtkCompositeSurfaceLICMapper* SurfaceLICLODMapper;
+#endif
 
   bool UseLICForLOD;
 private:
   vtkSurfaceLICRepresentation(const vtkSurfaceLICRepresentation&); // Not implemented
   void operator=(const vtkSurfaceLICRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

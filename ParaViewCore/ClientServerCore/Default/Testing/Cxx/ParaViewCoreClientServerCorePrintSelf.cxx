@@ -6,7 +6,6 @@
 #include "vtkClientServerMoveData.h"
 #include "vtkCompleteArrays.h"
 #include "vtkCompositeRepresentation.h"
-#include "vtkCubeAxesRepresentation.h"
 #include "vtkDataLabelRepresentation.h"
 #include "vtkGeometryRepresentation.h"
 #include "vtkGeometryRepresentationWithFaces.h"
@@ -76,7 +75,6 @@
 #include "vtkSelectionDeliveryFilter.h"
 #include "vtkSelectionRepresentation.h"
 #include "vtkSession.h"
-#include "vtkSessionIterator.h"
 #include "vtkSpreadSheetRepresentation.h"
 #include "vtkSpreadSheetView.h"
 #include "vtkTCPNetworkAccessManager.h"
@@ -110,7 +108,6 @@ int ParaViewCoreClientServerCorePrintSelf(int, char*[])
   PRINT_SELF(vtkClientServerMoveData);
   PRINT_SELF(vtkCompleteArrays);
   PRINT_SELF(vtkCompositeRepresentation);
-  PRINT_SELF(vtkCubeAxesRepresentation);
   PRINT_SELF(vtkDataLabelRepresentation);
   PRINT_SELF(vtkGeometryRepresentation);
   PRINT_SELF(vtkGeometryRepresentationWithFaces);
@@ -180,7 +177,7 @@ int ParaViewCoreClientServerCorePrintSelf(int, char*[])
   PRINT_SELF(vtkSelectionDeliveryFilter);
   PRINT_SELF(vtkSelectionRepresentation);
   PRINT_SELF(vtkSession);
-  PRINT_SELF(vtkSessionIterator);
+  // PRINT_SELF(vtkSessionIterator); Requires process module to have been created.
   PRINT_SELF(vtkSpreadSheetRepresentation);
   //PRINT_SELF(vtkSpreadSheetView);
   PRINT_SELF(vtkTCPNetworkAccessManager);

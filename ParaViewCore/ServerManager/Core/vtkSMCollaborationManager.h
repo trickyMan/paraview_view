@@ -33,8 +33,8 @@
 //   => do what you want with the message
 // }
 
-#ifndef __vtkSMCollaborationManager_h
-#define __vtkSMCollaborationManager_h
+#ifndef vtkSMCollaborationManager_h
+#define vtkSMCollaborationManager_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMRemoteObject.h"
@@ -118,7 +118,6 @@ public:
   // Request an update of the user list from the server. (A pull request is done)
   void UpdateUserInformations();
 
-//BTX
   enum EventType
     {
     CollaborationNotification = 12345,
@@ -157,6 +156,6 @@ private:
 
   vtkSMCollaborationManager(const vtkSMCollaborationManager&); // Not implemented
   void operator=(const vtkSMCollaborationManager&);       // Not implemented
-//ETX
+
 };
-#endif // #ifndef __vtkSMCollaborationManager_h
+#endif // #ifndef vtkSMCollaborationManager_h

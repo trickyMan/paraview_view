@@ -20,8 +20,8 @@
 // API i.e. without using properties to allow the user to setup parameter
 // values over the comparative grid.
 
-#ifndef __vtkSMComparativeAnimationCueProxy_h
-#define __vtkSMComparativeAnimationCueProxy_h
+#ifndef vtkSMComparativeAnimationCueProxy_h
+#define vtkSMComparativeAnimationCueProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -75,7 +75,6 @@ public:
   // unchanged.
   virtual int LoadXMLState(vtkPVXMLElement* element, vtkSMProxyLocator* locator);
 
-//BTX
 protected:
   vtkSMComparativeAnimationCueProxy();
   ~vtkSMComparativeAnimationCueProxy();
@@ -96,7 +95,7 @@ private:
 
   class vtkInternal;
   vtkInternal* Internals;
-//ETX
+
 };
 
 #endif

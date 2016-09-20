@@ -18,8 +18,8 @@
 // vtkFileSeriesWriter is a meta-writer that enables writing a file series using
 // writers that are not time-aware.
 
-#ifndef __vtkFileSeriesWriter_h
-#define __vtkFileSeriesWriter_h
+#ifndef vtkFileSeriesWriter_h
+#define vtkFileSeriesWriter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
@@ -63,7 +63,6 @@ public:
   vtkSetMacro(WriteAllTimeSteps, int);
   vtkBooleanMacro(WriteAllTimeSteps, int);
 
-  //BTX
   // Description:
   // see vtkAlgorithm for details
   virtual int ProcessRequest(vtkInformation*,
@@ -74,9 +73,9 @@ public:
   // Get/Set the interpreter to use to call methods on the writer.
   void SetInterpreter(vtkClientServerInterpreter* interp)
     { this->Interpreter = interp; }
-  //ETX
+
 protected:
-//BTX
+
   vtkFileSeriesWriter();
   ~vtkFileSeriesWriter();
 
@@ -109,7 +108,7 @@ private:
   char* FileName;
 
   vtkClientServerInterpreter* Interpreter;
-//ETX
+
 };
 
 #endif

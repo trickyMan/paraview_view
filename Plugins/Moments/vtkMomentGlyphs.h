@@ -28,8 +28,8 @@
 // the flow.
 //
 
-#ifndef __vtkMomentGlyphs_h
-#define __vtkMomentGlyphs_h
+#ifndef vtkMomentGlyphs_h
+#define vtkMomentGlyphs_h
 
 #include "vtkPolyDataAlgorithm.h"
 
@@ -79,7 +79,6 @@ protected:
                           vtkInformationVector **inputVector,
                           vtkInformationVector *outputVector);
 
-//BTX
   virtual void MakeMomentVectors(vtkSmartPointer<vtkDataSet> &input,
                                  vtkSmartPointer<vtkDataArray> &inputArray);
   virtual vtkSmartPointer<vtkDataArray> MakeGlyphScaleFactors(
@@ -87,11 +86,10 @@ protected:
                                                       vtkDataArray *inputArray);
   virtual vtkSmartPointer<vtkPolyData> MakeGlyphs(vtkDataSet *input,
                                                   vtkDataArray *inputArray);
-//ETX
 
 private:
   vtkMomentGlyphs(const vtkMomentGlyphs &);         // Not implemented
   void operator=(const vtkMomentGlyphs &);          // Not implemented
 };
 
-#endif //__vtkMomentGlyphs_h
+#endif //vtkMomentGlyphs_h

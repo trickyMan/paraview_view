@@ -18,12 +18,19 @@
 // to a vtkSMProxyProperty. 
 // The Server Mananger configuration defines the proxy types that form this list,
 // while the value of this domain is the list of instances of proxies.
+// Example usage :
+// <ProxyListDomain name="proxy_list">
+//   <Proxy group="implicit_functions"
+//          name="Plane" />
+//   <Group name="implicit_functions"/>
+// </ProxyListDomain>
+
 //
 // .SECTION See Also
 // vtkSMDomain vtkSMProxyProperty
 
-#ifndef __vtkSMProxyListDomain_h
-#define __vtkSMProxyListDomain_h
+#ifndef vtkSMProxyListDomain_h
+#define vtkSMProxyListDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDomain.h"

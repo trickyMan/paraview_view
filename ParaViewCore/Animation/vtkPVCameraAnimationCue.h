@@ -17,8 +17,8 @@
 // vtkPVCameraAnimationCue is a specialization of the vtkPVKeyFrameAnimationCue suitable
 // for animating cameras from a vtkPVRenderView.
 
-#ifndef __vtkPVCameraAnimationCue_h
-#define __vtkPVCameraAnimationCue_h
+#ifndef vtkPVCameraAnimationCue_h
+#define vtkPVCameraAnimationCue_h
 
 #include "vtkPVAnimationModule.h" //needed for exports
 #include "vtkPVKeyFrameAnimationCue.h"
@@ -53,7 +53,7 @@ public:
   virtual void EndUpdateAnimationValues();
 
   void SetDataSourceProxy(vtkSMProxy *dataSourceProxy);
-//BTX
+
 protected:
   vtkPVCameraAnimationCue();
   ~vtkPVCameraAnimationCue();
@@ -63,7 +63,7 @@ protected:
 private:
   vtkPVCameraAnimationCue(const vtkPVCameraAnimationCue&); // Not implemented
   void operator=(const vtkPVCameraAnimationCue&); // Not implemented
-//ETX
+
 };
 
 #endif

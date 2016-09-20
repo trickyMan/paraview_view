@@ -18,8 +18,8 @@
 // vtkStreamingParticlesRepresentation is a simple representation for multiblock
 // datasets that with streaming capabilities.
 
-#ifndef __vtkStreamingParticlesRepresentation_h
-#define __vtkStreamingParticlesRepresentation_h
+#ifndef vtkStreamingParticlesRepresentation_h
+#define vtkStreamingParticlesRepresentation_h
 
 #include "vtkPVDataRepresentation.h"
 #include "vtkSmartPointer.h" // for smart pointer.
@@ -117,7 +117,7 @@ public:
   void SetLookupTable(vtkScalarsToColors*);
   void SetPointSize(double val);
     
-//BTX
+
 protected:
   vtkStreamingParticlesRepresentation();
   ~vtkStreamingParticlesRepresentation();
@@ -240,7 +240,7 @@ private:
   // and we need to clear our streaming buffers since the streamed data is no
   // longer valid.
   bool InStreamingUpdate;
-//ETX
+
 };
 
 #endif

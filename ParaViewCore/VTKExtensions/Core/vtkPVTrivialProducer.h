@@ -18,8 +18,8 @@
 // vtkPVTrivialProducer is specialized subclass of vtkTrivialProducer that
 // can manage time requests.
 
-#ifndef __vtkPVTrivialProducer_h
-#define __vtkPVTrivialProducer_h
+#ifndef vtkPVTrivialProducer_h
+#define vtkPVTrivialProducer_h
 
 #include "vtkTrivialProducer.h"
 #include "vtkPVVTKExtensionsCoreModule.h" // needed for export macro
@@ -50,7 +50,7 @@ public:
   virtual int ProcessRequest(vtkInformation*,
                              vtkInformationVector**,
                              vtkInformationVector*);
-//BTX
+
 protected:
   vtkPVTrivialProducer();
   ~vtkPVTrivialProducer();
@@ -63,7 +63,7 @@ protected:
 private:
   vtkPVTrivialProducer(const vtkPVTrivialProducer&); // Not implemented
   void operator=(const vtkPVTrivialProducer&); // Not implemented
-//ETX
+
 };
 
 #endif

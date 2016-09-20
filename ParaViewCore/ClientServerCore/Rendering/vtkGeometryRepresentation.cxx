@@ -33,8 +33,10 @@
 #include "vtkMultiProcessController.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
+#include "vtkPointData.h"
 #include "vtkProperty.h"
 #include "vtkPVCacheKeeper.h"
+#include "vtkPVConfig.h"
 #include "vtkPVGeometryFilter.h"
 #include "vtkPVLODActor.h"
 #include "vtkPVRenderView.h"
@@ -48,6 +50,10 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTransform.h"
 #include "vtkUnstructuredGrid.h"
+
+#ifdef PARAVIEW_USE_OSPRAY
+#include "vtkOSPRayActorNode.h"
+#endif
 
 #include <vtksys/SystemTools.hxx>
 
@@ -150,6 +156,8 @@ vtkGeometryRepresentation::vtkGeometryRepresentation()
   vtkMath::UninitializeBounds(this->DataBounds);
 
   this->SetupDefaults();
+
+  this->PWF = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -390,13 +398,15 @@ int vtkGeometryRepresentation::RequestUpdateExtent(vtkInformation* request,
       {
       vtkInformation* inInfo = inputVector[cc]->GetInformationObject(kk);
 
-      int ghostLevels = vtkStreamingDemandDrivenPipeline::GetUpdateGhostLevel(inInfo);
+      int ghostLevels = inInfo->Get(
+        vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_GHOST_LEVELS());
       if (this->RequestGhostCellsIfNeeded &&
         vtkGeometryRepresentation::DoRequestGhostCells(inInfo))
         {
         ghostLevels++;
         }
-      vtkStreamingDemandDrivenPipeline::SetUpdateGhostLevel(inInfo, ghostLevels);
+      inInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_GHOST_LEVELS(),
+        ghostLevels);
       }
     }
 
@@ -414,6 +424,8 @@ int vtkGeometryRepresentation::RequestData(vtkInformation* request,
   // Pass caching information to the cache keeper.
   this->CacheKeeper->SetCachingEnabled(this->GetUseCache());
   this->CacheKeeper->SetCacheTime(this->GetCacheKey());
+  //cout << this << ": Using Cache (" << this->GetCacheKey() << ") : is_cached = " <<
+  //  this->IsCached(this->GetCacheKey()) << " && use_cache = " <<  this->GetUseCache() << endl;
 
   if (inputVector[0]->GetNumberOfInformationObjects()==1)
     {
@@ -441,33 +453,32 @@ int vtkGeometryRepresentation::RequestData(vtkInformation* request,
     }
   this->CacheKeeper->Update();
 
+  // HACK: To overcome issue with PolyDataMapper (OpenGL2). It doesn't recreate
+  // VBO/IBOs when using data from cache. I suspect it's because the blocks in
+  // the MB dataset have older MTime.
+  this->Mapper->Modified();
+
   // Determine data bounds.
-  this->GetBounds(this->CacheKeeper->GetOutputDataObject(0),
-    this->DataBounds);
+  vtkCompositePolyDataMapper2 *cpm =
+    vtkCompositePolyDataMapper2::SafeDownCast(this->Mapper);
+  this->GetBounds(this->CacheKeeper->GetOutputDataObject(0), this->DataBounds,
+                  cpm ? cpm->GetCompositeDataDisplayAttributes() : NULL);
   return this->Superclass::RequestData(request, inputVector, outputVector);
 }
 
 //----------------------------------------------------------------------------
 bool vtkGeometryRepresentation::GetBounds(
-  vtkDataObject* dataObject, double bounds[6])
+  vtkDataObject* dataObject, double bounds[6],
+  vtkCompositeDataDisplayAttributes* cdAttributes)
 {
   vtkMath::UninitializeBounds(bounds);
   if (vtkCompositeDataSet* cd = vtkCompositeDataSet::SafeDownCast(dataObject))
     {
-    vtkBoundingBox bbox;
-    vtkCompositeDataIterator* iter = cd->NewIterator();
-    for (iter->InitTraversal(); !iter->IsDoneWithTraversal(); iter->GoToNextItem())
+    // computing bounds with only visible blocks
+    vtkCompositeDataDisplayAttributes::ComputeVisibleBounds(
+      cdAttributes, cd, bounds);
+    if (vtkBoundingBox::IsValid(bounds))
       {
-      vtkDataSet* ds = vtkDataSet::SafeDownCast(iter->GetCurrentDataObject());
-      if (ds)
-        {
-        bbox.AddBounds(ds->GetBounds());
-        }
-      }
-    iter->Delete();
-    if (bbox.IsValid())
-      {
-      bbox.GetBounds(bounds);
       return true;
       }
     }
@@ -520,7 +531,7 @@ bool vtkGeometryRepresentation::AddToView(vtkView* view)
     // Indicate that this is prop that we are rendering when hardware selection
     // is enabled.
     rview->RegisterPropForHardwareSelection(this, this->GetRenderedProp());
-    return true;
+    return this->Superclass::AddToView(view);
     }
   return false;
 }
@@ -533,7 +544,7 @@ bool vtkGeometryRepresentation::RemoveFromView(vtkView* view)
     {
     rview->GetRenderer()->RemoveActor(this->Actor);
     rview->UnRegisterPropForHardwareSelection(this, this->GetRenderedProp());
-    return true;
+    return this->Superclass::RemoveFromView(view);
     }
   return false;
 }
@@ -1020,4 +1031,34 @@ void vtkGeometryRepresentation::RemoveBlockOpacities()
     {
     cpm->RemoveBlockOpacities();
     }
+}
+
+//----------------------------------------------------------------------------
+void vtkGeometryRepresentation::SetEnableScaling(int val)
+{
+#ifdef PARAVIEW_USE_OSPRAY
+  this->Actor->SetEnableScaling(val);
+#else
+  (void)val;
+#endif
+}
+
+//----------------------------------------------------------------------------
+void vtkGeometryRepresentation::SetScalingArrayName(const char* val)
+{
+#ifdef PARAVIEW_USE_OSPRAY
+  this->Actor->SetScalingArrayName(val);
+#else
+  (void)val;
+#endif
+}
+
+//----------------------------------------------------------------------------
+void vtkGeometryRepresentation::SetScalingFunction(vtkPiecewiseFunction* pwf)
+{
+#ifdef PARAVIEW_USE_OSPRAY
+  this->Actor->SetScalingFunction(pwf);
+#else
+  (void)pwf;
+#endif
 }

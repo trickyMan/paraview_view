@@ -18,8 +18,8 @@
 // spreadsheet view. This class overrides vtkSMRepresentationProxy to ensure
 // that the selection inputs are setup correctly.
 
-#ifndef __vtkSMSpreadSheetRepresentationProxy_h
-#define __vtkSMSpreadSheetRepresentationProxy_h
+#ifndef vtkSMSpreadSheetRepresentationProxy_h
+#define vtkSMSpreadSheetRepresentationProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMRepresentationProxy.h"
@@ -32,7 +32,6 @@ public:
     vtkSMRepresentationProxy);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSMSpreadSheetRepresentationProxy();
   ~vtkSMSpreadSheetRepresentationProxy();
@@ -46,7 +45,7 @@ protected:
 private:
   vtkSMSpreadSheetRepresentationProxy(const vtkSMSpreadSheetRepresentationProxy&); // Not implemented
   void operator=(const vtkSMSpreadSheetRepresentationProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

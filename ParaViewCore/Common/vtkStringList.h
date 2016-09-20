@@ -17,8 +17,8 @@
 // A vtkStringList holds a list of strings.  
 // We might be able to replace it in the future.
 
-#ifndef __vtkStringList_h
-#define __vtkStringList_h
+#ifndef vtkStringList_h
+#define vtkStringList_h
 
 #include "vtkObject.h"
 #include "vtkPVCommonModule.h" // needed for export macro
@@ -36,11 +36,11 @@ public:
   void AddString(const char* str);
   void AddUniqueString(const char* str);
   
-  //BTX
+
   // Description:
   // Add a command and format it any way you like.
   void AddFormattedString(const char* EventString, ...);
-  //ETX
+
   
   // Description:
   // Initialize to empty.

@@ -16,17 +16,19 @@
 // .SECTION Description
 // Implementation class used by vtkXYChartRepresentation.
 
-#ifndef __vtkXYChartRepresentationInternals_h
-#define __vtkXYChartRepresentationInternals_h
+#ifndef vtkXYChartRepresentationInternals_h
+#define vtkXYChartRepresentationInternals_h
 
 #include "vtkChartXY.h"
+#include "vtkColor.h"
+#include "vtkCSVExporter.h"
+#include "vtkDataArray.h"
 #include "vtkPen.h"
 #include "vtkPlotBar.h"
 #include "vtkPlotFunctionalBag.h"
 #include "vtkPlotPoints.h"
 #include "vtkSmartPointer.h"
 #include "vtkTable.h"
-#include "vtkColor.h"
 
 #include <map>
 #include <string>
@@ -359,6 +361,34 @@ public:
       }
     }
 
+  //---------------------------------------------------------------------------
+  // Export visible plots to a CSV file.
+  virtual bool Export(vtkXYChartRepresentation* self, vtkCSVExporter* exporter)
+    {
+    for (PlotsMap::iterator iter1 = this->SeriesPlots.begin(); iter1 != this->SeriesPlots.end(); ++iter1)
+      {
+      for (PlotsMapItem::const_iterator iter2 = iter1->second.begin(); iter2 != iter1->second.end(); ++iter2)
+        {
+        const PlotInfo& plotInfo = iter2->second;
+        vtkPlot* plot = plotInfo.Plot;
+        if (!plot->GetVisible())
+          {
+          continue;
+          }
+        const std::string& columnName = plotInfo.ColumnName;
+        vtkTable* table = plot->GetInput();
+        vtkDataArray* xarray = self->GetUseIndexForXAxis()? NULL :
+          vtkDataArray::SafeDownCast(table->GetColumnByName(self->GetXAxisSeriesName()));
+        vtkAbstractArray* yarray = table->GetColumnByName(columnName.c_str());
+        if (yarray != NULL)
+          {
+          exporter->AddColumn(yarray, plot->GetLabel().c_str(), xarray);
+          }
+        }
+      }
+    return true;
+    }
+
 protected:
   //---------------------------------------------------------------------------
   // Returns false for in-visible plots.
@@ -376,8 +406,13 @@ protected:
       }
 
     std::string default_label = self->GetDefaultSeriesLabel(tableName, columnName);
-    plot->SetLabel(this->GetSeriesParameter(self, tableName, columnName, role,
-        this->Labels, default_label));
+    std::string label = this->GetSeriesParameter(self, tableName, columnName, role,
+        this->Labels, default_label);
+    if (self->GetSeriesLabelPrefix())
+      {
+      label = std::string(self->GetSeriesLabelPrefix()) + label;
+      }
+    plot->SetLabel(label);
 
     vtkColor3d color = this->GetSeriesParameter(self, tableName, columnName, role,
       this->Colors, vtkColor3d(0, 0, 0));

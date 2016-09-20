@@ -17,13 +17,15 @@
 #include "vtkAnnotationLink.h"
 #include "vtkAxis.h"
 #include "vtkChartBox.h"
-#include "vtkChartWarning.h"
 #include "vtkChartLegend.h"
 #include "vtkChartParallelCoordinates.h"
+#include "vtkChartWarning.h"
 #include "vtkChartXY.h"
 #include "vtkCommand.h"
+#include "vtkContextMouseEvent.h"
 #include "vtkContextScene.h"
 #include "vtkContextView.h"
+#include "vtkCSVExporter.h"
 #include "vtkDoubleArray.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
@@ -32,7 +34,6 @@
 #include "vtkStringArray.h"
 #include "vtkTextProperty.h"
 #include "vtkXYChartRepresentation.h"
-#include "vtkContextMouseEvent.h"
 
 #include <string>
 #include <sstream>
@@ -76,7 +77,6 @@ vtkPVXYChartView::vtkPVXYChartView()
 
   // Use the buffer id - performance issues are fixed.
   this->ContextView->GetScene()->SetUseBufferId(true);
-  this->ContextView->GetScene()->SetScaleTiles(false);
   this->LogScaleWarningLabel = NULL;
 }
 
@@ -370,7 +370,22 @@ void vtkPVXYChartView::SetLegendLocation(int location)
         legend->SetHorizontalAlignment(vtkChartLegend::CENTER);
         legend->SetVerticalAlignment(vtkChartLegend::BOTTOM);
         break;
+      case 8: // CUSTOM
+        legend->SetHorizontalAlignment(vtkChartLegend::CUSTOM);
+        legend->SetVerticalAlignment(vtkChartLegend::CUSTOM);
+        break;
+      default:
+        break;
       }
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkPVXYChartView::SetLegendPosition(int x, int y)
+{
+  if (this->Chart)
+    {
+    this->Chart->GetLegend()->SetPoint(vtkVector2f(x, y));
     }
 }
 

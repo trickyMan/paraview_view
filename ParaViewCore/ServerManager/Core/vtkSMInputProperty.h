@@ -24,12 +24,10 @@
 // .SECTION See Also
 // vtkSMInputProperty vtkSMSourceProxy
 
-#ifndef __vtkSMInputProperty_h
-#define __vtkSMInputProperty_h
+#ifndef vtkSMInputProperty_h
+#define vtkSMInputProperty_h
 
-//BTX
 struct vtkSMInputPropertyInternals;
-//ETX
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMProxyProperty.h"

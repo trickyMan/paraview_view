@@ -22,8 +22,8 @@
 // or all. Only selected attributes will be reduced according to the 
 // type choosen, all other attributes are those at the first input.
 
-#ifndef __vtkAttributeDataReductionFilter_h
-#define __vtkAttributeDataReductionFilter_h
+#ifndef vtkAttributeDataReductionFilter_h
+#define vtkAttributeDataReductionFilter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
@@ -34,7 +34,7 @@ public:
   static vtkAttributeDataReductionFilter* New();
   vtkTypeMacro(vtkAttributeDataReductionFilter, vtkDataObjectAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
-//BTX
+
   enum ReductionTypes
     {
     ADD = 1,
@@ -49,7 +49,6 @@ public:
     FIELD_DATA = 0x04, // FIXME: Field data not supported yet.
     ROW_DATA = 0x08
     };
-//ETX
 
   // Set the attributes to reduce. Only the choosen type of attributes will be 
   // reduced by this filter. The not-choosen attributes are passed through

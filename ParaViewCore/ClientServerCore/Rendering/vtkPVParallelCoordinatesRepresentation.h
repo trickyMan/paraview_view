@@ -18,8 +18,8 @@
 // subclass for parallel coordinates representation. It exposes API from
 // underlying vtkChartParallelCoordinates.
 
-#ifndef __vtkPVParallelCoordinatesRepresentation_h
-#define __vtkPVParallelCoordinatesRepresentation_h
+#ifndef vtkPVParallelCoordinatesRepresentation_h
+#define vtkPVParallelCoordinatesRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkChartRepresentation.h"
@@ -64,7 +64,12 @@ public:
   // Sets the opacity for the lines in the plot.
   vtkSetMacro(Opacity, double);
 
-//BTX
+  // Description:
+  // Called by vtkPVContextView::Export() to export the representation's data to
+  // a CSV file. Return false on failure which will call the exporting process
+  // to abort and raise an error. Default implementation simply returns false.
+  virtual bool Export(vtkCSVExporter* exporter);
+
 protected:
   vtkPVParallelCoordinatesRepresentation();
   ~vtkPVParallelCoordinatesRepresentation();
@@ -93,7 +98,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

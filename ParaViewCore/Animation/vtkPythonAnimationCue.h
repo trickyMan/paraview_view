@@ -17,8 +17,8 @@
 // vtkPythonAnimationCue is an animation cue that can execute arbitrary Python
 // scripts.
 
-#ifndef __vtkPythonAnimationCue_h
-#define __vtkPythonAnimationCue_h
+#ifndef vtkPythonAnimationCue_h
+#define vtkPythonAnimationCue_h
 
 #include "vtkPVAnimationModule.h" //needed for exports
 #include "vtkAnimationCue.h"
@@ -45,7 +45,6 @@ public:
   vtkSetStringMacro(Script);
   vtkGetStringMacro(Script);
 
-//BTX
 protected:
   vtkPythonAnimationCue();
   ~vtkPythonAnimationCue();
@@ -66,7 +65,7 @@ protected:
 private:
   vtkPythonAnimationCue(const vtkPythonAnimationCue&); // Not implemented
   void operator=(const vtkPythonAnimationCue&); // Not implemented
-//ETX
+
 };
 
 #endif

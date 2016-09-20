@@ -17,8 +17,8 @@
 // This filter defaults to using the outline filter unless the input
 // is a structured volume.
 
-#ifndef __vtkPVGeometryFilter_h
-#define __vtkPVGeometryFilter_h
+#ifndef vtkPVGeometryFilter_h
+#define vtkPVGeometryFilter_h
 
 #include "vtkDataObjectAlgorithm.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -91,7 +91,9 @@ public:
   // Description:
   // Whether to triangulate mesh for rendering. This parameter avoid
   // rendering issues of non-convex polygons.
-  vtkSetMacro(Triangulate, int);
+  // This option has no effect when using OpenGL2 rendering backend. OpenGL2
+  // rendering always triangulates polygonal meshes.
+  virtual void SetTriangulate(int val);
   vtkGetMacro(Triangulate, int);
   vtkBooleanMacro(Triangulate, int);
 
@@ -160,7 +162,7 @@ public:
   static vtkInformationIntegerVectorKey* LINES_OFFSETS();
   static vtkInformationIntegerVectorKey* POLYS_OFFSETS();
   static vtkInformationIntegerVectorKey* STRIPS_OFFSETS();
-//BTX
+
 protected:
   vtkPVGeometryFilter();
   ~vtkPVGeometryFilter();
@@ -320,7 +322,7 @@ private:
   void AddBlockColors(vtkPolyData* pd, unsigned int index);
   void AddHierarchicalIndex(vtkPolyData* pd, unsigned int level, unsigned int index);
   class BoundsReductionOperation;
-//ETX
+
 };
 
 #endif

@@ -45,29 +45,34 @@ A simple example::
 #     PURPOSE.  See the above copyright notice for more information.
 #
 #==============================================================================
-import paraview, re, os, os.path, new, sys, atexit, vtk
+import paraview, re, os, os.path, new, sys, atexit
 
-from vtkPVServerImplementationCorePython import *
-from vtkPVClientServerCoreCorePython import *
-from vtkPVServerManagerCorePython import *
+# prefer `vtk` from `paraview` since it doesn't import all
+# vtk modules.
+from paraview import vtk
+from paraview import _backwardscompatibilityhelper as _bc
+
+from vtk.vtkPVServerImplementationCore import *
+from vtk.vtkPVClientServerCoreCore import *
+from vtk.vtkPVServerManagerCore import *
 
 try:
-  from vtkPVServerManagerDefaultPython import *
+  from vtk.vtkPVServerManagerDefault import *
 except:
-  paraview.print_error("Error: Cannot import vtkPVServerManagerDefaultPython")
+  paraview.print_error("Error: Cannot import vtkPVServerManagerDefault")
 try:
-  from vtkPVServerManagerRenderingPython import *
+  from vtk.vtkPVServerManagerRendering import *
 except:
-  paraview.print_error("Error: Cannot import vtkPVServerManagerRenderingPython")
+  paraview.print_error("Error: Cannot import vtkPVServerManagerRendering")
 try:
-  from vtkPVServerManagerApplicationPython import *
+  from vtk.vtkPVServerManagerApplication import *
 except:
-  paraview.print_error("Error: Cannot import vtkPVServerManagerApplicationPython")
+  paraview.print_error("Error: Cannot import vtkPVServerManagerApplication")
 try:
-  from vtkPVAnimationPython import *
+  from vtk.vtkPVAnimation import *
 except:
-  paraview.print_error("Error: Cannot import vtkPVAnimationPython")
-from vtkPVCommonPython import *
+  paraview.print_error("Error: Cannot import vtkPVAnimation")
+from vtk.vtkPVCommon import *
 
 def _wrap_property(proxy, smproperty):
     """ Internal function.
@@ -458,16 +463,14 @@ class Proxy(object):
             return self.__GetActiveCamera
         if name == "SaveDefinition" and hasattr(self.SMProxy, "SaveDefinition"):
             return self.__SaveDefinition
-        if name == "ColorAttributeType" and self.SMProxy.GetProperty("ColorArrayName"):
-            if paraview.compatibility.GetVersion() <= 4.1:
-                if self.GetProperty("ColorArrayName")[0] == "CELLS":
-                    return "CELL_DATA"
-                else:
-                    return "POINT_DATA"
-            else:
-                # if ColorAttributeType is being used, warn.
-                paraview.print_debug_info(\
-                    "'ColorAttributeType' is obsolete. Simply use 'ColorArrayName' instead.  Refer to ParaView Python API changes documentation online.")
+
+        try:
+            return _bc.getattr(self, name)
+        except _bc.NotSupportedException:
+            # we fall through and let getattr() raise the appropriate exception.
+            pass
+        except _bc.Continue:
+            pass
         # If not a property, see if SMProxy has the method
         try:
             proxyAttr = getattr(self.SMProxy, name)
@@ -2580,6 +2583,7 @@ def updateModules(m):
     createModule('piecewise_functions', m.piecewise_functions)
     createModule("extended_sources", m.extended_sources)
     createModule("incremental_point_locators", m.misc)
+    createModule("point_locators", m.misc)
 
 def _createModules(m):
     """Called when the module is loaded, this creates sub-
@@ -2601,6 +2605,7 @@ def _createModules(m):
     m.extended_sources = createModule("extended_sources")
     m.misc = createModule("misc")
     createModule("incremental_point_locators", m.misc)
+    createModule("point_locators", m.misc)
 
 class PVModule(object):
     pass

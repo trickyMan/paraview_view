@@ -18,8 +18,8 @@
 // For that we need the object on which we should get the Port and its port
 // number.
 
-#ifndef __vtkSIInputProperty_h
-#define __vtkSIInputProperty_h
+#ifndef vtkSIInputProperty_h
+#define vtkSIInputProperty_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkSIProxyProperty.h"
@@ -36,7 +36,6 @@ public:
   // By default, this is 0.
   vtkGetMacro(PortIndex, int);
 
-//BTX
 protected:
   vtkSIInputProperty();
   ~vtkSIInputProperty();
@@ -54,7 +53,7 @@ protected:
 private:
   vtkSIInputProperty(const vtkSIInputProperty&); // Not implemented
   void operator=(const vtkSIInputProperty&); // Not implemented
-//ETX
+
 };
 
 #endif

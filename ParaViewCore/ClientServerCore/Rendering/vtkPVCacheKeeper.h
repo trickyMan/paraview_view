@@ -23,8 +23,8 @@
 // .SECTION See Also
 // vtkPVCacheKeeperPipeline
 
-#ifndef __vtkPVCacheKeeper_h
-#define __vtkPVCacheKeeper_h
+#ifndef vtkPVCacheKeeper_h
+#define vtkPVCacheKeeper_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkDataObjectAlgorithm.h"
@@ -61,7 +61,15 @@ public:
   vtkGetMacro(CachingEnabled, bool);
   vtkBooleanMacro(CachingEnabled, bool);
 
-//BTX
+  // Description:
+  // These methods are used for testing. Using this global state we can add
+  // checks to ensure that cache was used or not used for a particular sequence
+  // of actions.
+  static void ClearCacheStateFlags();
+  static int GetCacheHits();
+  static int GetCacheMisses();
+  static int GetCacheSkips();
+
 protected:
   vtkPVCacheKeeper();
   ~vtkPVCacheKeeper();
@@ -90,11 +98,14 @@ protected:
 private:
   vtkPVCacheKeeper(const vtkPVCacheKeeper&); // Not implemented
   void operator=(const vtkPVCacheKeeper&); // Not implemented
- 
+
   class vtkCacheMap;
   vtkCacheMap* Cache;
-//ETX
+
+  static int CacheHit;
+  static int CacheMiss;
+  static int CacheSkips;
+
 };
 
 #endif
-

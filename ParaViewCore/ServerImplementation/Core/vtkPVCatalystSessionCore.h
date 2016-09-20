@@ -19,8 +19,8 @@
 // real data and therefore are not allowed to execute the VTK pipeline.
 // @ingroup LiveInsitu
 
-#ifndef __vtkPVCatalystSessionCore_h
-#define __vtkPVCatalystSessionCore_h
+#ifndef vtkPVCatalystSessionCore_h
+#define vtkPVCatalystSessionCore_h
 
 #include "vtkPVServerImplementationCoreModule.h" //needed for exports
 #include "vtkPVSessionCore.h"
@@ -52,7 +52,7 @@ public:
 
   void UpdateIdMap(vtkTypeUInt32* idMapArray, int size);
   void ResetIdMap();
-//BTX
+
 protected:
   vtkPVCatalystSessionCore();
   ~vtkPVCatalystSessionCore();
@@ -64,7 +64,6 @@ private:
   class vtkInternal;
   vtkInternal* CatalystInternal;
 
-//ETX
 };
 
 #endif

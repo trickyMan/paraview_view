@@ -1,5 +1,5 @@
-#ifndef __vtkCTHSource_h
-#define __vtkCTHSource_h
+#ifndef vtkCTHSource_h
+#define vtkCTHSource_h
 
 #include "vtkBoundingBox.h"
 #include "vtkSmartPointer.h"
@@ -61,15 +61,14 @@ protected:
   int GlobalBlockSize[3];
 
   vtkBoundingBox Bounds;
-//BTX
+
   std::vector<std::string> CFieldNames;
   std::vector< std::vector<std::string> > MFieldNames;
-//ETX
 
   vtkIntArray* NeighborArray;
   
   bool AllocationsChanged;
-//BTX
+
   struct Block
   {
     int id;
@@ -90,7 +89,6 @@ protected:
   };
   std::vector<Block> Blocks;
   vtkSmartPointer<vtkNonOverlappingAMR> AMRSet;
-//ETX
 
   void AllocateBlock (Block &b);
   bool GetBounds (Block& b, int loCorner[3], int hiCorner[3]);
@@ -108,4 +106,4 @@ private:
   void operator = (const vtkCTHSource&); // Not implemented 
 };
 
-#endif /* __vtkCTHSource_h */
+#endif /* vtkCTHSource_h */

@@ -6,6 +6,9 @@ very specific web application.
 import os, sys, logging, types, inspect, traceback, logging, re, json
 from time import time
 
+# import Twisted reactor for later callback
+from twisted.internet import reactor
+
 # import RPC annotation
 from autobahn.wamp import register as exportRpc
 
@@ -18,7 +21,7 @@ from paraview.web import helper
 from vtk.web import protocols as vtk_protocols
 from decorators import *
 
-from vtkWebCorePython import vtkWebInteractionEvent
+from vtk.vtkWebCore import vtkWebInteractionEvent
 
 from vtk import vtkImageData
 from vtk import vtkUnsignedCharArray
@@ -28,15 +31,15 @@ from vtk import vtkDataEncoder
 #    vtkSMPVRepresentationProxy
 #    vtkSMTransferFunctionProxy
 #    vtkSMTransferFunctionManager
-from vtkPVServerManagerRenderingPython import *
+from vtk.vtkPVServerManagerRendering import *
 
 # Needed for:
 #    vtkSMProxyManager
-from vtkPVServerManagerCorePython import *
+from vtk.vtkPVServerManagerCore import *
 
 # Needed for:
 #    vtkDataObject
-from vtkCommonDataModelPython import *
+from vtk.vtkCommonDataModel import *
 
 # =============================================================================
 #
@@ -48,6 +51,7 @@ class ParaViewWebProtocol(vtk_protocols.vtkWebProtocol):
 
     def __init__(self):
         self.Application = None
+        self.coreServer = None
         self.multiRoot = False
         self.baseDirectory = ''
         self.baseDirectoryMap = {}
@@ -144,6 +148,10 @@ class ParaViewWebProtocol(vtk_protocols.vtkWebProtocol):
         lutMgr = vtkSMTransferFunctionManager()
         lutMgr.UpdateScalarBars(v.SMProxy, mode)
 
+    def publish(self, topic, event):
+        if self.coreServer:
+            self.coreServer.publish(topic, event)
+
 # =============================================================================
 #
 # Handle Mouse interaction on any type of view
@@ -192,6 +200,7 @@ class ParaViewWebMouseHandler(ParaViewWebProtocol):
         #pvevent.SetKeyCode(event["charCode"])
         retVal = self.getApplication().HandleInteractionEvent(view.SMProxy, pvevent)
         del pvevent
+
         return retVal
 
 # =============================================================================
@@ -204,11 +213,11 @@ class ParaViewWebViewPort(ParaViewWebProtocol):
 
     # RpcName: resetCamera => viewport.camera.reset
     @exportRpc("viewport.camera.reset")
-    def resetCamera(self, view):
+    def resetCamera(self, viewId):
         """
         RPC callback to reset camera.
         """
-        view = self.getView(view)
+        view = self.getView(viewId)
         simple.Render(view)
         simple.ResetCamera(view)
         try:
@@ -217,30 +226,33 @@ class ParaViewWebViewPort(ParaViewWebProtocol):
             pass
 
         self.getApplication().InvalidateCache(view.SMProxy)
+
         return view.GetGlobalIDAsString()
 
     # RpcName: updateOrientationAxesVisibility => viewport.axes.orientation.visibility.update
     @exportRpc("viewport.axes.orientation.visibility.update")
-    def updateOrientationAxesVisibility(self, view, showAxis):
+    def updateOrientationAxesVisibility(self, viewId, showAxis):
         """
         RPC callback to show/hide OrientationAxis.
         """
-        view = self.getView(view)
+        view = self.getView(viewId)
         view.OrientationAxesVisibility = (showAxis if 1 else 0);
 
         self.getApplication().InvalidateCache(view.SMProxy)
+
         return view.GetGlobalIDAsString()
 
     # RpcName: updateCenterAxesVisibility => viewport.axes.center.visibility.update
     @exportRpc("viewport.axes.center.visibility.update")
-    def updateCenterAxesVisibility(self, view, showAxis):
+    def updateCenterAxesVisibility(self, viewId, showAxis):
         """
         RPC callback to show/hide CenterAxesVisibility.
         """
-        view = self.getView(view)
+        view = self.getView(viewId)
         view.CenterAxesVisibility = (showAxis if 1 else 0);
 
         self.getApplication().InvalidateCache(view.SMProxy)
+
         return view.GetGlobalIDAsString()
 
     # RpcName: updateCamera => viewport.camera.update
@@ -252,6 +264,20 @@ class ParaViewWebViewPort(ParaViewWebProtocol):
         view.CameraViewUp = view_up
         view.CameraPosition = position
         self.getApplication().InvalidateCache(view.SMProxy)
+
+    @exportRpc("viewport.camera.get")
+    def getCamera(self, view_id):
+        view = self.getView(view_id)
+        return {
+            focal: list(view.CameraFocalPoint),
+            up: list(view.CameraViewUp),
+            position: list(view.CameraPosition)
+        }
+
+    @exportRpc("viewport.size.update")
+    def updateSize(self, view_id, width, height):
+        view = self.getView(view_id)
+        view.ViewSize = [ width, height ]
 
 # =============================================================================
 #
@@ -295,6 +321,10 @@ class ParaViewWebViewPortImageDelivery(ParaViewWebProtocol):
             app.InvalidateCache(view.SMProxy)
             reply["image"] = app.StillRenderToString(view.SMProxy, t, quality)
             tries -= 1
+
+        if not resize and options and options.has_key("clearCache") and options["clearCache"]:
+            app.InvalidateCache(view.SMProxy)
+            reply["image"] = app.StillRenderToString(view.SMProxy, t, quality)
 
         reply["stale"] = app.GetHasImagesBeingProcessed(view.SMProxy)
         reply["mtime"] = app.GetLastStillRenderToStringMTime()
@@ -421,6 +451,13 @@ class ParaViewWebTimeHandler(ParaViewWebProtocol):
         self.scene = simple.GetAnimationScene()
         simple.GetTimeTrack()
         self.scene.PlayMode = "Snap To TimeSteps"
+        self.playing = False
+        self.playTime = 0.1 # Time in second
+
+    def nextPlay(self):
+        self.updateTime('next')
+        if self.playing:
+            reactor.callLater(self.playTime, self.nextPlay)
 
     # RpcName: updateTime => pv.vcr.action
     @exportRpc("pv.vcr.action")
@@ -442,7 +479,53 @@ class ParaViewWebTimeHandler(ParaViewWebProtocol):
         if action == "last":
             animationScene.GoToLast()
 
+        timestep = list(animationScene.TimeKeeper.TimestepValues).index(animationScene.TimeKeeper.Time)
+        self.publish("pv.time.change", { 'time': float(view.ViewTime), 'timeStep': timestep } )
+
         return view.ViewTime
+
+    @exportRpc("pv.time.index.set")
+    def setTimeStep(self, timeIdx):
+        anim = simple.GetAnimationScene()
+        anim.TimeKeeper.Time = anim.TimeKeeper.TimestepValues[timeIdx]
+        return anim.TimeKeeper.Time
+
+    @exportRpc("pv.time.index.get")
+    def getTimeStep(self):
+        anim = simple.GetAnimationScene()
+        return list(anim.TimeKeeper.TimestepValues).index(anim.TimeKeeper.Time)
+
+    @exportRpc("pv.time.value.set")
+    def setTimeValue(self, t):
+        anim = simple.GetAnimationScene()
+
+        try:
+            step = list(anim.TimeKeeper.TimestepValues).index(t)
+            anim.TimeKeeper.Time = anim.TimeKeeper.TimestepValues[step]
+        except:
+            print 'Try to update time with', t, 'but value not found in the list'
+
+        return anim.TimeKeeper.Time
+
+    @exportRpc("pv.time.value.get")
+    def getTimeValue(self):
+        anim = simple.GetAnimationScene()
+        return anim.TimeKeeper.Time
+
+    @exportRpc("pv.time.values")
+    def getTimeValues(self):
+        return list(simple.GetAnimationScene().TimeKeeper.TimestepValues)
+
+    @exportRpc("pv.time.play")
+    def play(self, deltaT=0.1):
+        if not self.playing:
+            self.playTime = deltaT
+            self.playing = True
+            self.nextPlay()
+
+    @exportRpc("pv.time.stop")
+    def stop(self):
+        self.playing = False
 
 # =============================================================================
 #
@@ -832,6 +915,48 @@ class ParaViewWebColorManager(ParaViewWebProtocol):
         b64Str = encoder.EncodeAsBase64Png(imgData, 0)
 
         return { 'range': dataRange, 'image': b64Str }
+
+    @exportRpc("pv.color.manager.lut.image.all")
+    def getLutImages(self, numSamples):
+        colorArray = vtkUnsignedCharArray()
+        colorArray.SetNumberOfComponents(3)
+        colorArray.SetNumberOfTuples(numSamples)
+
+        pxm = simple.servermanager.ProxyManager()
+        lutProxy = pxm.NewProxy('lookup_tables', 'PVLookupTable')
+        lut = lutProxy.GetClientSideObject()
+        dataRange = lut.GetRange()
+        delta = (dataRange[1] - dataRange[0]) / float(numSamples)
+
+        # Add the color array to an image data
+        imgData = vtkImageData()
+        imgData.SetDimensions(numSamples, 1, 1)
+        imgData.GetPointData().SetScalars(colorArray)
+
+        # Use the vtk data encoder to base-64 encode the image as png, using no compression
+        encoder = vtkDataEncoder()
+
+        # Result container
+        result = {}
+
+        # Loop over all presets
+        self.findColorMapText('')
+        for name in self.colorMapNames:
+            colorMapText = self.findColorMapText(name)
+            vtkSMTransferFunctionProxy.ApplyColorMap(lutProxy, colorMapText)
+            rgb = [ 0, 0, 0 ]
+            for i in range(numSamples):
+                lut.GetColor(dataRange[0] + float(i) * delta, rgb)
+                r = int(round(rgb[0] * 255))
+                g = int(round(rgb[1] * 255))
+                b = int(round(rgb[2] * 255))
+                colorArray.SetTuple3(i, r, g, b)
+
+            result[name] = encoder.EncodeAsBase64Png(imgData, 0)
+
+        simple.Delete(lutProxy)
+
+        return result
 
     # RpcName: setSurfaceOpacity => pv.color.manager.surface.opacity.set
     @exportRpc("pv.color.manager.surface.opacity.set")
@@ -1636,7 +1761,7 @@ class ParaViewWebProxyManager(ParaViewWebProtocol):
         return { 'success': True, 'id': reader.GetGlobalIDAsString() }
 
     @exportRpc("pv.proxy.manager.get")
-    def get(self, proxyId):
+    def get(self, proxyId, ui=True):
         """
         Returns the proxy state for the given proxyId as a JSON object.
         """
@@ -1644,8 +1769,11 @@ class ParaViewWebProxyManager(ParaViewWebProtocol):
         proxyId = str(proxyId)
         self.fillPropertyList(proxyId, proxyProperties)
         proxyProperties = self.reorderProperties(proxyId, proxyProperties)
-        uiProperties = self.getUiProperties(proxyId, proxyProperties)
-        proxyJson = { 'id': proxyId, 'properties': proxyProperties, 'ui': uiProperties }
+        proxyJson = { 'id': proxyId, 'properties': proxyProperties }
+
+        # Perform costly request only when needed
+        if ui:
+            proxyJson['ui'] = self.getUiProperties(proxyId, proxyProperties)
 
         if 'specialHints' in self.propertyDetailsMap:
             proxyJson['hints'] = self.propertyDetailsMap['specialHints']
@@ -2364,7 +2492,17 @@ class ParaViewWebFileListing(ParaViewWebProtocol):
             relativeDir = relativeDir[len(self.rootName)+1:]
             path += relativeDir.replace('\\','/').split('/')
 
-        currentPath = os.path.join(baseDirectory, relativeDir)
+        currentPath = os.path.normpath(os.path.join(baseDirectory, relativeDir))
+        normBase = os.path.normpath(baseDirectory)
+
+        if not currentPath.startswith(normBase):
+            print "### CAUTION =========================================="
+            print " Attempt to get to another root path ###"
+            print "  => Requested:", relativeDir
+            print "  => BaseDir:", normBase
+            print "  => Computed path:", currentPath
+            print "### CAUTION =========================================="
+            currentPath = normBase
 
         self.directory_proxy.List(currentPath)
 
@@ -2441,8 +2579,8 @@ class ParaViewWebFileListing(ParaViewWebProtocol):
 # Handle Data Selection
 #
 # =============================================================================
-from vtkPVClientServerCoreRenderingPython import *
-from vtkCommonCorePython import *
+from vtk.vtkPVClientServerCoreRendering import *
+from vtk.vtkCommonCore import *
 
 class ParaViewWebSelectionHandler(ParaViewWebProtocol):
 

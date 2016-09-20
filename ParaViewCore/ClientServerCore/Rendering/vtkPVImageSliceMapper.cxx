@@ -226,7 +226,7 @@ int vtkPVImageSliceMapper::SetupScalars(vtkImageData* input)
 
 //----------------------------------------------------------------------------
 void vtkPVImageSliceMapper::RenderInternal(vtkRenderer *renderer,
-                                           vtkActor *vtkNotUsed(actor))
+                                           vtkActor *actor)
 {
   vtkImageData* input = vtkImageData::SafeDownCast(this->GetInput());
   if (this->UpdateTime < input->GetMTime() || this->UpdateTime < this->MTime)
@@ -406,6 +406,7 @@ void vtkPVImageSliceMapper::RenderInternal(vtkRenderer *renderer,
       polyPoints->SetPoint(i, outputbounds[indices[i*3]],
         outputbounds[indices[3*i+1]], outputbounds[indices[3*i+2]]);
       }
+      polyPoints->Modified();
     }
 
   if (!this->Texture->GetInput())
@@ -413,6 +414,13 @@ void vtkPVImageSliceMapper::RenderInternal(vtkRenderer *renderer,
     return;
     }
 
+  // copy information to the delegate
+  this->PolyDataActor->vtkProp3D::ShallowCopy(actor);
+  vtkInformation *info = actor->GetPropertyKeys();
+  this->PolyDataActor->SetPropertyKeys(info);
+  this->PolyDataActor->SetProperty(actor->GetProperty());
+
+  // Render
   this->Texture->Render(renderer);
   this->PolyDataActor->GetMapper()->Render(renderer, this->PolyDataActor);
   this->Texture->PostRender(renderer);
@@ -493,6 +501,7 @@ void vtkPVImageSliceMapper::ReleaseGraphicsResources (vtkWindow *win)
 {
 #ifdef VTKGL2
   this->Texture->ReleaseGraphicsResources(win);
+  this->PolyDataActor->ReleaseGraphicsResources(win);
 #else
   this->Painter->ReleaseGraphicsResources(win);
 #endif
@@ -513,12 +522,19 @@ void vtkPVImageSliceMapper::Render(vtkRenderer* ren, vtkActor* act)
     return;
     }
 
+  vtkInformation *inInfo = this->GetInputInformation();
+
   int nPieces = this->NumberOfSubPieces* this->NumberOfPieces;
   for (int cc=0; cc < this->NumberOfSubPieces; cc++)
     {
     int currentPiece = this->NumberOfSubPieces * this->Piece + cc;
-    vtkStreamingDemandDrivenPipeline::SetUpdateExtent(this->GetInputInformation(),
-      currentPiece, nPieces, this->GhostLevel);
+    inInfo->Set(
+      vtkStreamingDemandDrivenPipeline::UPDATE_PIECE_NUMBER(), currentPiece);
+    inInfo->Set(
+      vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_PIECES(), nPieces);
+    inInfo->Set(
+      vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_GHOST_LEVELS(),
+      this->GhostLevel);
     this->RenderPiece(ren, act);
     }
 
@@ -548,11 +564,17 @@ void vtkPVImageSliceMapper::Update(int port)
     // the memory limit, break the current piece into sub-pieces.
     if (input)
       {
-      this->GetInputAlgorithm()->UpdateInformation();
+      vtkInformation* inInfo = this->GetInputInformation();
       currentPiece = this->NumberOfSubPieces * this->Piece;
-      vtkStreamingDemandDrivenPipeline::SetUpdateExtent(
-        this->GetInputInformation(),
-        currentPiece, this->NumberOfSubPieces*nPieces, this->GhostLevel);
+      this->GetInputAlgorithm()->UpdateInformation();
+      inInfo->Set(
+        vtkStreamingDemandDrivenPipeline::UPDATE_PIECE_NUMBER(), currentPiece);
+      inInfo->Set(
+        vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_PIECES(),
+        this->NumberOfSubPieces * nPieces);
+      inInfo->Set(
+        vtkStreamingDemandDrivenPipeline::UPDATE_NUMBER_OF_GHOST_LEVELS(),
+        this->GhostLevel);
       }
 
     this->Superclass::Update(port);

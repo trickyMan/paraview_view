@@ -31,8 +31,8 @@
 // set UseModelTransform to true, and then specify the ModelBounds and
 // ModelTransformMatrix. Note: ModelTransform and DataScale/DataPosition are
 // mutually exclusive.
-#ifndef __vtkPVGridAxes3DActor_h
-#define __vtkPVGridAxes3DActor_h
+#ifndef vtkPVGridAxes3DActor_h
+#define vtkPVGridAxes3DActor_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkGridAxes3DActor.h"
@@ -74,7 +74,6 @@ public:
   // superclass.
   virtual double *GetBounds();
 
-//BTX
 protected:
   vtkPVGridAxes3DActor();
   ~vtkPVGridAxes3DActor();
@@ -97,7 +96,7 @@ private:
   void operator=(const vtkPVGridAxes3DActor&); // Not implemented
 
   vtkTimeStamp BoundsUpdateTime;
-//ETX
+
 };
 
 #endif

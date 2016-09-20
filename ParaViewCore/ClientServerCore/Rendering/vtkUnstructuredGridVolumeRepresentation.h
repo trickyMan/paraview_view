@@ -19,8 +19,8 @@
 // rendering vtkUnstructuredGrid datasets. It simply renders a translucent
 // surface for LOD i.e. interactive rendering.
 
-#ifndef __vtkUnstructuredGridVolumeRepresentation_h
-#define __vtkUnstructuredGridVolumeRepresentation_h
+#ifndef vtkUnstructuredGridVolumeRepresentation_h
+#define vtkUnstructuredGridVolumeRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
@@ -99,7 +99,6 @@ public:
   // Provides access to the actor used by this representation.
   vtkPVLODVolume* GetActor() { return this->Actor; }
 
-//BTX
 protected:
   vtkUnstructuredGridVolumeRepresentation();
   ~vtkUnstructuredGridVolumeRepresentation();
@@ -148,7 +147,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

@@ -19,8 +19,8 @@
 // ParaView's client-server streams to create new classes. Thus we don't have to
 // do any additional initialization as needed for vtkInstantiator to work.
 
-#ifndef __vtkPVInstantiator_h
-#define __vtkPVInstantiator_h
+#ifndef vtkPVInstantiator_h
+#define vtkPVInstantiator_h
 
 #include "vtkObject.h"
 #include "vtkPVCommonModule.h" // needed for export macro
@@ -36,9 +36,9 @@ public:
   // Create an instance of the class whose name is given.  If creation
   // fails, a NULL pointer is returned.
   // This uses vtkClientServerInterpreter::NewInstance() to create the class.
+  VTK_NEWINSTANCE
   static vtkObject* CreateInstance(const char* className);
 
-//BTX
 protected:
   vtkPVInstantiator();
   ~vtkPVInstantiator();
@@ -46,7 +46,7 @@ protected:
 private:
   vtkPVInstantiator(const vtkPVInstantiator&); // Not implemented
   void operator=(const vtkPVInstantiator&); // Not implemented
-//ETX
+
 };
 
 #endif

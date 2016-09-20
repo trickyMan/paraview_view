@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqDefaultViewBehavior_h 
-#define __pqDefaultViewBehavior_h
+#ifndef pqDefaultViewBehavior_h
+#define pqDefaultViewBehavior_h
 
 #include <QObject>
 #include "pqApplicationComponentsModule.h"
@@ -53,8 +53,19 @@ protected slots:
   void fiveMinuteTimeoutWarning();
   void finalTimeoutWarning();
 
+  void showWarnings();
 private:
-  Q_DISABLE_COPY(pqDefaultViewBehavior)
+  Q_DISABLE_COPY(pqDefaultViewBehavior);
+
+  enum WarningModes
+    {
+    NONE,
+    SERVER_DISPLAY_INACCESSIBLE,
+    SERVER_OPENGL_INADEQUATE,
+    CLIENT_OPENGL_INADEQUATE
+    };
+  WarningModes WarningMode;
+  QString ExtraWarningMessage;
 };
 
 #endif

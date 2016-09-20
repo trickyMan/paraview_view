@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkPVBox extends vtkBox to add ParaView specific API.
 
-#ifndef __vtkPVBox_h
-#define __vtkPVBox_h
+#ifndef vtkPVBox_h
+#define vtkPVBox_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkBox.h"
@@ -59,7 +59,6 @@ public:
   void SetScale(const double pos[3]);
   vtkGetVector3Macro(Scale, double);
 
-//BTX
 protected:
   vtkPVBox();
   ~vtkPVBox();
@@ -72,7 +71,7 @@ protected:
 private:
   vtkPVBox(const vtkPVBox&); // Not implemented
   void operator=(const vtkPVBox&); // Not implemented
-//ETX
+
 };
 
 #endif

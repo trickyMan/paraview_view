@@ -16,11 +16,37 @@
 #include <string.h>
 #include <stdlib.h>
 #include "vtkParse.h"
+#include "vtkParseHierarchy.h"
 #include "vtkParseMain.h"
+#include "vtkWrap.h"
 
 int numberOfWrappedFunctions = 0;
 FunctionInfo *wrappedFunctions[1000];
 extern FunctionInfo *currentFunction;
+HierarchyInfo *hierarchyInfo = NULL;
+
+/* make a guess about whether a class is wrapped */
+static int class_is_wrapped(const char *classname)
+{
+  HierarchyEntry *entry;
+
+  if (hierarchyInfo)
+    {
+    entry = vtkParseHierarchy_FindEntry(hierarchyInfo, classname);
+
+    if (entry)
+      {
+      /* only allow non-excluded vtkObjects as args */
+      if (vtkParseHierarchy_GetProperty(entry, "WRAP_EXCLUDE") ||
+          !vtkParseHierarchy_IsTypeOf(hierarchyInfo, entry, "vtkObjectBase"))
+        {
+        return 0;
+        }
+      }
+    }
+
+  return 1;
+}
 
 int arg_is_pointer_to_data(unsigned int argType, int count)
 {
@@ -30,6 +56,7 @@ int arg_is_pointer_to_data(unsigned int argType, int count)
      (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_STRING && /* vtkStdString* */
      (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_VOID && /* void*    */
      (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_CHAR && /* char*    */
+     (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_BOOL && /* bool*    */
      (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_UNKNOWN && /* Foo*  */
      (argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_VTK_OBJECT /* vtkFoo*  */);
 }
@@ -579,8 +606,9 @@ int managableArguments(FunctionInfo *curFunction)
       if (((argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_VTK_OBJECT) ||
           strcmp(curFunction->ArgClasses[i], "vtkClientServerStream"))
         {
-        /* also make exception for "vtkStdString" */
-        if ((argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_STRING)
+        /* also make exception for "const vtkStdString&" */
+        if ((argType & VTK_PARSE_BASE_TYPE) != VTK_PARSE_STRING ||
+            (curFunction->ArgTypes[i] & VTK_PARSE_CONST) == 0)
           {
           args_ok = 0;
           }
@@ -594,10 +622,24 @@ int managableArguments(FunctionInfo *curFunction)
       args_ok = 0;
       }
 
+    /* if arg is a vtk object, make sure it is a wrapped object */
+    if ((argType & VTK_PARSE_BASE_TYPE) == VTK_PARSE_VTK_OBJECT &&
+        !class_is_wrapped(curFunction->ArgClasses[i]))
+      {
+      args_ok = 0;
+      }
+
     /* if it is "**" or "*&" then don't wrap it */
     if (((argType & VTK_PARSE_INDIRECT) != 0) &&
         ((argType & VTK_PARSE_INDIRECT) != VTK_PARSE_POINTER) &&
         ((argType & VTK_PARSE_INDIRECT) != VTK_PARSE_REF))
+      {
+      args_ok = 0;
+      }
+
+    /* if it is an array of chars, then don't wrap it */
+    if ((argType & VTK_PARSE_BASE_TYPE) == VTK_PARSE_CHAR &&
+        curFunction->ArgCounts[i] != 0)
       {
       args_ok = 0;
       }
@@ -645,6 +687,13 @@ int managableArguments(FunctionInfo *curFunction)
   /* if it is a vtk object that isn't a pointer, don't wrap it */
   if (((returnType & VTK_PARSE_INDIRECT) == 0) &&
       ((returnType & VTK_PARSE_BASE_TYPE) == VTK_PARSE_VTK_OBJECT))
+    {
+    args_ok = 0;
+    }
+
+  /* if arg is a vtk object, make sure it is a wrapped object */
+  if ((returnType & VTK_PARSE_BASE_TYPE) == VTK_PARSE_VTK_OBJECT &&
+      !class_is_wrapped(curFunction->ReturnClass))
     {
     args_ok = 0;
     }
@@ -1077,12 +1126,24 @@ int classUsesStdString(ClassInfo *data)
   return 0;
 }
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+# define snprintf _snprintf
+#endif
+
 /* print the parsed structures */
 int main(int argc, char *argv[])
 {
   OptionInfo *options;
   FileInfo *fileInfo;
   ClassInfo *data;
+  NamespaceInfo *ns;
+  char nsname[1024];
+  struct {
+    NamespaceInfo *ns;
+    size_t nsnamepos;
+    int n;
+  } nsstack[32];
+  size_t nspos;
   FILE *fp;
   NewClassInfo *classData;
   int i;
@@ -1104,10 +1165,73 @@ int main(int argc, char *argv[])
 
   data = fileInfo->MainClass;
 
+  /* Set up the stack. */
+  nspos = 0;
+  nsstack[nspos].ns = fileInfo->Contents;
+  nsstack[nspos].nsnamepos = 0;
+  nsstack[nspos].n = 0;
+  nsname[nsstack[nspos].nsnamepos] = '\0';
+  ns = nsstack[nspos].ns;
+
+  while (!data && ns)
+    {
+    if (ns->Name)
+      {
+      size_t namelen = strlen(nsname);
+      snprintf(nsname + namelen, sizeof(nsname) - namelen, "::%s", ns->Name);
+      }
+
+    if (ns->NumberOfClasses > 0)
+      {
+      data = ns->Classes[0];
+      break;
+      }
+
+    if (ns->NumberOfNamespaces > nsstack[nspos].n)
+      {
+      /* Use the next namespace. */
+      ns = ns->Namespaces[nsstack[nspos].n];
+      nsstack[nspos].n++;
+
+      /* Go deeper. */
+      nspos++;
+      nsstack[nspos].ns = ns;
+      nsstack[nspos].nsnamepos = strlen(nsname);
+      nsstack[nspos].n = 0;
+      }
+    else
+      {
+      if (nspos)
+        {
+        --nspos;
+        /* Reset the namespace name. */
+        nsname[nsstack[nspos].nsnamepos] = '\0';
+        /* Go back up the stack. */
+        ns = nsstack[nspos].ns;
+        }
+      else
+        {
+        /* Nothing left to search. */
+        ns = NULL;
+        }
+      }
+    }
+
   if(!data)
     {
     fclose(fp);
-    exit(0);
+    exit(1);
+    }
+
+  /* get the hierarchy info for accurate typing */
+  if (options->HierarchyFileName)
+    {
+    hierarchyInfo = vtkParseHierarchy_ReadFile(options->HierarchyFileName);
+    if (hierarchyInfo)
+      {
+      /* resolve using declarations within the header files */
+      vtkWrap_ApplyUsingDeclarations(data, fileInfo, hierarchyInfo);
+      }
     }
 
   fprintf(fp,"// ClientServer wrapper for %s object\n//\n",data->Name);
@@ -1134,6 +1258,10 @@ int main(int argc, char *argv[])
   if (!strcmp("vtkObjectBase",data->Name))
     {
     fprintf(fp,"#include <sstream>\n");
+    }
+  if (*nsname)
+    {
+    fprintf(fp,"using namespace %s;\n", nsname);
     }
   if (!data->IsAbstract)
     {

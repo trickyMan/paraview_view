@@ -20,8 +20,8 @@
 // .NAME vtkRedistributePolyData - redistribute poly cells from other processes
 //                        (special version to color according to processor)
 
-#ifndef __vtkRedistributePolyData_h
-#define __vtkRedistributePolyData_h
+#ifndef vtkRedistributePolyData_h
+#define vtkRedistributePolyData_h
 
 #include "vtkPolyDataAlgorithm.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -61,7 +61,6 @@ protected:
   vtkRedistributePolyData();
   ~vtkRedistributePolyData();
 
-//BTX
   enum {
     CELL_ID_TAG        = 10,
     POINT_COORDS_TAG   = 20,
@@ -103,8 +102,6 @@ protected:
     vtkCommSched(const vtkCommSched&); // Not implemented
     void operator=(const vtkCommSched&); // Not implemented
   };
-
-//ETX
 
   virtual void MakeSchedule (vtkPolyData* input, vtkCommSched*);
   void OrderSchedule (vtkCommSched*);

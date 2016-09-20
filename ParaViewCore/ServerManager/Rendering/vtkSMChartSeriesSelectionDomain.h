@@ -30,13 +30,17 @@
 // the state for any series that already set on the property. Thus, it's not a
 // true "reset", but more like "update".
 
-#ifndef __vtkSMChartSeriesSelectionDomain_h
-#define __vtkSMChartSeriesSelectionDomain_h
+#ifndef vtkSMChartSeriesSelectionDomain_h
+#define vtkSMChartSeriesSelectionDomain_h
 
 #include "vtkSMStringListDomain.h"
 #include "vtkPVServerManagerRenderingModule.h" // needed for exports
 
+#include <set> // For std::set
+
 class vtkPVDataInformation;
+class vtkPVArrayInformation;
+class vtkChartRepresentation;
 
 class VTKPVSERVERMANAGERRENDERING_EXPORT vtkSMChartSeriesSelectionDomain :
   public vtkSMStringListDomain
@@ -73,7 +77,6 @@ public:
   // Add/Remove series names to hide by default. These are regular expressions.
   static void AddSeriesVisibilityDefault(const char* regex, bool value);
 
-//BTX
 protected:
   vtkSMChartSeriesSelectionDomain();
   ~vtkSMChartSeriesSelectionDomain();
@@ -105,6 +108,17 @@ protected:
     vtkPVDataInformation* dataInfo, int fieldAssociation, bool flattenTable);
 
   // Description:
+  // Build up the domain with provided array.
+  // Add array component from dataArray to strings. If blockName is non-empty, then it's
+  // used to "uniquify" the array names.
+  virtual void PopulateArrayComponents(
+    vtkChartRepresentation* chartRepr,
+    const std::string& blockName, 
+    std::vector<vtkStdString>& strings,
+    std::set<vtkStdString>& unique_strings, 
+    vtkPVArrayInformation* dataInfo, bool flattenTable);
+
+  // Description:
   // Call this method in PopulateAvailableArrays() to override a specific array's
   // default visibility. Used for hiding array components, by default, for
   // example.
@@ -133,7 +147,6 @@ private:
   void OnDomainModified();
   void UpdateDefaultValues(vtkSMProperty*, bool preserve_previous_values);
 
-//ETX
 };
 
 #endif

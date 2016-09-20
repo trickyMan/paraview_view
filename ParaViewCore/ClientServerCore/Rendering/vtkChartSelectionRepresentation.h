@@ -17,8 +17,8 @@
 // vtkChartSelectionRepresentation is a representation for the Cube-Axes that shows a
 // bounding box with labels around any input dataset.
 
-#ifndef __vtkChartSelectionRepresentation_h
-#define __vtkChartSelectionRepresentation_h
+#ifndef vtkChartSelectionRepresentation_h
+#define vtkChartSelectionRepresentation_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkPVDataRepresentation.h"
@@ -50,7 +50,6 @@ public:
   // representation. This is not reference counted.
   void SetChartRepresentation(vtkChartRepresentation* repr);
 
-//BTX
 protected:
   vtkChartSelectionRepresentation();
   ~vtkChartSelectionRepresentation();
@@ -71,7 +70,7 @@ protected:
   // Returns true if the removal succeeds.
   virtual bool RemoveFromView(vtkView* view);
 
-  vtkWeakPointer<vtkPVContextView> View;
+  vtkWeakPointer<vtkPVContextView> ContextView;
   vtkWeakPointer<vtkChartRepresentation> ChartRepresentation;
 
   // Flag updated in AddToView to indicate if the configuration requires
@@ -81,7 +80,7 @@ protected:
 private:
   vtkChartSelectionRepresentation(const vtkChartSelectionRepresentation&); // Not implemented
   void operator=(const vtkChartSelectionRepresentation&); // Not implemented
-//ETX
+
 };
 
 #endif

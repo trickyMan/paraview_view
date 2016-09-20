@@ -82,7 +82,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QStringList>
 #include <set>
 
-static const int metaId = qRegisterMetaType<QList<QList<QVariant> > >();
+const int pqSMAdaptor::metaId = qRegisterMetaType<QList<QList<QVariant> > >();
 
 namespace
 {
@@ -1269,14 +1269,14 @@ void pqSMAdaptor::setMultipleElementProperty(vtkSMProperty* Property,
 
     if(Type == CHECKED)
       {
-      if (num > 0)
+      if (num > 0 || dvp->GetRepeatable())
         {
         dvp->SetElements(dvalues, num);
         }
       }
     else if(Type == UNCHECKED)
       {
-      if (num > 0)
+      if (num > 0 || dvp->GetRepeatable())
         {
         dvp->SetUncheckedElements(dvalues, num);
         }

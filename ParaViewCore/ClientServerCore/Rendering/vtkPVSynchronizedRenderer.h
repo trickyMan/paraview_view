@@ -17,8 +17,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkPVSynchronizedRenderer_h
-#define __vtkPVSynchronizedRenderer_h
+#ifndef vtkPVSynchronizedRenderer_h
+#define vtkPVSynchronizedRenderer_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkObject.h"
@@ -42,6 +42,7 @@ public:
   // Description:
   // Set this flag to true before calling Initialize() to disable using
   // vtkIceTSynchronizedRenderers for parallel rendering.
+  // Default value is setup using vtkPVRenderViewSettings::GetDisableIceT.
   vtkSetMacro(DisableIceT, bool);
   vtkGetMacro(DisableIceT, bool);
 
@@ -113,7 +114,6 @@ public:
   // Enable/Disable empty images optimization.
   void SetRenderEmptyImages(bool);
 
-//BTX
   // Description:
   // Not for the faint hearted. This internal vtkSynchronizedRenderers instances
   // are exposed for advanced users that want to do advanced tricks with
@@ -163,7 +163,7 @@ protected:
 private:
   vtkPVSynchronizedRenderer(const vtkPVSynchronizedRenderer&); // Not implemented
   void operator=(const vtkPVSynchronizedRenderer&); // Not implemented
-//ETX
+
 };
 
 #endif

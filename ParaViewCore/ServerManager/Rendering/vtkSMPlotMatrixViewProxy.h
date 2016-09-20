@@ -14,8 +14,8 @@ PURPOSE.  See the above copyright notice for more information.
 =========================================================================*/
 // .NAME vtkSMPlotMatrixViewProxy - Proxy class for plot matrix view
 
-#ifndef __vtkSMPlotMatrixViewProxy_h
-#define __vtkSMPlotMatrixViewProxy_h
+#ifndef vtkSMPlotMatrixViewProxy_h
+#define vtkSMPlotMatrixViewProxy_h
 
 #include "vtkPVServerManagerRenderingModule.h" //needed for exports
 #include "vtkSMContextViewProxy.h"
@@ -33,7 +33,7 @@ public:
   // Description:
   // Provides access to the vtk plot matrix.
   virtual vtkAbstractContextItem* GetContextItem();
-//BTX
+
 protected:
   virtual void CreateVTKObjects();
   void ActivePlotChanged();
@@ -50,7 +50,7 @@ protected:
 private:
   vtkSMPlotMatrixViewProxy(const vtkSMPlotMatrixViewProxy&); // Not implemented
   void operator=(const vtkSMPlotMatrixViewProxy&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -16,8 +16,8 @@
 // .SECTION Description
 // Abstract superclass for an animation player.
 
-#ifndef __vtkAnimationPlayer_h
-#define __vtkAnimationPlayer_h
+#ifndef vtkAnimationPlayer_h
+#define vtkAnimationPlayer_h
 
 #include "vtkObject.h"
 #include "vtkWeakPointer.h" // needed for vtkWeakPointer.
@@ -71,7 +71,6 @@ public:
   // Take animation scene to last frame.
   void GoToLast();
 
-//BTX
 protected:
   vtkAnimationPlayer();
   ~vtkAnimationPlayer();
@@ -97,7 +96,6 @@ private:
   bool Loop;
   double CurrentTime;
 
-//ETX
 };
 
 #endif

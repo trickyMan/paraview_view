@@ -31,8 +31,8 @@
 // It manages the point sprite shader programs, and link the radius parameter to
 // the VertexAttribute in the mapper if the radius is varying.
 
-#ifndef __vtkPointSpriteProperty_h_
-#define __vtkPointSpriteProperty_h_
+#ifndef vtkPointSpriteProperty_h
+#define vtkPointSpriteProperty_h
 
 #include "vtkPointSpriteRenderingModule.h" //needed for exports
 #include "vtkOpenGLProperty.h"
@@ -53,19 +53,15 @@ public :
   // and add OpenGL calls for the point parameters.
   virtual void Render(vtkActor *a, vtkRenderer *ren);
 
-  //BTX
   // Description:
   // Restore point parameters and call Superclass PostRender method.
   virtual void PostRender(vtkActor *a,
                           vtkRenderer *r);
-  //ETX
 
-  //BTX
   enum
   {
     FixedRadius = 0, AttributeRadius = 1
   };
-  //ETX
 
   // Description:
   // The radius is always given in World coordinates.
@@ -103,12 +99,10 @@ public :
   vtkGetVector2Macro(RadiusRange, float);
   vtkSetVector2Macro(RadiusRange, float);
 
-  //BTX
   enum eRenderMode
   {
   Quadrics=0, TexturedSprite = 1, SimplePoint = 2
   };
-  //ETX
 
   // Description:
   // Set/Get the RenderMode for this mapper.
@@ -187,10 +181,9 @@ private:
   vtkPointSpriteProperty(const vtkPointSpriteProperty&); // Not implemented.
   void operator=(const vtkPointSpriteProperty&); // Not implemented.
 
-  //BTX
   class vtkInternal;
   vtkInternal* Internal;
-  //ETX
+
 };
 
-#endif// __vtkPointSpriteFilter_h_
+#endif// vtkPointSpriteFilter_h

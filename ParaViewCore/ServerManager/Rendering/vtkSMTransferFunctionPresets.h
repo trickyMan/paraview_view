@@ -23,8 +23,8 @@
 // destroyed. While there is no explicit synchronization between multiple
 // instances of vtkSMTransferFunctionPresets, there should not be any need to
 // have multiple instances alive at the same time.
-#ifndef __vtkSMTransferFunctionPresets_h
-#define __vtkSMTransferFunctionPresets_h
+#ifndef vtkSMTransferFunctionPresets_h
+#define vtkSMTransferFunctionPresets_h
 
 #include "vtkPVServerManagerRenderingModule.h" // needed for exports
 #include "vtkSMObject.h"
@@ -122,7 +122,6 @@ public:
   bool ImportPresets(const char* filename);
   bool ImportPresets(const Json::Value& presets);
 
-//BTX
 protected:
   vtkSMTransferFunctionPresets();
   ~vtkSMTransferFunctionPresets();
@@ -133,7 +132,7 @@ private:
 
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

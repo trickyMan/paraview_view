@@ -16,11 +16,12 @@
 // .SECTION Description
 // This is a subclass of vtkXMLParser that constructs a representation
 // of parsed XML using vtkPVXMLElement.
-#ifndef __vtkPVXMLParser_h
-#define __vtkPVXMLParser_h
+#ifndef vtkPVXMLParser_h
+#define vtkPVXMLParser_h
 
 #include "vtkXMLParser.h"
 #include "vtkPVCommonModule.h" // needed for export macro
+#include "vtkSmartPointer.h" // needed for vtkSmartPointer.
 
 class vtkPVXMLElement;
 
@@ -52,6 +53,12 @@ public:
   vtkGetMacro(SuppressErrorMessages, int);
   vtkSetMacro(SuppressErrorMessages, int);
   vtkBooleanMacro(SuppressErrorMessages, int);
+
+  // Description:
+  // Convenience method to parse XML contents. Will return NULL is the
+  // xmlcontents cannot be parsed.
+  static vtkSmartPointer<vtkPVXMLElement> ParseXML(
+    const char* xmlcontents, bool suppress_errors=false);
 
 protected:
   vtkPVXMLParser();

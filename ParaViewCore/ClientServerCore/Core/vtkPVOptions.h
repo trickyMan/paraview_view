@@ -19,8 +19,8 @@
 // These options can be retrieved during run-time, set using configuration file
 // or using Command Line Arguments.
 
-#ifndef __vtkPVOptions_h
-#define __vtkPVOptions_h
+#ifndef vtkPVOptions_h
+#define vtkPVOptions_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkCommandOptions.h"
@@ -30,9 +30,9 @@ class vtkPVOptionsInternal;
 class VTKPVCLIENTSERVERCORECORE_EXPORT vtkPVOptions : public vtkCommandOptions
 {
 protected:
-//BTX
+
   friend class vtkPVOptionsXMLParser;
-//ETX
+
 public:
   static vtkPVOptions* New();
   vtkTypeMacro(vtkPVOptions,vtkCommandOptions);
@@ -44,6 +44,7 @@ public:
 
   vtkGetMacro(ConnectID, int);
   vtkGetMacro(UseOffscreenRendering, int);
+  vtkGetMacro(EGLDeviceIndex, int);
   vtkGetMacro(UseStereoRendering, int);
   vtkGetStringMacro(StereoType);
 
@@ -171,7 +172,7 @@ public:
     };
 
 protected:
-//BTX
+
   // Description:
   // Default constructor.
   vtkPVOptions();
@@ -223,6 +224,7 @@ protected:
 private:
   int ConnectID;
   int UseOffscreenRendering;
+  int EGLDeviceIndex;
   int UseStereoRendering;
   int ReverseConnection;
   int TileDimensions[2];
@@ -244,7 +246,6 @@ private:
   // inline setters
   vtkSetStringMacro(StereoType);
 
-//ETX
 private:
   vtkPVOptions(const vtkPVOptions&); // Not implemented
   void operator=(const vtkPVOptions&); // Not implemented

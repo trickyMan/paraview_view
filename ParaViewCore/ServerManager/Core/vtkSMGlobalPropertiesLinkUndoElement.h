@@ -21,8 +21,8 @@
 // FIXME: This class is currrently non-functional. I need to re-energize this
 // class. It's falling down the priority chain for now.
 
-#ifndef __vtkSMGlobalPropertiesLinkUndoElement_h
-#define __vtkSMGlobalPropertiesLinkUndoElement_h
+#ifndef vtkSMGlobalPropertiesLinkUndoElement_h
+#define vtkSMGlobalPropertiesLinkUndoElement_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMUndoElement.h"
@@ -50,7 +50,6 @@ public:
                      const char* globalpropname,
                      vtkSMProxy* proxy, const char* propname, bool isAddAction);
 
-//BTX
 protected:
   vtkSMGlobalPropertiesLinkUndoElement();
   ~vtkSMGlobalPropertiesLinkUndoElement();
@@ -71,7 +70,7 @@ protected:
 private:
   vtkSMGlobalPropertiesLinkUndoElement(const vtkSMGlobalPropertiesLinkUndoElement&); // Not implemented
   void operator=(const vtkSMGlobalPropertiesLinkUndoElement&); // Not implemented
-//ETX
+
 };
 
 #endif

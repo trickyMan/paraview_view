@@ -17,8 +17,8 @@
 // vtkPVKeyFrameAnimationCueForProxies extends vtkPVKeyFrameAnimationCue to
 // update properties on proxies in SetAnimationValue().
 
-#ifndef __vtkPVKeyFrameAnimationCueForProxies_h
-#define __vtkPVKeyFrameAnimationCueForProxies_h
+#ifndef vtkPVKeyFrameAnimationCueForProxies_h
+#define vtkPVKeyFrameAnimationCueForProxies_h
 
 #include "vtkPVKeyFrameAnimationCue.h"
 
@@ -59,7 +59,6 @@ public:
   virtual void SetAnimationValue(int index, double value);
   virtual void EndUpdateAnimationValues();
 
-//BTX
 protected:
   vtkPVKeyFrameAnimationCueForProxies();
   ~vtkPVKeyFrameAnimationCueForProxies();
@@ -80,7 +79,7 @@ protected:
 private:
   vtkPVKeyFrameAnimationCueForProxies(const vtkPVKeyFrameAnimationCueForProxies&); // Not implemented
   void operator=(const vtkPVKeyFrameAnimationCueForProxies&); // Not implemented
-//ETX
+
 };
 
 #endif

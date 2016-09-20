@@ -19,8 +19,8 @@
 // create and exporter proxy (in same spirit as vtkSMWriterFactory, except that
 // there's no globally existing instance).
 
-#ifndef __vtkSMViewExportHelper_h
-#define __vtkSMViewExportHelper_h
+#ifndef vtkSMViewExportHelper_h
+#define vtkSMViewExportHelper_h
 
 #include "vtkPVServerManagerDefaultModule.h" //needed for exports
 #include "vtkSMObject.h"
@@ -50,7 +50,6 @@ public:
   // (or NULL). Caller must release the returned object explicitly.
   virtual vtkSMExporterProxy* CreateExporter(const char* filename, vtkSMViewProxy*);
 
-//BTX
 protected:
   vtkSMViewExportHelper();
   ~vtkSMViewExportHelper();
@@ -58,7 +57,7 @@ protected:
 private:
   vtkSMViewExportHelper(const vtkSMViewExportHelper&); // Not implemented
   void operator=(const vtkSMViewExportHelper&); // Not implemented
-//ETX
+
 };
 
 #endif

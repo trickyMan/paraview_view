@@ -43,7 +43,8 @@ vtkXYChartRepresentation::vtkXYChartRepresentation()
   ChartType(vtkChart::LINE),
   XAxisSeriesName(NULL),
   UseIndexForXAxis(true),
-  PlotDataHasChanged(false)
+  PlotDataHasChanged(false),
+  SeriesLabelPrefix(NULL)
 {
   this->SelectionColor[0] = 1.;
   this->SelectionColor[1] = 0.;
@@ -60,6 +61,7 @@ vtkXYChartRepresentation::~vtkXYChartRepresentation()
   delete this->Internals;
   this->Internals = NULL;
   this->SetXAxisSeriesName(NULL);
+  this->SetSeriesLabelPrefix(NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -290,4 +292,11 @@ void vtkXYChartRepresentation::PrepareForRendering()
   this->Internals->UpdatePlots(this, tables);
   this->Internals->UpdatePlotProperties(this);
   assert(this->UseIndexForXAxis == true || this->XAxisSeriesName != NULL);
+}
+
+//----------------------------------------------------------------------------
+bool vtkXYChartRepresentation::Export(vtkCSVExporter* exporter)
+{
+  assert(this->GetVisibility() == true);
+  return this->Internals->Export(this, exporter);
 }

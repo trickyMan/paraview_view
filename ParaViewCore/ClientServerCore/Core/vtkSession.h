@@ -18,8 +18,8 @@
 // between different processes or same process. What types of conversations are
 // possible i.e what protocols are supported, is defined by the subclasses.
 
-#ifndef __vtkSession_h
-#define __vtkSession_h
+#ifndef vtkSession_h
+#define vtkSession_h
 
 #include "vtkPVClientServerCoreCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -34,7 +34,6 @@ public:
   // Returns true is this session is active/alive/valid.
   virtual bool GetIsAlive() = 0;
 
-//BTX
 protected:
   vtkSession();
   ~vtkSession();
@@ -59,7 +58,7 @@ protected:
 private:
   vtkSession(const vtkSession&); // Not implemented
   void operator=(const vtkSession&); // Not implemented
-//ETX
+
 };
 
 #endif

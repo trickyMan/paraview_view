@@ -25,8 +25,8 @@
 // This will turn on profiling of how long each part of the filter takes
 //#define vtkMaterialInterfaceFilterPROFILE
 
-#ifndef __vtkMaterialInterfaceFilter_h
-#define __vtkMaterialInterfaceFilter_h
+#ifndef vtkMaterialInterfaceFilter_h
+#define vtkMaterialInterfaceFilter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkMultiBlockDataSetAlgorithm.h"
@@ -266,7 +266,6 @@ protected:
   vtkMaterialInterfaceFilter();
   ~vtkMaterialInterfaceFilter();
 
-  //BTX
   virtual int RequestData(vtkInformation *, vtkInformationVector **, vtkInformationVector *);
   virtual int FillInputPortInformation(int port, vtkInformation *info);
   virtual int FillOutputPortInformation(int port, vtkInformation *info);
@@ -726,7 +725,7 @@ protected:
 private:
   vtkMaterialInterfaceFilter(const vtkMaterialInterfaceFilter&);  // Not implemented.
   void operator=(const vtkMaterialInterfaceFilter&);  // Not implemented.
-  //ETX
+
 };
 
 #endif

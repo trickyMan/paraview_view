@@ -15,8 +15,8 @@
 // so that we can output boundary information for those cells given
 // only surfaces.
 
-#ifndef __vtkDataSetRegionSurfaceFilter_h
-#define __vtkDataSetRegionSurfaceFilter_h
+#ifndef vtkDataSetRegionSurfaceFilter_h
+#define vtkDataSetRegionSurfaceFilter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 
@@ -76,7 +76,6 @@ public:
   vtkSetStringMacro(InterfaceIDsName);
   vtkGetStringMacro(InterfaceIDsName);
 
-//BTX
 protected:
   vtkDataSetRegionSurfaceFilter();
   ~vtkDataSetRegionSurfaceFilter();
@@ -109,7 +108,6 @@ protected:
 private:
   vtkDataSetRegionSurfaceFilter(const vtkDataSetRegionSurfaceFilter&); // Not implemented.
   void operator=(const vtkDataSetRegionSurfaceFilter&); // Not implemented.
-//ETX
 
   char *RegionArrayName;
   vtkIntArray    *RegionArray;

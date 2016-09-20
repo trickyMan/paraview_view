@@ -14,8 +14,8 @@
 =========================================================================*/
 // .NAME vtkCSVWriter - CSV writer for vtkTable
 // Writes a vtkTable as a delimited text file (such as CSV). 
-#ifndef __vtkCSVWriter_h
-#define __vtkCSVWriter_h
+#ifndef vtkCSVWriter_h
+#define vtkCSVWriter_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkWriter.h"
@@ -64,7 +64,6 @@ public:
   vtkGetMacro(UseScientificNotation, bool);
   vtkBooleanMacro(UseScientificNotation, bool);
 
-//BTX
   // Description:
   // Internal method: decortes the "string" with the "StringDelimiter" if 
   // UseStringDelimiter is true.
@@ -93,7 +92,7 @@ protected:
 private:
   vtkCSVWriter(const vtkCSVWriter&); // Not implemented.
   void operator=(const vtkCSVWriter&); // Not implemented.
-//ETX
+
 };
 
 

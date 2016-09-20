@@ -24,8 +24,8 @@
 // minimal, we leave this as a sub-class of a Proxy with GlobalID=0 and
 // Session=NULL.
 
-#ifndef __vtkSMOutputPort_h
-#define __vtkSMOutputPort_h
+#ifndef vtkSMOutputPort_h
+#define vtkSMOutputPort_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMProxy.h"
@@ -78,7 +78,6 @@ public:
   // Provides access to the source proxy to which the output port belongs.
   vtkSMSourceProxy* GetSourceProxy();
 
-//BTX
 protected:
   vtkSMOutputPort();
   ~vtkSMOutputPort();
@@ -133,7 +132,7 @@ private:
 
   // Update Pipeline with the given timestep request.
   void UpdatePipeline(double time);
-//ETX
+
 };
 
 #endif

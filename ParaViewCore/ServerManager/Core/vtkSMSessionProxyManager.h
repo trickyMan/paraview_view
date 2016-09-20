@@ -101,8 +101,8 @@
 //       </SourceProxy>
 // </pre>
 
-#ifndef __vtkSMSessionProxyManager_h
-#define __vtkSMSessionProxyManager_h
+#ifndef vtkSMSessionProxyManager_h
+#define vtkSMSessionProxyManager_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMSessionObject.h"
@@ -128,10 +128,8 @@ class vtkSMPipelineState;
 class vtkSMStateLocator;
 class vtkSMProxySelectionModel;
 
-//BTX
 struct vtkSMSessionProxyManagerInternals;
 struct vtkClientServerID;
-//ETX
 
 class VTKPVSERVERMANAGERCORE_EXPORT vtkSMSessionProxyManager : public vtkSMSessionObject
 {
@@ -450,8 +448,6 @@ public:
   void EnableStateUpdateNotification();
   void TriggerStateUpdate();
 
-//BTX
-
   // Description:
   // This method returns the full object state that can be used to create that
   // object from scratch.
@@ -537,7 +533,7 @@ private:
 private:
   vtkSMSessionProxyManager(const vtkSMSessionProxyManager&); // Not implemented
   void operator=(const vtkSMSessionProxyManager&); // Not implemented
-//ETX
+
 };
 
 #endif

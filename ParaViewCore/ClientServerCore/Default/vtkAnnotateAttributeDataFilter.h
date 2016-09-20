@@ -19,8 +19,8 @@
 // vtkPythonAnnotationFilter which makes it easier to annotate using data values
 // from any input dataset.
 
-#ifndef __vtkAnnotateAttributeDataFilter_h
-#define __vtkAnnotateAttributeDataFilter_h
+#ifndef vtkAnnotateAttributeDataFilter_h
+#define vtkAnnotateAttributeDataFilter_h
 
 #include "vtkPythonAnnotationFilter.h"
 #include "vtkPVClientServerCoreDefaultModule.h" //needed for exports
@@ -52,7 +52,7 @@ public:
   // Set the text prefix to display in front of the Field value
   vtkSetStringMacro(Prefix);
   vtkGetStringMacro(Prefix);
-//BTX
+
 protected:
   vtkAnnotateAttributeDataFilter();
   ~vtkAnnotateAttributeDataFilter();
@@ -67,7 +67,7 @@ protected:
 private:
   vtkAnnotateAttributeDataFilter(const vtkAnnotateAttributeDataFilter&); // Not implemented
   void operator=(const vtkAnnotateAttributeDataFilter&); // Not implemented
-//ETX
+
 };
 
 #endif

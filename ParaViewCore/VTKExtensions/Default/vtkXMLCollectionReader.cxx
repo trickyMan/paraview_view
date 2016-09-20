@@ -552,6 +552,16 @@ void vtkXMLCollectionReader::ReadXMLDataImpl()
                       actualOutput);
       block->SetNumberOfBlocks(updateNumPieces);
       block->SetBlock(updatePiece, actualOutput);
+
+      // Set the block name from the DataSet name attribute, if any
+      vtkXMLDataElement* ds =
+        this->Internal->RestrictedDataSets[i];
+      const char* name = ds? ds->GetAttribute("name") : 0;
+      if(name)
+        {
+        output->GetMetaData(i)->Set(vtkCompositeDataSet::NAME(), name);
+        }
+
       actualOutput->Delete();
       }
     }
@@ -574,15 +584,9 @@ void vtkXMLCollectionReader::ReadAFile(int index,
 
     // Give the update request from this output to its internal
     // reader.
-    vtkStreamingDemandDrivenPipeline::SafeDownCast(
-      r->GetExecutive())->SetUpdateExtent(0, 
-                                          updatePiece,
-                                          updateNumPieces, 
-                                          updateGhostLevels);
-      
     // Read the data.
-    r->Update();
-    
+    r->UpdatePiece(updatePiece, updateNumPieces, updateGhostLevels);
+
     // The internal reader is finished.  Remove the observer in case
     // we delete the reader later.
     r->RemoveObserver(this->InternalProgressObserver);

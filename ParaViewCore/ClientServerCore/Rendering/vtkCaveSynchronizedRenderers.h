@@ -21,8 +21,8 @@
 // configuration file.
 // This code was previously in class vtkCaveRenderManager.
 
-#ifndef __vtkCaveSynchronizedRenderers_h
-#define __vtkCaveSynchronizedRenderers_h
+#ifndef vtkCaveSynchronizedRenderers_h
+#define vtkCaveSynchronizedRenderers_h
 
 #include "vtkPVClientServerCoreRenderingModule.h" //needed for exports
 #include "vtkSynchronizedRenderers.h"
@@ -37,7 +37,6 @@ public:
   vtkTypeMacro(vtkCaveSynchronizedRenderers, vtkSynchronizedRenderers);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkCaveSynchronizedRenderers();
   ~vtkCaveSynchronizedRenderers();
@@ -79,7 +78,7 @@ protected:
 private:
   vtkCaveSynchronizedRenderers(const vtkCaveSynchronizedRenderers&); // Not implemented
   void operator=(const vtkCaveSynchronizedRenderers&); // Not implemented
-//ETX
+
 };
 
 #endif

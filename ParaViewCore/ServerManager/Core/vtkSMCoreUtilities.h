@@ -16,8 +16,8 @@
 // .SECTION Description
 // vtkSMCoreUtilities provides miscellaneous utility functions.
 
-#ifndef __vtkSMCoreUtilities_h
-#define __vtkSMCoreUtilities_h
+#ifndef vtkSMCoreUtilities_h
+#define vtkSMCoreUtilities_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkObject.h"
@@ -69,7 +69,6 @@ public:
     return retVal;
     }
 
-//BTX
 protected:
   vtkSMCoreUtilities();
   ~vtkSMCoreUtilities();
@@ -77,7 +76,7 @@ protected:
 private:
   vtkSMCoreUtilities(const vtkSMCoreUtilities&); // Not implemented
   void operator=(const vtkSMCoreUtilities&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -16,8 +16,8 @@
 // .SECTION Description
 //
 
-#ifndef __vtkSMParaViewPipelineController_h
-#define __vtkSMParaViewPipelineController_h
+#ifndef vtkSMParaViewPipelineController_h
+#define vtkSMParaViewPipelineController_h
 
 #include "vtkSMObject.h"
 
@@ -210,7 +210,6 @@ public:
   // For a given proxy returns the name of the group used for helper proxies.
   static vtkStdString GetHelperProxyGroupName(vtkSMProxy*);
 
-//BTX
 protected:
   vtkSMParaViewPipelineController();
   ~vtkSMParaViewPipelineController();
@@ -242,22 +241,31 @@ protected:
   virtual bool UnRegisterDependencies(vtkSMProxy* proxy);
 
   // Description:
-  // Proxies in proxy-list domains can have hints that are used to setup
-  // property-links to ensure that those proxies get appropriate domains.
-  virtual void ProcessProxyListProxyHints(vtkSMProxy* parent, vtkSMProxy* proxyFromDomain);
-
-  // Description:
   // Returns the initialization timestamp for the proxy, if available. Useful
   // for subclasses to determine which properties were modified since
   // initialization.
   unsigned long GetInitializationTime(vtkSMProxy*);
+
+  // Description:
+  // Proxies can specify custom initialization using XML hints. This method
+  // calls those initialization helpers, if any.
+  void ProcessInitializationHelper(vtkSMProxy*, unsigned long initializationTimeStamp);
 private:
   vtkSMParaViewPipelineController(const vtkSMParaViewPipelineController&); // Not implemented
   void operator=(const vtkSMParaViewPipelineController&); // Not implemented
 
+  // Description:
+  // We added support for LZ4 in ParaView 5.0.1. LZ4 is a good default
+  // compression algo to use for client-server images. However since the
+  // implementation is not present in 5.0.0, we have to change the explicitly
+  // avoid choosing LZ4 when connected to ParaView 5.0.0 server using a ParaView
+  // 5.0.1 client. This code does that. We can remove this when we change
+  // version to 5.1 or later.
+  void HandleLZ4Issue(vtkSMProxy* renderViewSettings);
+
   class vtkInternals;
   vtkInternals* Internals;
-//ETX
+
 };
 
 #endif

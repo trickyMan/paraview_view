@@ -46,8 +46,8 @@ PURPOSE.  See the above copyright notice for more information.
 // reader removes those wrong ghost cells.
 // - Each time step contains all the cell array name variables
 
-#ifndef __vtkSpyPlotReader_h
-#define __vtkSpyPlotReader_h
+#ifndef vtkSpyPlotReader_h
+#define vtkSpyPlotReader_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkCompositeDataSetAlgorithm.h"
@@ -326,6 +326,14 @@ protected:
   int UpdateTimeStep(vtkInformation *requestInfo,
                      vtkInformationVector *outputInfo,
                      vtkCompositeDataSet *hb);
+
+  // Description:
+  // Overwritten to avoid hiding.
+  virtual int UpdateTimeStep(double time,
+    int piece=-1, int numPieces=1, int ghostLevels=0, const int extents[6]=0)
+  {
+    return this->Superclass::UpdateTimeStep(time, piece, numPieces, ghostLevels, extents);
+  }
 
   // The file format stores a vector field as separated scalar component
   // fields. This method rebuilds the vector field from those scalar

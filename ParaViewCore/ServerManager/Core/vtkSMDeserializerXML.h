@@ -18,8 +18,8 @@
 // is the base class of deserialization classes that load XMLs to restore
 // servermanager state (or part thereof).
 
-#ifndef __vtkSMDeserializerXML_h
-#define __vtkSMDeserializerXML_h
+#ifndef vtkSMDeserializerXML_h
+#define vtkSMDeserializerXML_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDeserializer.h"
@@ -35,7 +35,6 @@ public:
   vtkTypeMacro(vtkSMDeserializerXML, vtkSMDeserializer);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-//BTX
 protected:
   vtkSMDeserializerXML();
   ~vtkSMDeserializerXML();
@@ -73,7 +72,7 @@ protected:
 private:
   vtkSMDeserializerXML(const vtkSMDeserializerXML&); // Not implemented
   void operator=(const vtkSMDeserializerXML&); // Not implemented
-//ETX
+
 };
 
 #endif

@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef __pqColorDialogEventPlayer_h
-#define __pqColorDialogEventPlayer_h
+#ifndef pqColorDialogEventPlayer_h
+#define pqColorDialogEventPlayer_h
 
 #include "pqWidgetEventPlayer.h"
 #include "pqWidgetsModule.h" // needed for EXPORT macro.
@@ -45,6 +45,7 @@ public:
   pqColorDialogEventPlayer(QObject* parent=0);
   ~pqColorDialogEventPlayer();
 
+  using Superclass::playEvent;
   bool playEvent(QObject* object, const QString& command, const QString&
     arguments, bool& error);
 

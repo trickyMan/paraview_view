@@ -15,8 +15,8 @@
 // .NAME vtkGridAxes2DActor
 // .SECTION Description
 
-#ifndef __vtkGridAxes2DActor_h
-#define __vtkGridAxes2DActor_h
+#ifndef vtkGridAxes2DActor_h
+#define vtkGridAxes2DActor_h
 
 #include "vtkPVVTKExtensionsDefaultModule.h" //needed for exports
 #include "vtkProp3D.h"
@@ -199,7 +199,6 @@ public:
   // Overridden to include the mtime for the text properties.
   unsigned long GetMTime();
 
-//BTX
 protected:
   vtkGridAxes2DActor();
   ~vtkGridAxes2DActor();
@@ -238,7 +237,7 @@ private:
   friend class vtkLabels;
 
   bool DoRender;
-//ETX
+
 };
 
 #endif

@@ -28,7 +28,12 @@
 // li \c SCALED_EXTENT: the range is set to (0, maxbounds * this->ScaleFactor)
 // where maxbounds is the length of the longest axis for the bounding box.
 // li \c APPROXIMATE_CELL_LENGTH: approximation for cell length computed using the
-// expression (diameter/ (cube_root(numCells)) * this->ScaleFactor.
+// li \c DATA_BOUNDS: this mode for a 6 tuple property that takes the data
+// bounds. The range will have 6 ranges:
+// (xmin,xmax), (xmin,xmax), (ymin,ymax), (ymin,ymax), (zmin,zmax), and (zmin,zmax).
+// If default_mode is not specified, then "min,max,min,max,min,max" is assumed.
+// li \c EXTENTS: this mode for a property that takes a value between 0 and (max-min) for
+// each component.
 //
 // To determine the input data bounds, this domain depends on a required
 // property with function \c Input. The data-information from the source-proxy
@@ -36,12 +41,12 @@
 //
 // Supported XML attributes:
 // \li \c mode : used to specify the Mode. Value can be "normal", "magnitude",
-// "oriented_magnitude", "scaled_extent", or "approximate_cell_length".
+// "oriented_magnitude", "scaled_extent", or "approximate_cell_length", "data_bounds".
 // \li \c scale_factor : used in SCALED_EXTENT and APPROXIMATE_CELL_LENGTH mode.
 // Value is a floating point number that is used as the scale factor.
 
-#ifndef __vtkSMBoundsDomain_h
-#define __vtkSMBoundsDomain_h
+#ifndef vtkSMBoundsDomain_h
+#define vtkSMBoundsDomain_h
 
 #include "vtkPVServerManagerCoreModule.h" //needed for exports
 #include "vtkSMDoubleRangeDomain.h"
@@ -73,7 +78,9 @@ public:
     MAGNITUDE,
     ORIENTED_MAGNITUDE,
     SCALED_EXTENT,
-    APPROXIMATE_CELL_LENGTH
+    APPROXIMATE_CELL_LENGTH,
+    DATA_BOUNDS,
+    EXTENTS,
   };
 
   vtkGetMacro(ScaleFactor, double);

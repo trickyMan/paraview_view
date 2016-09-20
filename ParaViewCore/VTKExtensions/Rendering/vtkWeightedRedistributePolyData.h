@@ -19,8 +19,8 @@
 
 // .NAME vtkWeightedRedistributePolyData - do weighted balance of cells on processors
 
-#ifndef __vtkWeightedRedistributePolyData_h
-#define __vtkWeightedRedistributePolyData_h
+#ifndef vtkWeightedRedistributePolyData_h
+#define vtkWeightedRedistributePolyData_h
 
 #include "vtkRedistributePolyData.h"
 #include "vtkPVVTKExtensionsRenderingModule.h" // needed for export macro
@@ -46,7 +46,6 @@ protected:
   vtkWeightedRedistributePolyData();
   ~vtkWeightedRedistributePolyData();
 
-//BTX
   enum
   {
     NUM_LOC_CELLS_TAG  = 70,
@@ -56,8 +55,6 @@ protected:
     SCHED_1_TAG        = 310,
     SCHED_2_TAG        = 311
   };
-//ETX
-
 
   virtual void MakeSchedule (vtkPolyData* input, vtkCommSched*);
   float* Weights;

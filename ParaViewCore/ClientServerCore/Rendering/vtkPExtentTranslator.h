@@ -19,8 +19,8 @@
 // information about image extents on all the ranks. This is resurrected version
 // of vtkPVTrivialExtentTranslator.
 
-#ifndef __vtkPExtentTranslator_h
-#define __vtkPExtentTranslator_h
+#ifndef vtkPExtentTranslator_h
+#define vtkPExtentTranslator_h
 
 #include "vtkExtentTranslator.h"
 #include "vtkPVClientServerCoreRenderingModule.h" // needed for export macro
@@ -41,7 +41,6 @@ public:
   // that each process knows the subextent of every process.
   void GatherExtents(vtkDataSet* dataset);
 
-//BTX
 protected:
   vtkPExtentTranslator();
   ~vtkPExtentTranslator();
@@ -57,7 +56,7 @@ private:
   void operator=(const vtkPExtentTranslator&); // Not implemented
 
   vtkPExtentTranslatorInternals* Internals;
-//ETX
+
 };
 
 #endif

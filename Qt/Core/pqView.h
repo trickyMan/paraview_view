@@ -29,8 +29,8 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =========================================================================*/
-#ifndef __pqView_h
-#define __pqView_h
+#ifndef pqView_h
+#define pqView_h
 
 
 #include "pqProxy.h"
@@ -57,6 +57,13 @@ class PQCORE_EXPORT pqView : public pqProxy
   Q_OBJECT
   typedef pqProxy Superclass;
 public:
+  enum SelectionModifier {
+    PV_SELECTION_DEFAULT = 0,
+    PV_SELECTION_ADDITION,
+    PV_SELECTION_SUBTRACTION,
+    PV_SELECTION_TOGGLE
+  };
+
   virtual ~pqView();
 
   /// Returns the internal render Module proxy associated with this object.
@@ -74,9 +81,6 @@ public:
   /// (which is rare, if impossible) or the QWidget was previously created but
   /// since has been destroyed due to Qt cleanup.
   QWidget* widget();
-
-  /// @deprecated Replaced by pqView::widget() as of ParaView 4.4.
-  VTK_LEGACY(QWidget* getWidget());
 
   /// Returns if this view module can support 
   /// undo/redo. Returns false by default. Subclassess must override
