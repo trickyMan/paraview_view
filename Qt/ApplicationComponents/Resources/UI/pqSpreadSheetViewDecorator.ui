@@ -103,6 +103,15 @@
    </item>
    <item>
     <widget class="QToolButton" name="ToggleFixed">
+     <property name="toolTip">
+      <string>Switches between scientific and fixed-point representation</string>
+     </property>
+     <property name="statusTip">
+      <string>Toggle fixed-point representation (always show #Precision digits)</string>
+     </property>
+     <property name="whatsThis">
+      <string>Toggle fixed-point representation (always show #Precision digits)</string>
+     </property>
      <property name="text">
       <string>F</string>
      </property>
