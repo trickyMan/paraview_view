@@ -23,6 +23,7 @@
 
 class vtkInformation;
 class vtkInformationRequestKey;
+class vtkStreamLinesMapper;
 
 class VTK_EXPORT vtkStreamLinesRepresentation : public vtkGeometryRepresentation
 {
@@ -40,13 +41,10 @@ public:
     vtkInformation* inInfo, vtkInformation* outInfo);
 
   //***************************************************************************
-  // Forwarded to vtkSurfaceLICPainter
+  // Forwarded to vtkStreamLinesMapper
   void SetEnable(bool val);
-
   void SetNumberOfSteps(int val);
   void SetStepSize(double val);
-  void SetNormalizeVectors(int val);
-
   void SelectInputVectors(int, int, int, int attributeMode, const char* name);
 
 protected:
