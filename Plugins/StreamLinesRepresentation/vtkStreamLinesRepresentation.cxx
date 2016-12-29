@@ -71,6 +71,8 @@ int vtkStreamLinesRepresentation::ProcessViewRequest(
     outInfo->Set(vtkPVRenderView::RENDER_EMPTY_IMAGES(), 1);
     }
 
+  this->MarkModified(); // Should this go into ProcessViewRequest() ?
+
   return 1;
 }
 

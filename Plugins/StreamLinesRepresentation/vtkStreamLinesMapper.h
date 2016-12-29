@@ -26,11 +26,18 @@
 
 #include "vtkRenderingCoreModule.h" // For export macro
 #include "vtkAbstractMapper3D.h"
+#include "vtkAbstractVolumeMapper.h"
+#include "vtkSmartPointer.h"
+#include <vector>
 
 class vtkRenderer;
 class vtkVolume;
 class vtkWindow;
 class vtkDataSet;
+class vtkImageData;
+class vtkMinimalStandardRandomSequence;
+class vtkFrameBufferObject;
+class Particle;
 
 class VTKRENDERINGCORE_EXPORT vtkStreamLinesMapper : public vtkAbstractVolumeMapper
 {
@@ -38,21 +45,38 @@ public:
   vtkTypeMacro(vtkStreamLinesMapper,vtkAbstractMapper3D);
   void PrintSelf( ostream& os, vtkIndent indent );
 
-    //@{
-    /**
-     * Get/Set the number of integration steps in each direction.
-     */
-  void SetNumberOfSteps(int val);
-  vtkGetMacro(NumberOfSteps, int);
-    //@}
+  //@{
+  /**
+   * Get/Set the Alpha blending between new trajectory and previous.
+   */
+  void SetAlpha(double val);
+  vtkGetMacro(Alpha, double);
+  //@}
 
   //@{
   /**
-   * Get/Set the step size (in pixels).
+   * Get/Set the StepLength.
    */
-  void SetStepSize(double val);
-  vtkGetMacro(StepSize, double);
+  void SetStepLength(double val);
+  vtkGetMacro(StepLength, double);
   //@}
+
+  //@{
+  /**
+   * Get/Set the NumberOfParticles.
+   */
+  void SetNumberOfParticles(int val);
+  vtkGetMacro(NumberOfParticles, int);
+  //@}
+
+  //@{
+  /**
+   * Get/Set the MaxTimeToDeath (number of iteration before killing a particle).
+   */
+  void SetMaxTimeToDeath(int val);
+  vtkGetMacro(MaxTimeToDeath, int);
+  //@}
+
 
   /**
    * WARNING: INTERNAL METHOD - NOT INTENDED FOR GENERAL USE
@@ -73,14 +97,24 @@ protected:
   vtkStreamLinesMapper();
   ~vtkStreamLinesMapper();
 
-  int NumberOfSteps;
-  double StepSize;
+  int MaxTimeToDeath;
+  double Alpha;
+  double StepLength;
+  int NumberOfParticles;
+  std::vector<Particle> Particles;
+  vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
+  vtkFrameBufferObject CurrentBuffer;
 
   // see algorithm for more info
   virtual int FillInputPortInformation(int port, vtkInformation* info);
 
 
 private:
+
+  void InitParticle(vtkImageData *volume, Particle & p);
+  void UpdateParticles(vtkImageData *volume);
+  void DrawParticles(vtkRenderer *ren, vtkFrameBufferObject *buffer);
+
   vtkStreamLinesMapper(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
   void operator=(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
 };
