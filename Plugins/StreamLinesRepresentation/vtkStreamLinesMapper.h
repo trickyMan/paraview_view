@@ -25,21 +25,11 @@
 #define vtkStreamLinesMapper_h
 
 #include "vtkMapper.h"
-#include "vtkSmartPointer.h"
-
-#include <vector> // For the particle array
 
 class vtkActor;
 class vtkDataSet;
 class vtkImageData;
-class vtkMinimalStandardRandomSequence;
-class vtkOpenGLFramebufferObject;
 class vtkRenderer;
-class vtkOpenGLShaderCache;
-class vtkShaderProgram;
-class vtkTextureObject;
-class vtkWindow;
-struct Particle;
 
 class VTK_EXPORT vtkStreamLinesMapper : public vtkMapper
 {
@@ -104,24 +94,14 @@ protected:
   double StepLength;
   int MaxTimeToDeath;
   int NumberOfParticles;
-  std::vector<Particle> Particles;
-  vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
-  vtkOpenGLShaderCache* ShaderCache;
-  vtkShaderProgram* Program;
-  vtkShaderProgram* BlendingProgram;
-  vtkShaderProgram* TextureProgram;
-  vtkOpenGLFramebufferObject* CurrentBuffer;
-  vtkOpenGLFramebufferObject* FrameBuffer;
-  vtkTextureObject* CurrentTexture;
-  vtkTextureObject* FrameTexture;
-
-  vtkMTimeType CameraMTime;
+  class Private;
+  Private *Internal;
 
   // see algorithm for more info
   virtual int FillInputPortInformation(int port, vtkInformation* info);
 
 private:
-  void InitParticle(vtkImageData*, vtkDataArray*, Particle*);
+  void InitParticle(vtkImageData*, vtkDataArray*, int);
   void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
   void DrawParticles(vtkRenderer* ren, vtkActor *actor);
   void InitializeBuffers(vtkRenderer* ren);

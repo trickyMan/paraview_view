@@ -25,3 +25,6 @@ add_paraview_plugin(
   SOURCES
     ${ENCODED_STRING_FILES}
   )
+
+include(vtkOpenGL)
+vtk_opengl_link(StreamLinesRepresentation)
