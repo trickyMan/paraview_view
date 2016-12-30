@@ -220,6 +220,8 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   vtkMatrix4x4* vcdc;
   cam->GetKeyMatrices(ren, wcvc, norms, vcdc, wcdc);
 
+  ////////////////////////////////////////////////
+  // Pass 1: Render segment to current buffer FBO
   this->CurrentBuffer->SetContext(renWin);
   this->CurrentBuffer->SaveCurrentBindingsAndBuffers();
   this->CurrentBuffer->Bind();
@@ -253,9 +255,8 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
     "vertexMC", vbo->VertexOffset, vbo->Stride, VTK_FLOAT, 3, false);
   vtkOpenGLCheckErrorMacro("failed after vao");
 
-  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT);
-  //glEnable(GL_DEPTH_TEST);
 
   // Perform rendering
   glLineWidth(2);//actor->GetProperty()->GetLineWidth());
@@ -273,6 +274,8 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   static float quadTCoords[8] = { 0., 0., 1., 0., 1., 1., 0., 1. };
   static float quadVerts[12] = { -1., -1., 0,  1., -1., 0.,  1., 1., 0.,  -1., 1., 0. };
 
+  ////////////////////////////////////////////////
+  // Pass 2: blend current and previous frame FBO
   this->FrameBuffer->SetContext(renWin);
   this->FrameBuffer->SaveCurrentBindingsAndBuffers();
   this->FrameBuffer->Bind();
@@ -300,20 +303,16 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
     this->FrameTexture->GetTextureUnit());
   this->BlendingProgram->SetUniformi("current",
     this->CurrentTexture->GetTextureUnit());
-  //glDisable(GL_DEPTH_TEST);
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_ONE, GL_ONE);
   vtkOpenGLRenderUtilities::RenderQuad(
     quadVerts, quadTCoords, this->BlendingProgram, vaotb.Get());
-  //glDisable(GL_BLEND);
   this->CurrentTexture->Deactivate();
   vaotb->Release();
 
   this->FrameBuffer->UnBind();
   this->FrameBuffer->RestorePreviousBindingsAndBuffers();
-  //glEnable(GL_DEPTH_TEST);
 
-  // Finally draw the framebuffer FBO onto the screen
+  ////////////////////////////////////////////////////////////
+  // Pass 3: Finally draw the framebuffer FBO onto the screen
   this->ShaderCache->ReadyShaderProgram(this->TextureProgram);
   vtkNew<vtkOpenGLVertexArrayObject> vaot;
   vaot->Bind();
@@ -323,7 +322,7 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   //vtkNew<vtkOpenGLVertexArrayObject> vaot;
   //vaot->Bind();
   glEnable(GL_BLEND);
-  glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
+  glBlendFunc(GL_ONE, GL_ONE);
   vtkOpenGLRenderUtilities::RenderQuad(
     quadVerts, quadTCoords, this->TextureProgram, vaot.Get());
   glDisable(GL_BLEND);
@@ -428,7 +427,7 @@ void vtkStreamLinesMapper::InitializeBuffers(vtkRenderer* ren)
       "{\n"
       "  vec4 pc = texture2D(prev, tcoordVC);\n"
       "  vec4 cc = texture2D(current, tcoordVC);\n"
-      "  vec4 c = pc * alpha + cc;\n"//mix(cc, pc, alpha);\n"
+      "  vec4 c = pc * alpha + cc;\n"
       "  gl_FragData[0] = vec4(c.rgb, 1.);\n"
       "}\n";
     this->BlendingProgram->GetVertexShader()->SetSource(VSSource);
