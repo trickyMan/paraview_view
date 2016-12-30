@@ -187,8 +187,6 @@ int vtkStreamLinesRepresentation::ProcessViewRequest(
   {
     this->UpdateMapperParameters();
 
-    cout << "req render" << endl;
-
     vtkAlgorithmOutput* producerPort = vtkPVRenderView::GetPieceProducer(inInfo, this);
     if (producerPort)
     {
@@ -347,35 +345,30 @@ void vtkStreamLinesRepresentation::SetVisibility(bool val)
 {
   this->Superclass::SetVisibility(val);
   this->Actor->SetVisibility(val ? 1 : 0);
-  this->MarkModified();
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetAlpha(double val)
 {
   this->VolumeMapper->SetAlpha(val);
-  this->MarkModified();
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetStepLength(double val)
 {
   this->VolumeMapper->SetStepLength(val);
-  this->MarkModified();
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetNumberOfParticles(int val)
 {
   this->VolumeMapper->SetNumberOfParticles(val);
-  this->MarkModified();
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetMaxTimeToDeath(int val)
 {
   this->VolumeMapper->SetMaxTimeToDeath(val);
-  this->MarkModified();
 }
 
 //----------------------------------------------------------------------------
@@ -383,5 +376,4 @@ void vtkStreamLinesRepresentation::SelectInputVectors(int a, int b, int c,
   int attributeMode, const char* name)
 {
   this->VolumeMapper->SetInputArrayToProcess(a, b, c, attributeMode, name);
-  this->MarkModified();
 }

@@ -1,6 +1,8 @@
 #version 120
 
 //VTK::System::Dec
+//VTK::Output::Dec
+
 attribute vec4 vertexMC;
 
 uniform mat4 MCDCMatrix;

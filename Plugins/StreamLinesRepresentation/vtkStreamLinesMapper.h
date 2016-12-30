@@ -108,10 +108,14 @@ protected:
   vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
   vtkOpenGLShaderCache* ShaderCache;
   vtkShaderProgram* Program;
+  vtkShaderProgram* BlendingProgram;
+  vtkShaderProgram* TextureProgram;
   vtkOpenGLFramebufferObject* CurrentBuffer;
   vtkOpenGLFramebufferObject* FrameBuffer;
   vtkTextureObject* CurrentTexture;
   vtkTextureObject* FrameTexture;
+
+  vtkMTimeType CameraMTime;
 
   // see algorithm for more info
   virtual int FillInputPortInformation(int port, vtkInformation* info);

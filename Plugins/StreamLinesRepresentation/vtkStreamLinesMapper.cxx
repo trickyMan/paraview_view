@@ -34,6 +34,7 @@
 #include "vtkOpenGLFramebufferObject.h"
 #include "vtkOpenGLBufferObject.h"
 #include "vtkOpenGLRenderer.h"
+#include "vtkOpenGLRenderUtilities.h"
 #include "vtkOpenGLRenderWindow.h"
 #include "vtkOpenGLShaderCache.h"
 #include "vtkOpenGLTexture.h"
@@ -47,6 +48,7 @@
 #include "vtkShader.h"
 #include "vtkShaderProgram.h"
 #include "vtkTextureObject.h"
+#include "vtkTextureObjectVS.h"  // a pass through shader
 
 #include "vtk_glew.h"
 
@@ -81,6 +83,9 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
   this->CurrentTexture = 0;
   this->FrameTexture = 0;
   this->ShaderCache = 0;
+  this->Program = 0;
+  this->BlendingProgram = 0;
+  this->TextureProgram = 0;
 
   this->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
     vtkDataSetAttributes::VECTORS);
@@ -178,15 +183,6 @@ void vtkStreamLinesMapper::UpdateParticles(
 void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
 {
   vtkRenderWindow* renWin = ren->GetRenderWindow();
-//  this->CurrentBuffer->SetContext(renWin);
-//  this->CurrentBuffer->SaveCurrentBindingsAndBuffers();
-//  this->CurrentBuffer->Bind();
-//  this->CurrentBuffer->AddColorAttachment(
-//    this->CurrentBuffer->GetBothMode(), 0, this->CurrentTexture);
-//  this->CurrentBuffer->AddDepthAttachment(); // auto create depth buffer
-//  this->CurrentBuffer->ActivateBuffer(0);
-//  this->CurrentBuffer->Start(
-//    this->CurrentTexture->GetWidth(), this->CurrentTexture->GetHeight());
 
   vtkNew<vtkPoints> points;
   points->SetDataTypeToFloat();
@@ -212,6 +208,9 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
     }
   }
 
+  vtkIdType nbPoints = points->GetNumberOfPoints() / 2;
+
+  const int* size = renWin->GetSize();
   vtkOpenGLCamera* cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
   // [WMVD]C == {world, model, view, display} coordinates
   // E.g., WCDC == world to display coordinate transformation
@@ -221,6 +220,16 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   vtkMatrix4x4* vcdc;
   cam->GetKeyMatrices(ren, wcvc, norms, vcdc, wcdc);
 
+  this->CurrentBuffer->SetContext(renWin);
+  this->CurrentBuffer->SaveCurrentBindingsAndBuffers();
+  this->CurrentBuffer->Bind();
+  this->CurrentBuffer->AddColorAttachment(
+    this->CurrentBuffer->GetBothMode(), 0, this->CurrentTexture);
+  this->CurrentBuffer->AddDepthAttachment(); // auto create depth buffer
+  this->CurrentBuffer->ActivateBuffer(0);
+  this->CurrentBuffer->Start(
+    this->CurrentTexture->GetWidth(), this->CurrentTexture->GetHeight());
+
   this->ShaderCache->ReadyShaderProgram(this->Program);
   if (this->Program->IsUniformUsed("MCDCMatrix") > 0)
     this->Program->SetUniformMatrix("MCDCMatrix", wcdc);
@@ -228,14 +237,14 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
 
   // Create the VBO
   vtkNew<vtkOpenGLVertexBufferObject> vbo;
-  vbo->CreateVBO(points.Get(), points->GetNumberOfPoints(), 0, 0, 0, 0);
+  vbo->CreateVBO(points.Get(), nbPoints * 2, 0, 0, 0, 0);
   vbo->Bind();
   vtkOpenGLCheckErrorMacro("failed after vbo");
 
   vtkNew<vtkOpenGLBufferObject> ibo;
   ibo->SetType(vtkOpenGLBufferObject::ElementArrayBuffer);
   ibo->Bind();
-  ibo->Upload(&indices[0], points->GetNumberOfPoints()*2, vtkOpenGLBufferObject::ElementArrayBuffer);
+  ibo->Upload(&indices[0], nbPoints * 2, vtkOpenGLBufferObject::ElementArrayBuffer);
   vtkOpenGLCheckErrorMacro("failed after ibo");
 
   vtkNew<vtkOpenGLVertexArrayObject> vao;
@@ -244,21 +253,88 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
     "vertexMC", vbo->VertexOffset, vbo->Stride, VTK_FLOAT, 3, false);
   vtkOpenGLCheckErrorMacro("failed after vao");
 
+  glClearColor(0.0, 0.0, 0.0, 1.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+  //glEnable(GL_DEPTH_TEST);
+
+  // Perform rendering
   glLineWidth(2);//actor->GetProperty()->GetLineWidth());
-  glDrawArrays(GL_LINES, 0, points->GetNumberOfPoints());// / 2);
+  glDrawArrays(GL_LINES, 0, points->GetNumberOfPoints());
 
   vtkOpenGLCheckErrorMacro("failed after Render");
 
+  ibo->Release();
   vao->Release();
   vbo->Release();
 
-  //this->ShaderCache->Release();
+  this->CurrentBuffer->UnBind();
+  this->CurrentBuffer->RestorePreviousBindingsAndBuffers();
 
-  // Perform rendering
-//  this->CurrentBuffer->UnBind();
-//  this->CurrentBuffer->RestorePreviousBindingsAndBuffers();
+  static float quadTCoords[8] = { 0., 0., 1., 0., 1., 1., 0., 1. };
+  static float quadVerts[12] = { -1., -1., 0,  1., -1., 0.,  1., 1., 0.,  -1., 1., 0. };
 
-  cout << this->Particles.size() << " rendered" << endl;
+  this->FrameBuffer->SetContext(renWin);
+  this->FrameBuffer->SaveCurrentBindingsAndBuffers();
+  this->FrameBuffer->Bind();
+  this->FrameBuffer->AddColorAttachment(
+    this->FrameBuffer->GetBothMode(), 0, this->FrameTexture);
+  this->FrameBuffer->AddDepthAttachment(); // auto create depth buffer
+  this->FrameBuffer->ActivateBuffer(0);
+  this->FrameBuffer->Start(
+    this->FrameTexture->GetWidth(), this->FrameTexture->GetHeight());
+
+  if (this->CameraMTime < cam->GetMTime())
+  {
+    // Clear frame buffer if camera changed
+    glClear(GL_COLOR_BUFFER_BIT);
+    this->CameraMTime = cam->GetMTime();
+  }
+
+  this->ShaderCache->ReadyShaderProgram(this->BlendingProgram);
+  vtkNew<vtkOpenGLVertexArrayObject> vaotb;
+  vaotb->Bind();
+  this->FrameTexture->Activate();
+  this->CurrentTexture->Activate();
+  this->BlendingProgram->SetUniformf("alpha", this->Alpha);
+  this->BlendingProgram->SetUniformi("prev",
+    this->FrameTexture->GetTextureUnit());
+  this->BlendingProgram->SetUniformi("current",
+    this->CurrentTexture->GetTextureUnit());
+  //glDisable(GL_DEPTH_TEST);
+  //glEnable(GL_BLEND);
+  //glBlendFunc(GL_ONE, GL_ONE);
+  vtkOpenGLRenderUtilities::RenderQuad(
+    quadVerts, quadTCoords, this->BlendingProgram, vaotb.Get());
+  //glDisable(GL_BLEND);
+  this->CurrentTexture->Deactivate();
+  vaotb->Release();
+
+  this->FrameBuffer->UnBind();
+  this->FrameBuffer->RestorePreviousBindingsAndBuffers();
+  //glEnable(GL_DEPTH_TEST);
+
+  // Finally draw the framebuffer FBO onto the screen
+  this->ShaderCache->ReadyShaderProgram(this->TextureProgram);
+  vtkNew<vtkOpenGLVertexArrayObject> vaot;
+  vaot->Bind();
+  this->FrameTexture->Activate();
+  this->TextureProgram->SetUniformi("source",
+    this->FrameTexture->GetTextureUnit());
+  //vtkNew<vtkOpenGLVertexArrayObject> vaot;
+  //vaot->Bind();
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
+  vtkOpenGLRenderUtilities::RenderQuad(
+    quadVerts, quadTCoords, this->TextureProgram, vaot.Get());
+  glDisable(GL_BLEND);
+  this->FrameTexture->Deactivate();
+
+  vaot->Release();
+
+
+  // Update the current buffer as alpha blending: t*newbuffer+(1-t)*oldbuffer
+  // TODO(jpouderoux)
+  //this->CurrentBuffer =  this->Alpha * buffer + (1- this->Alpha)*this->CurrentBuffer;
 }
 
 //----------------------------------------------------------------------------
@@ -286,12 +362,6 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
 
   // Draw updated particles in a buffer
   this->DrawParticles(ren, actor);
-
-  // Update the current buffer as alpha blending: t*newbuffer+(1-t)*oldbuffer
-  // TODO(jpouderoux)
-  //this->CurrentBuffer =  this->Alpha * buffer + (1- this->Alpha)*this->CurrentBuffer;
-
-  std::cout << "Render called on streamline mapper" << std::endl;
 }
 
 //----------------------------------------------------------------------------
@@ -323,7 +393,7 @@ void vtkStreamLinesMapper::InitializeBuffers(vtkRenderer* ren)
     RELEASE_VTKGL_OBJECT(this->CurrentTexture);
     this->CurrentTexture = vtkTextureObject::New();
     this->CurrentTexture->SetContext(renWin);
-    this->CurrentTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
+    this->CurrentTexture->Create2D(size[0], size[1], 4, VTK_UNSIGNED_CHAR, false);
   }
 
   if (!this->FrameTexture ||
@@ -333,7 +403,7 @@ void vtkStreamLinesMapper::InitializeBuffers(vtkRenderer* ren)
     RELEASE_VTKGL_OBJECT(this->FrameTexture);
     this->FrameTexture = vtkTextureObject::New();
     this->FrameTexture->SetContext(renWin);
-    this->FrameTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
+    this->FrameTexture->Create2D(size[0], size[1], 4, VTK_UNSIGNED_CHAR, false);
   }
 
   if (!this->ShaderCache)
@@ -342,6 +412,41 @@ void vtkStreamLinesMapper::InitializeBuffers(vtkRenderer* ren)
     this->Program = vtkShaderProgram::New();
     this->Program->GetVertexShader()->SetSource(vtkStreamLines_vs);
     this->Program->GetFragmentShader()->SetSource(vtkStreamLines_fs);
+
+    std::string VSSource = vtkTextureObjectVS;
+
+    this->BlendingProgram = vtkShaderProgram::New();
+        // build the shader source code
+    std::string FSTSource =
+      "//VTK::System::Dec\n"
+      "//VTK::Output::Dec\n"
+      "varying vec2 tcoordVC;\n"
+      "uniform sampler2D prev;\n"
+      "uniform sampler2D current;\n"
+      "uniform float alpha;\n"
+      "void main(void)\n"
+      "{\n"
+      "  vec4 pc = texture2D(prev, tcoordVC);\n"
+      "  vec4 cc = texture2D(current, tcoordVC);\n"
+      "  vec4 c = pc * alpha + cc;\n"//mix(cc, pc, alpha);\n"
+      "  gl_FragData[0] = vec4(c.rgb, 1.);\n"
+      "}\n";
+    this->BlendingProgram->GetVertexShader()->SetSource(VSSource);
+    this->BlendingProgram->GetFragmentShader()->SetSource(FSTSource);
+
+    this->TextureProgram = vtkShaderProgram::New();
+        // build the shader source code
+    std::string FSSource =
+      "//VTK::System::Dec\n"
+      "//VTK::Output::Dec\n"
+      "varying vec2 tcoordVC;\n"
+      "uniform sampler2D source;\n"
+      "void main(void)\n"
+      "{\n"
+      "  gl_FragData[0] = texture2D(source, tcoordVC);\n"
+      "}\n";
+    this->TextureProgram->GetVertexShader()->SetSource(VSSource);
+    this->TextureProgram->GetFragmentShader()->SetSource(FSSource);
   }
 }
 

@@ -1,4 +1,5 @@
 //VTK::System::Dec
+//VTK::Output::Dec
 
 void main(void)
 {
