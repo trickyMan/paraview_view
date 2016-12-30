@@ -235,6 +235,12 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   this->ShaderCache->ReadyShaderProgram(this->Program);
   if (this->Program->IsUniformUsed("MCDCMatrix") > 0)
     this->Program->SetUniformMatrix("MCDCMatrix", wcdc);
+  double* col = actor->GetProperty()->GetDiffuseColor();
+  float color[3];
+  color[0] = static_cast<double>(col[0]);
+  color[1] = static_cast<double>(col[1]);
+  color[2] = static_cast<double>(col[2]);
+  this->Program->SetUniform3f("color", color);
   vtkOpenGLCheckErrorMacro("failed after shader");
 
   // Create the VBO
@@ -259,7 +265,7 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   glClear(GL_COLOR_BUFFER_BIT);
 
   // Perform rendering
-  glLineWidth(2);//actor->GetProperty()->GetLineWidth());
+  glLineWidth(actor->GetProperty()->GetLineWidth());
   glDrawArrays(GL_LINES, 0, points->GetNumberOfPoints());
 
   vtkOpenGLCheckErrorMacro("failed after Render");
@@ -271,11 +277,17 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   this->CurrentBuffer->UnBind();
   this->CurrentBuffer->RestorePreviousBindingsAndBuffers();
 
-  static float quadTCoords[8] = { 0., 0., 1., 0., 1., 1., 0., 1. };
-  static float quadVerts[12] = { -1., -1., 0,  1., -1., 0.,  1., 1., 0.,  -1., 1., 0. };
+  static float s_quadTCoords[8] =
+  {
+    0.f, 0.f, 1.f, 0.f, 1.f, 1.f, 0.f, 1.f
+  };
+  static float s_quadVerts[12] =
+  {
+    -1.f, -1.f, 0.f,  1.f, -1.f, 0.f,  1.f, 1.f, 0.f,  -1.f, 1.f, 0.f
+  };
 
-  ////////////////////////////////////////////////
-  // Pass 2: blend current and previous frame FBO
+  ////////////////////////////////////////////////////////////////////
+  // Pass 2: Blend current and previous frame in the frame buffer FBO
   this->FrameBuffer->SetContext(renWin);
   this->FrameBuffer->SaveCurrentBindingsAndBuffers();
   this->FrameBuffer->Bind();
@@ -304,7 +316,7 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   this->BlendingProgram->SetUniformi("current",
     this->CurrentTexture->GetTextureUnit());
   vtkOpenGLRenderUtilities::RenderQuad(
-    quadVerts, quadTCoords, this->BlendingProgram, vaotb.Get());
+    s_quadVerts, s_quadTCoords, this->BlendingProgram, vaotb.Get());
   this->CurrentTexture->Deactivate();
   vaotb->Release();
 
@@ -319,21 +331,14 @@ void vtkStreamLinesMapper::DrawParticles(vtkRenderer *ren, vtkActor *actor)
   this->FrameTexture->Activate();
   this->TextureProgram->SetUniformi("source",
     this->FrameTexture->GetTextureUnit());
-  //vtkNew<vtkOpenGLVertexArrayObject> vaot;
-  //vaot->Bind();
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE);
   vtkOpenGLRenderUtilities::RenderQuad(
-    quadVerts, quadTCoords, this->TextureProgram, vaot.Get());
+    s_quadVerts, s_quadTCoords, this->TextureProgram, vaot.Get());
   glDisable(GL_BLEND);
   this->FrameTexture->Deactivate();
 
   vaot->Release();
-
-
-  // Update the current buffer as alpha blending: t*newbuffer+(1-t)*oldbuffer
-  // TODO(jpouderoux)
-  //this->CurrentBuffer =  this->Alpha * buffer + (1- this->Alpha)*this->CurrentBuffer;
 }
 
 //----------------------------------------------------------------------------

@@ -339,6 +339,68 @@ void vtkStreamLinesRepresentation::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //***************************************************************************
+// Forwarded to Property.
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetColor(double r, double g, double b)
+{
+  this->Property->SetColor(r, g, b);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetLineWidth(double val)
+{
+  this->Property->SetLineWidth(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetOpacity(double val)
+{
+  this->Property->SetOpacity(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetPointSize(double val)
+{
+  this->Property->SetPointSize(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetAmbientColor(double r, double g, double b)
+{
+  this->Property->SetAmbientColor(r, g, b);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetDiffuseColor(double r, double g, double b)
+{
+  this->Property->SetDiffuseColor(r, g, b);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetEdgeColor(double r, double g, double b)
+{
+  this->Property->SetEdgeColor(r, g, b);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetInterpolation(int val)
+{
+  this->Property->SetInterpolation(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetSpecularColor(double r, double g, double b)
+{
+  this->Property->SetSpecularColor(r, g, b);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetSpecularPower(double val)
+{
+  this->Property->SetSpecularPower(val);
+}
+
+//***************************************************************************
 // Forwarded to Actor.
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetVisibility(bool val)
