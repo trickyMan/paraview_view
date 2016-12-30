@@ -3,27 +3,33 @@
   <!--======================================================================-->
   <ProxyGroup name="representations">
     <RepresentationProxy name="StreamLinesRepresentation"
-      class="vtkStreamLinesRepresentation"
-      processes="client|dataserver|renderserver"
-      base_proxygroup="internal_representations"
-      base_proxyname="SurfaceRepresentationBase">
+                         class="vtkStreamLinesRepresentation"
+                         processes="client|dataserver|renderserver"
+                         si_class="vtkSIProxy">
       <Documentation>
         Representation proxy for StreamLines.
       </Documentation>
 
-      <InputProperty name="Input" command="SetInputConnection">
+      <InputProperty name="Input"
+                     command="SetInputConnection">
+        <DataTypeDomain composite_data_supported="0"
+                        name="input_type">
+          <DataType value="vtkImageData" />
+        </DataTypeDomain>
         <InputArrayDomain name="input_vectors"
-          number_of_components="3">
+                          number_of_components="3">
         </InputArrayDomain>
+        <Documentation>Set the input to the representation.</Documentation>
       </InputProperty>
 
       <StringVectorProperty name="SelectInputVectors"
-        command="SelectInputVectors"
-        number_of_elements="5"
-        element_types="0 0 0 0 2"
-        label="Vectors">
-        <ArrayListDomain name="array_list" attribute_type="Vectors"
-          input_domain_name="input_vectors">
+                            command="SelectInputVectors"
+                            number_of_elements="5"
+                            element_types="0 0 0 0 2"
+                            label="Vectors">
+        <ArrayListDomain name="array_list"
+                         attribute_type="Vectors"
+                         input_domain_name="input_vectors">
           <RequiredProperties>
             <Property name="Input" function="Input"/>
           </RequiredProperties>
@@ -40,6 +46,15 @@
           This property specifies the name of the input vector array to process.
         </Documentation>
       </StringVectorProperty>
+
+      <IntVectorProperty command="SetVisibility"
+                         default_values="1"
+                         name="Visibility"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+        <Documentation>Set the visibility for this
+        representation.</Documentation>
+      </IntVectorProperty>
 
       <!--
       Integrator controls
@@ -73,7 +88,7 @@
     </RepresentationProxy>
 
     <!--======================================================================-->
-    <Extension name="GeometryRepresentation">
+    <!--Extension name="GeometryRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
         subtype="Surface" text="StreamLines" />
 
@@ -87,7 +102,6 @@
         </ShareProperties>
 
         <ExposedProperties>
-         <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
            <Property name="Alpha"/>
@@ -95,19 +109,19 @@
            <Property name="NumberOfParticles" />
            <Property name="MaxTimeToDeath" />
          </PropertyGroup>
-        <!-- </PropertyGroup> -->
         </ExposedProperties>
 
       </SubProxy>
-    </Extension>
+    </Extension-->
 
     <!--======================================================================-->
     <Extension name="UniformGridRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
-        subtype="Surface" text="StreamLines" />
+                          text="StreamLines" />
       <SubProxy>
         <Proxy name="StreamLinesRepresentation"
-          proxygroup="representations" proxyname="StreamLinesRepresentation" />
+               proxygroup="representations"
+               proxyname="StreamLinesRepresentation" />
 
         <ShareProperties subproxy="SurfaceRepresentation">
           <Exception name="Input" />
@@ -115,7 +129,6 @@
         </ShareProperties>
 
         <ExposedProperties>
-         <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
            <Property name="Alpha"/>
@@ -130,7 +143,7 @@
     </Extension>
 
     <!--======================================================================-->
-    <Extension name="StructuredGridRepresentation">
+    <!--Extension name="StructuredGridRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
         subtype="Surface" text="StreamLines" />
       <SubProxy>
@@ -143,7 +156,6 @@
         </ShareProperties>
 
         <ExposedProperties>
-         <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
            <Property name="Alpha"/>
@@ -154,7 +166,7 @@
         </ExposedProperties>
 
       </SubProxy>
-    </Extension>
+    </Extension-->
 
   </ProxyGroup>
 </ServerManagerConfiguration>

@@ -35,6 +35,8 @@ class vtkImageData;
 class vtkMinimalStandardRandomSequence;
 class vtkOpenGLFramebufferObject;
 class vtkRenderer;
+class vtkOpenGLShaderCache;
+class vtkShaderProgram;
 class vtkTextureObject;
 class vtkWindow;
 struct Particle;
@@ -45,15 +47,6 @@ public:
   static vtkStreamLinesMapper* New();
   vtkTypeMacro(vtkStreamLinesMapper, vtkMapper);
   void PrintSelf(ostream& os, vtkIndent indent);
-
-  //@{
-  /**
-   * Get/Set the enable state.
-   */
-  vtkSetMacro(Enable, bool);
-  vtkGetMacro(Enable, bool);
-  //@}
-
 
   //@{
   /**
@@ -111,9 +104,10 @@ protected:
   double StepLength;
   int MaxTimeToDeath;
   int NumberOfParticles;
-  bool Enable;
   std::vector<Particle> Particles;
   vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
+  vtkOpenGLShaderCache* ShaderCache;
+  vtkShaderProgram* Program;
   vtkOpenGLFramebufferObject* CurrentBuffer;
   vtkOpenGLFramebufferObject* FrameBuffer;
   vtkTextureObject* CurrentTexture;
@@ -125,7 +119,7 @@ protected:
 private:
   void InitParticle(vtkImageData*, vtkDataArray*, Particle*);
   void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
-  void DrawParticles(vtkRenderer* ren);
+  void DrawParticles(vtkRenderer* ren, vtkActor *actor);
   void InitializeBuffers(vtkRenderer* ren);
 
   vtkStreamLinesMapper(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
