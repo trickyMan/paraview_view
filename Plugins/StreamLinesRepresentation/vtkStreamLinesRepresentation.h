@@ -43,9 +43,18 @@ public:
   //***************************************************************************
   // Forwarded to vtkStreamLinesMapper
   void SetEnable(bool val);
-  void SetNumberOfSteps(int val);
-  void SetStepSize(double val);
+  void SetAlpha(double val);
+  void SetStepLength(double val);
+  void SetNumberOfParticles(int val);
+  void SetMaxTimeToDeath(int val);
+
   void SelectInputVectors(int, int, int, int attributeMode, const char* name);
+
+  /**
+   * Fill input port information.
+   */
+  virtual int FillInputPortInformation(int port, vtkInformation* info);
+
 
 protected:
   vtkStreamLinesRepresentation();
@@ -53,7 +62,7 @@ protected:
 
   // Description:
   // Overridden method to set parameters on vtkProperty and vtkMapper.
-  void UpdateColoringParameters();
+  //void UpdateColoringParameters();
 
   vtkStreamLinesMapper* StreamLinesMapper;
 

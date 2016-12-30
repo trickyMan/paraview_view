@@ -24,32 +24,42 @@
 #ifndef vtkStreamLinesMapper_h
 #define vtkStreamLinesMapper_h
 
-#include "vtkRenderingCoreModule.h" // For export macro
-#include "vtkAbstractMapper3D.h"
-#include "vtkAbstractVolumeMapper.h"
+#include "vtkMapper.h"
 #include "vtkSmartPointer.h"
-#include <vector>
 
-class vtkRenderer;
-class vtkVolume;
-class vtkWindow;
+#include <vector> // For the particle array
+
+class vtkActor;
 class vtkDataSet;
 class vtkImageData;
 class vtkMinimalStandardRandomSequence;
-class vtkFrameBufferObject;
-class Particle;
+class vtkOpenGLFramebufferObject;
+class vtkRenderer;
+class vtkTextureObject;
+class vtkWindow;
+struct Particle;
 
-class VTKRENDERINGCORE_EXPORT vtkStreamLinesMapper : public vtkAbstractVolumeMapper
+class VTK_EXPORT vtkStreamLinesMapper : public vtkMapper
 {
 public:
-  vtkTypeMacro(vtkStreamLinesMapper,vtkAbstractMapper3D);
-  void PrintSelf( ostream& os, vtkIndent indent );
+  static vtkStreamLinesMapper* New();
+  vtkTypeMacro(vtkStreamLinesMapper, vtkMapper);
+  void PrintSelf(ostream& os, vtkIndent indent);
+
+  //@{
+  /**
+   * Get/Set the enable state.
+   */
+  vtkSetMacro(Enable, bool);
+  vtkGetMacro(Enable, bool);
+  //@}
+
 
   //@{
   /**
    * Get/Set the Alpha blending between new trajectory and previous.
    */
-  void SetAlpha(double val);
+  vtkSetMacro(Alpha, double);
   vtkGetMacro(Alpha, double);
   //@}
 
@@ -57,7 +67,7 @@ public:
   /**
    * Get/Set the StepLength.
    */
-  void SetStepLength(double val);
+  vtkSetMacro(StepLength, double);
   vtkGetMacro(StepLength, double);
   //@}
 
@@ -65,7 +75,7 @@ public:
   /**
    * Get/Set the NumberOfParticles.
    */
-  void SetNumberOfParticles(int val);
+  vtkSetMacro(NumberOfParticles, int);
   vtkGetMacro(NumberOfParticles, int);
   //@}
 
@@ -73,7 +83,7 @@ public:
   /**
    * Get/Set the MaxTimeToDeath (number of iteration before killing a particle).
    */
-  void SetMaxTimeToDeath(int val);
+  vtkSetMacro(MaxTimeToDeath, int);
   vtkGetMacro(MaxTimeToDeath, int);
   //@}
 
@@ -83,7 +93,7 @@ public:
    * DO NOT USE THIS METHOD OUTSIDE OF THE RENDERING PROCESS
    * Render the volume
    */
-  virtual void Render(vtkRenderer *ren, vtkVolume *vol);
+  virtual void Render(vtkRenderer *ren, vtkActor *vol);
 
   /**
    * WARNING: INTERNAL METHOD - NOT INTENDED FOR GENERAL USE
@@ -97,23 +107,26 @@ protected:
   vtkStreamLinesMapper();
   ~vtkStreamLinesMapper();
 
-  int MaxTimeToDeath;
   double Alpha;
   double StepLength;
+  int MaxTimeToDeath;
   int NumberOfParticles;
+  bool Enable;
   std::vector<Particle> Particles;
   vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
-  vtkFrameBufferObject CurrentBuffer;
+  vtkOpenGLFramebufferObject* CurrentBuffer;
+  vtkOpenGLFramebufferObject* FrameBuffer;
+  vtkTextureObject* CurrentTexture;
+  vtkTextureObject* FrameTexture;
 
   // see algorithm for more info
   virtual int FillInputPortInformation(int port, vtkInformation* info);
 
-
 private:
-
-  void InitParticle(vtkImageData *volume, Particle & p);
-  void UpdateParticles(vtkImageData *volume);
-  void DrawParticles(vtkRenderer *ren, vtkFrameBufferObject *buffer);
+  void InitParticle(vtkImageData*, vtkDataArray*, Particle*);
+  void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
+  void DrawParticles(vtkRenderer* ren);
+  void InitializeBuffers(vtkRenderer* ren);
 
   vtkStreamLinesMapper(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
   void operator=(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;

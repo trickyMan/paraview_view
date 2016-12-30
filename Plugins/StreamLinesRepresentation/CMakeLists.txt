@@ -4,6 +4,8 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
+include(vtkOpenGL)
+
 if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
   add_definitions(-DVTKGL2)
 endif()

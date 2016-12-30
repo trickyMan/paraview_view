@@ -44,19 +44,31 @@
       <!--
       Integrator controls
       -->
-      <IntVectorProperty name="NumberOfSteps"
-        command="SetNumberOfSteps"
-        number_of_elements="1"
-        default_values="40">
-        <IntRangeDomain name="range" min="1" />
-      </IntVectorProperty>
-
-      <DoubleVectorProperty name="StepSize"
-        command="SetStepSize"
-        number_of_elements="1"
-        default_values="0.25">
+      <DoubleVectorProperty name="Alpha"
+                            command="SetAlpha"
+                            number_of_elements="1"
+                            default_values="0.5">
+        <DoubleRangeDomain name="range" min="0.0" max="1.0"/>
+      </DoubleVectorProperty>
+      <DoubleVectorProperty name="StepLength"
+                            command="SetStepLength"
+                            number_of_elements="1"
+                            default_values="1">
         <DoubleRangeDomain name="range" min="0.0"/>
       </DoubleVectorProperty>
+
+      <IntVectorProperty name="NumberOfParticles"
+                         command="SetNumberOfParticles"
+                         number_of_elements="1"
+                         default_values="100">
+        <IntRangeDomain name="range" min="1" />
+      </IntVectorProperty>
+      <IntVectorProperty name="MaxTimeToDeath"
+                         command="SetMaxTimeToDeath"
+                         number_of_elements="1"
+                         default_values="40">
+        <IntRangeDomain name="range" min="1" />
+      </IntVectorProperty>
 
     </RepresentationProxy>
 
@@ -78,8 +90,10 @@
          <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
-           <Property name="NumberOfSteps"/>
-           <Property name="StepSize" />
+           <Property name="Alpha"/>
+           <Property name="StepLength"/>
+           <Property name="NumberOfParticles" />
+           <Property name="MaxTimeToDeath" />
          </PropertyGroup>
         <!-- </PropertyGroup> -->
         </ExposedProperties>
@@ -104,8 +118,10 @@
          <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
-           <Property name="NumberOfSteps"/>
-           <Property name="StepSize" />
+           <Property name="Alpha"/>
+           <Property name="StepLength"/>
+           <Property name="NumberOfParticles" />
+           <Property name="MaxTimeToDeath" />
          </PropertyGroup>
 
         </ExposedProperties>
@@ -130,8 +146,10 @@
          <!-- Integrator -->
          <PropertyGroup label="StreamLines: Integrator">
            <Property name="SelectInputVectors"/>
-           <Property name="NumberOfSteps"/>
-           <Property name="StepSize" />
+           <Property name="Alpha"/>
+           <Property name="StepLength"/>
+           <Property name="NumberOfParticles" />
+           <Property name="MaxTimeToDeath" />
          </PropertyGroup>
         </ExposedProperties>
 
