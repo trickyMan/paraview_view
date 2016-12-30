@@ -97,14 +97,10 @@ protected:
   class Private;
   Private *Internal;
 
+  friend class Private;
+
   // see algorithm for more info
   virtual int FillInputPortInformation(int port, vtkInformation* info);
-
-private:
-  void InitParticle(vtkImageData*, vtkDataArray*, int);
-  void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
-  void DrawParticles(vtkRenderer* ren, vtkActor *actor);
-  void InitializeBuffers(vtkRenderer* ren);
 
   vtkStreamLinesMapper(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
   void operator=(const vtkStreamLinesMapper&) VTK_DELETE_FUNCTION;
