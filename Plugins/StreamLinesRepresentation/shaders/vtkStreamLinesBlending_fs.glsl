@@ -11,6 +11,8 @@ void main(void)
 {
   vec4 pc = texture2D(prev, tcoordVC);
   vec4 cc = texture2D(current, tcoordVC);
-  vec4 c = pc * alpha + cc;
-  gl_FragData[0] = vec4(c.rgb, 1.);
+  if (pc.a < 0.1)
+    gl_FragData[0] = cc;
+  else
+    gl_FragData[0] = pc * alpha + cc;
 }

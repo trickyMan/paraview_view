@@ -58,7 +58,7 @@ public:
   /**
    * Get/Set the NumberOfParticles.
    */
-  vtkSetMacro(NumberOfParticles, int);
+  void SetNumberOfParticles(int);
   vtkGetMacro(NumberOfParticles, int);
   //@}
 
@@ -70,6 +70,15 @@ public:
   vtkGetMacro(MaxTimeToDeath, int);
   //@}
 
+  /**
+   * Returns if the mapper does not expect to have translucent geometry. This
+   * may happen when using ColorMode is set to not map scalars i.e. render the
+   * scalar array directly as colors and the scalar array has opacity i.e. alpha
+   * component.  Default implementation simply returns true. Note that even if
+   * this method returns true, an actor may treat the geometry as translucent
+   * since a constant translucency is set on the property, for example.
+   */
+  virtual bool GetIsOpaque() { return true; }
 
   /**
    * WARNING: INTERNAL METHOD - NOT INTENDED FOR GENERAL USE

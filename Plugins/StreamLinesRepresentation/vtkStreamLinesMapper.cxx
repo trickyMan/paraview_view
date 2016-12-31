@@ -76,6 +76,13 @@ struct Particle
     _x->Delete(); \
     _x = 0; \
   }
+#define RELEASE_VTKGL_OBJECT2(_x) \
+  if (_x) \
+  { \
+    _x->ReleaseGraphicsResources(); \
+    _x->Delete(); \
+    _x = 0; \
+  }
 
 //----------------------------------------------------------------------------
 class vtkStreamLinesMapper::Private : public vtkObject
@@ -95,15 +102,25 @@ public:
     this->Program = 0;
     this->BlendingProgram = 0;
     this->TextureProgram = 0;
-    this->Particles = std::vector<Particle>();
+    this->IndexBufferObject = 0;
+    this->Particles->SetDataTypeToFloat();
+    this->RebuildBufferObjects = true;
+  }
+
+  ~Private()
+  {
   }
 
   void ReleaseGraphicsResources(vtkWindow *renWin)
   {
+    RELEASE_VTKGL_OBJECT2(this->IndexBufferObject);
     RELEASE_VTKGL_OBJECT(this->CurrentBuffer);
     RELEASE_VTKGL_OBJECT(this->FrameBuffer);
     RELEASE_VTKGL_OBJECT(this->CurrentTexture);
     RELEASE_VTKGL_OBJECT(this->FrameTexture);
+    RELEASE_VTKGL_OBJECT(this->Program);
+    RELEASE_VTKGL_OBJECT(this->BlendingProgram);
+    RELEASE_VTKGL_OBJECT(this->TextureProgram);
   }
 
   vtkStreamLinesMapper* Parent;
@@ -116,40 +133,67 @@ public:
   vtkOpenGLFramebufferObject* FrameBuffer;
   vtkTextureObject* CurrentTexture;
   vtkTextureObject* FrameTexture;
+  vtkOpenGLBufferObject* IndexBufferObject;
 
   vtkMTimeType CameraMTime;
 
-  std::vector<Particle> Particles;
+  //std::vector<Particle> Particles;
+  vtkNew<vtkPoints> Particles;
+  std::vector<int> ParticlesTTL;
+  std::vector<int> Indices;
 
+  bool RebuildBufferObjects;
+
+  void SetNumberOfParticles(int nbParticles);
   void InitParticle(vtkImageData*, vtkDataArray*, int);
   void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
   void DrawParticles(vtkRenderer* ren, vtkActor *actor);
   void InitializeBuffers(vtkRenderer* ren);
+  double Rand(double vmin = 0., double vmax = 1.)
+  {
+    this->RandomNumberSequence->Next();
+    return this->RandomNumberSequence->GetRangeValue(vmin, vmax);
+  }
 };
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesMapper::Private::SetNumberOfParticles(int nbParticles)
+{
+  this->Particles->Resize(nbParticles * 2);
+  this->ParticlesTTL.resize(nbParticles, 0);
+  this->Indices.resize(nbParticles * 2);
+
+  // Build indices array
+  for (size_t i = 0; i < nbParticles * 2; i++)
+  {
+    this->Indices[i] = i;
+  }
+
+  this->RebuildBufferObjects = true;
+}
 
 //-----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::InitParticle(
   vtkImageData *inData, vtkDataArray* speedField, int pid)
 {
-  Particle& p = this->Particles[pid];
+  //Particle& p = this->Particles[pid];
   double bounds[6];
   inData->GetBounds(bounds);
-  vtkMinimalStandardRandomSequence* rand = this->RandomNumberSequence.Get();
   bool added = false;
   do
   {
-    //sample a location
-    double x = rand->GetRangeValue(bounds[0], bounds[1]); rand->Next();
-    double y = rand->GetRangeValue(bounds[2], bounds[3]); rand->Next();
-    double z = rand->GetRangeValue(bounds[4], bounds[5]); rand->Next();
-    p.prevPos[0] = p.pos[0] = x;
-    p.prevPos[1] = p.pos[1] = y;
-    p.prevPos[2] = p.pos[2] = z;
-    p.timeToDeath = rand->GetRangeValue(1, this->Parent->MaxTimeToDeath); rand->Next();
+    // Sample a new seed location
+    double pos[3];
+    pos[0] = this->Rand(bounds[0], bounds[1]);
+    pos[1] = this->Rand(bounds[2], bounds[3]);
+    pos[2] = this->Rand(bounds[4], bounds[5]);
+    this->Particles->SetPoint(pid * 2 + 0, pos);
+    this->Particles->SetPoint(pid * 2 + 1, pos);
+    this->ParticlesTTL[pid] = this->Rand(1, this->Parent->MaxTimeToDeath);
 
     // Check speed at this location
     double speedVec[3];
-    vtkIdType pid = inData->FindPoint(p.pos);
+    vtkIdType pid = inData->FindPoint(pos);
     double speed = 0.;
     if (pid >= 0)
     {
@@ -177,34 +221,38 @@ void vtkStreamLinesMapper::Private::InitParticle(
 void vtkStreamLinesMapper::Private::UpdateParticles(
   vtkImageData *inData, vtkDataArray* speedField, vtkRenderer* ren)
 {
-  this->Particles.resize(this->Parent->NumberOfParticles);
-
   double dt = this->Parent->StepLength;
   vtkCamera* cam = ren->GetActiveCamera();
   vtkBoundingBox bbox(inData->GetBounds());
-  for (size_t i = 0; i < this->Particles.size(); ++i)
+
+  std::size_t nbParticles = this->ParticlesTTL.size();
+  for (size_t i = 0; i < nbParticles; ++i)
   {
-    Particle & p = this->Particles[i];
-    p.timeToDeath--;
-    if (p.timeToDeath > 0)
+    this->ParticlesTTL[i]--;
+    if (this->ParticlesTTL[i] > 0)
     {
+      double pos[3];
+      this->Particles->GetPoint(i * 2 + 1, pos);
+      // Update prevpos with last pos
+      this->Particles->SetPoint(i * 2 + 0, pos);
       // Move the particle
-      vtkIdType pid = inData->FindPoint(p.pos);
+      vtkIdType pid = inData->FindPoint(pos);
       if (pid > 0)
       {
         double localSpeed[3];
         speedField->GetTuple(pid, localSpeed);
-        p.pos[0] += dt * localSpeed[0];
-        p.pos[1] += dt * localSpeed[1];
-        p.pos[2] += dt * localSpeed[2];
+        this->Particles->SetPoint(2 * i + 1,
+          pos[0] + dt * localSpeed[0],
+          pos[1] + dt * localSpeed[1],
+          pos[2] + dt * localSpeed[2]);
       }
       // Kill if out-of-volume or out-of-frustum
-      if (pid < 0 || !bbox.ContainsPoint(p.pos))// || !cam->IsInFrustrum(p.pos))
+      if (pid < 0 || !bbox.ContainsPoint(pos))// || !cam->IsInFrustrum(pos))
       {
-        p.timeToDeath = 0;
+        this->ParticlesTTL[i] = 0;
       }
     }
-    if (p.timeToDeath <= 0)
+    if (this->ParticlesTTL[i] <= 0)
     {
       // Resample dead or out-of-bounds particle
       this->InitParticle(inData, speedField, i);
@@ -219,32 +267,7 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
 
   vtkRenderWindow* renWin = ren->GetRenderWindow();
 
-  vtkNew<vtkPoints> points;
-  points->SetDataTypeToFloat();
-  std::size_t nbParticles = this->Particles.size();
-  points->Allocate(nbParticles * 2);
-
-  std::vector<unsigned int> indices(nbParticles * 2);
-
-  // Build VAO
-  for (size_t i = 0, cnt = 0; i < nbParticles; ++i)
-  {
-    Particle& p = this->Particles[i];
-    if (p.timeToDeath > 0)
-    {
-      // Draw particle motion line
-      points->InsertNextPoint(p.prevPos);
-      points->InsertNextPoint(p.pos);
-
-      indices[cnt] = cnt; ++cnt;
-      indices[cnt] = cnt; ++cnt;
-
-      // update lastRenderedXYZ
-      memcpy(p.prevPos, p.pos, 3 * sizeof(double));
-    }
-  }
-
-  vtkIdType nbPoints = points->GetNumberOfPoints() / 2;
+  std::size_t nbParticles = this->ParticlesTTL.size();
 
   const int* size = renWin->GetSize();
   vtkOpenGLCamera* cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
@@ -278,16 +301,22 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   color[2] = static_cast<double>(col[2]);
   this->Program->SetUniform3f("color", color);
 
+  // Setup the IBO
+  this->IndexBufferObject->Bind();
+  if (this->RebuildBufferObjects)
+  {
+    // We upload the indices only when number of particles changed
+    this->IndexBufferObject->Upload(&this->Indices[0], nbParticles * 2,
+      vtkOpenGLBufferObject::ElementArrayBuffer);
+    this->RebuildBufferObjects = false;
+  }
+
   // Create the VBO
   vtkNew<vtkOpenGLVertexBufferObject> vbo;
-  vbo->CreateVBO(points.Get(), nbPoints * 2, 0, 0, 0, 0);
+  vbo->CreateVBO(this->Particles.Get(), nbParticles * 2, 0, 0, 0, 0);
   vbo->Bind();
 
-  vtkNew<vtkOpenGLBufferObject> ibo;
-  ibo->SetType(vtkOpenGLBufferObject::ElementArrayBuffer);
-  ibo->Bind();
-  ibo->Upload(&indices[0], nbPoints * 2, vtkOpenGLBufferObject::ElementArrayBuffer);
-
+  // Setup the VAO
   vtkNew<vtkOpenGLVertexArrayObject> vao;
   vao->Bind();
   vao->AddAttributeArray(this->Program, vbo.Get(),
@@ -297,10 +326,10 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT);
   glLineWidth(actor->GetProperty()->GetLineWidth());
-  glDrawArrays(GL_LINES, 0, points->GetNumberOfPoints());
+  glDrawArrays(GL_LINES, 0, nbParticles * 2);
   vtkOpenGLCheckErrorMacro("Failed after rendering");
 
-  ibo->Release();
+  this->IndexBufferObject->Release();
   vao->Release();
   vbo->Release();
 
@@ -432,6 +461,12 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
     this->TextureProgram =
       this->ShaderCache->ReadyShaderProgram(vtkTextureObjectVS, vtkStreamLinesCopy_fs, "");
   }
+
+  if (!this->IndexBufferObject)
+  {
+    this->IndexBufferObject = vtkOpenGLBufferObject::New();
+    this->IndexBufferObject->SetType(vtkOpenGLBufferObject::ElementArrayBuffer);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -440,11 +475,12 @@ vtkStandardNewMacro(vtkStreamLinesMapper)
 //-----------------------------------------------------------------------------
 vtkStreamLinesMapper::vtkStreamLinesMapper()
 {
+  this->Internal = new Private(this);
   this->Alpha = 0.95;
   this->StepLength = 0.01;
-  this->NumberOfParticles = 1000;
   this->MaxTimeToDeath = 600;
-  this->Internal = new Private(this);
+  this->NumberOfParticles = 0;
+  this->SetNumberOfParticles(1000);
 
   this->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
     vtkDataSetAttributes::VECTORS);
@@ -454,6 +490,18 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
 vtkStreamLinesMapper::~vtkStreamLinesMapper()
 {
   delete this->Internal;
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesMapper::SetNumberOfParticles(int nbParticles)
+{
+  if (this->NumberOfParticles == nbParticles)
+  {
+    return;
+  }
+  this->NumberOfParticles = nbParticles;
+  this->Internal->SetNumberOfParticles(nbParticles);
+  this->Modified();
 }
 
 //----------------------------------------------------------------------------
