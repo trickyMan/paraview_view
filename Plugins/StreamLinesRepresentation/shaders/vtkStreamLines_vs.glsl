@@ -1,5 +1,3 @@
-#version 120
-
 //VTK::System::Dec
 //VTK::Output::Dec
 

@@ -21,7 +21,6 @@
 #include "vtkDataArray.h"
 #include "vtkDataSet.h"
 #include "vtkExecutive.h"
-#include "vtkFloatArray.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 #include "vtkMath.h"
