@@ -154,8 +154,13 @@
            <Property name="StepLength"/>
            <Property name="NumberOfParticles" />
            <Property name="MaxTimeToDeath" />
+          <Hints>
+            <PropertyWidgetDecorator type="GenericDecorator"
+                                     mode="visibility"
+                                     property="Representation"
+                                     value="StreamLines" />
+          </Hints>
          </PropertyGroup>
-
         </ExposedProperties>
 
       </SubProxy>

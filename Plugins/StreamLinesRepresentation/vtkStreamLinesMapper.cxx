@@ -417,23 +417,20 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
 
   if (!this->Program)
   {
-    this->Program = vtkShaderProgram::New();
-    this->Program->GetVertexShader()->SetSource(vtkStreamLines_vs);
-    this->Program->GetFragmentShader()->SetSource(vtkStreamLines_fs);
+    this->Program =
+      this->ShaderCache->ReadyShaderProgram(vtkStreamLines_vs, vtkStreamLines_fs, "");
   }
 
   if (!this->BlendingProgram)
   {
-    this->BlendingProgram = vtkShaderProgram::New();
-    this->BlendingProgram->GetVertexShader()->SetSource(vtkTextureObjectVS);
-    this->BlendingProgram->GetFragmentShader()->SetSource(vtkStreamLinesBlending_fs);
+    this->BlendingProgram =
+      this->ShaderCache->ReadyShaderProgram(vtkTextureObjectVS, vtkStreamLinesBlending_fs, "");
   }
 
   if (!this->TextureProgram)
   {
-    this->TextureProgram = vtkShaderProgram::New();
-    this->TextureProgram->GetVertexShader()->SetSource(vtkTextureObjectVS);
-    this->TextureProgram->GetFragmentShader()->SetSource(vtkStreamLinesCopy_fs);
+    this->TextureProgram =
+      this->ShaderCache->ReadyShaderProgram(vtkTextureObjectVS, vtkStreamLinesCopy_fs, "");
   }
 }
 
