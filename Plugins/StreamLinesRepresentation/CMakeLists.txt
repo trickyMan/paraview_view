@@ -11,6 +11,8 @@ if("${VTK_RENDERING_BACKEND}" STREQUAL "OpenGL2")
 endif()
 
 encode_files_as_strings(ENCODED_STRING_FILES
+  shaders/vtkStreamLinesBlending_fs.glsl
+  shaders/vtkStreamLinesCopy_fs.glsl
   shaders/vtkStreamLines_fs.glsl
   shaders/vtkStreamLines_vs.glsl
   )

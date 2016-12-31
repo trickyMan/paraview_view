@@ -54,6 +54,8 @@
 
 #include <vector>
 
+extern const char* vtkStreamLinesBlending_fs;
+extern const char* vtkStreamLinesCopy_fs;
 extern const char* vtkStreamLines_fs;
 extern const char* vtkStreamLines_vs;
 
@@ -418,41 +420,20 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
     this->Program = vtkShaderProgram::New();
     this->Program->GetVertexShader()->SetSource(vtkStreamLines_vs);
     this->Program->GetFragmentShader()->SetSource(vtkStreamLines_fs);
+  }
 
-    std::string VSSource = vtkTextureObjectVS;
-
+  if (!this->BlendingProgram)
+  {
     this->BlendingProgram = vtkShaderProgram::New();
-        // build the shader source code
-    std::string FSTSource =
-      "//VTK::System::Dec\n"
-      "//VTK::Output::Dec\n"
-      "varying vec2 tcoordVC;\n"
-      "uniform sampler2D prev;\n"
-      "uniform sampler2D current;\n"
-      "uniform float alpha;\n"
-      "void main(void)\n"
-      "{\n"
-      "  vec4 pc = texture2D(prev, tcoordVC);\n"
-      "  vec4 cc = texture2D(current, tcoordVC);\n"
-      "  vec4 c = pc * alpha + cc;\n"
-      "  gl_FragData[0] = vec4(c.rgb, 1.);\n"
-      "}\n";
-    this->BlendingProgram->GetVertexShader()->SetSource(VSSource);
-    this->BlendingProgram->GetFragmentShader()->SetSource(FSTSource);
+    this->BlendingProgram->GetVertexShader()->SetSource(vtkTextureObjectVS);
+    this->BlendingProgram->GetFragmentShader()->SetSource(vtkStreamLinesBlending_fs);
+  }
 
+  if (!this->TextureProgram)
+  {
     this->TextureProgram = vtkShaderProgram::New();
-        // build the shader source code
-    std::string FSSource =
-      "//VTK::System::Dec\n"
-      "//VTK::Output::Dec\n"
-      "varying vec2 tcoordVC;\n"
-      "uniform sampler2D source;\n"
-      "void main(void)\n"
-      "{\n"
-      "  gl_FragData[0] = texture2D(source, tcoordVC);\n"
-      "}\n";
-    this->TextureProgram->GetVertexShader()->SetSource(VSSource);
-    this->TextureProgram->GetFragmentShader()->SetSource(FSSource);
+    this->TextureProgram->GetVertexShader()->SetSource(vtkTextureObjectVS);
+    this->TextureProgram->GetFragmentShader()->SetSource(vtkStreamLinesCopy_fs);
   }
 }
 
