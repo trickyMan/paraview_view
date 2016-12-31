@@ -60,15 +60,6 @@ extern const char* vtkStreamLines_fs;
 extern const char* vtkStreamLines_vs;
 
 //----------------------------------------------------------------------------
-// Out simple particle data structure
-struct Particle
-{
-  double pos[3];
-  double prevPos[3];
-  int timeToDeath;
-};
-
-//----------------------------------------------------------------------------
 #define RELEASE_VTKGL_OBJECT(_x) \
   if (_x) \
   { \
