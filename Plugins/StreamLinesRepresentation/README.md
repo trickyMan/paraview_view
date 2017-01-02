@@ -16,7 +16,7 @@ The UI panel (ie. proxy) allows to specify:
 * Vectors: the vector field (mandatory).
 * Alpha: the rate of blending (depends on MaxTimeToLive, 0: no trace, 1: trace
   will face as long as TimeToLive).
-* Step legth: Normalized integration step - allow to adjust particle speed.
+* Step Length: Normalized integration step - allow to adjust particle speed.
 * Number Of Particles: Number of simulated particles in the flow.
 * Max Time To Live: Maximum number of iteration a particle is followed before
   it dies.
