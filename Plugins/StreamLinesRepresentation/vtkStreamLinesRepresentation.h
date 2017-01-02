@@ -144,8 +144,9 @@ protected:
   virtual vtkPVLODActor* GetRenderedProp() { return this->Actor; };
 
   vtkImageData* Cache;
+  vtkAlgorithm* MBMerger;
   vtkPVCacheKeeper* CacheKeeper;
-  vtkStreamLinesMapper* VolumeMapper;
+  vtkStreamLinesMapper* StreamLinesMapper;
   vtkProperty* Property;
   vtkPVLODActor* Actor;
 
@@ -162,8 +163,6 @@ protected:
   double Spacing[3];
   int WholeExtent[6];
 
-
-  bool UseLICForLOD;
 private:
   vtkStreamLinesRepresentation(const vtkStreamLinesRepresentation&) VTK_DELETE_FUNCTION;
   void operator=(const vtkStreamLinesRepresentation&) VTK_DELETE_FUNCTION;

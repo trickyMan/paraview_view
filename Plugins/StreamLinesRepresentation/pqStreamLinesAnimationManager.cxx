@@ -71,7 +71,7 @@ void pqStreamLinesAnimationManager::onRenderEnded()
     {
       const char* rs = vtkSMPropertyHelper(repr, "Representation").GetAsString();
       const int visible = vtkSMPropertyHelper(repr, "Visibility").GetAsInt();
-      if (rs && !strcmp(rs, "StreamLines") && visible)
+      if (rs && !strcmp(rs, "Stream Lines") && visible)
       {
         // This view as a visible StreamLines representation.
         // Let's ask for a new render!

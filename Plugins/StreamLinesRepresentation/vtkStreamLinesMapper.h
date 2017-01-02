@@ -14,7 +14,7 @@
 =========================================================================*/
 /**
  * @class   vtkStreamLinesMapper
- * @brief   Mapper for live stream lines rendering of 3D image data
+ * @brief   Mapper for live stream lines rendering of vtkDataSet.
  *
  *
  * @sa

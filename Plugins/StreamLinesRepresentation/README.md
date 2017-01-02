@@ -7,12 +7,12 @@ by B.Jacquet & J.Pouderoux, Kitware SAS 2017
 Description
 -----------
 
-This plugin provides a new representation called 'StreamLines' for ImageData
+This plugin provides a new representation called "Stream Lines" for DataSet
 in ParaView. The representation displays an animated view of streamlines in
 a vector field of the dataset. Seeds are initialized randomly in the bounds
 of the domain and created each time one particle dies (time to live - ie, max
 number of iterations - is reached, out-of-domain or zero velocity).
-The UI panel allows to specify:
+The UI panel (ie. proxy) allows to specify:
 * Vectors: the vector field (mandatory).
 * Alpha: the rate of blending (depends on MaxTimeToLive, 0: no trace, 1: trace
   will face as long as TimeToLive).
@@ -32,15 +32,16 @@ How to test
 
 Load the plugin "StreamLinesRepresentation".
 Create a "Wavelet" source. Apply a "Gradient" filter on it.
-Switch representation from "Outline" to "StreamLines".
+Switch representation from "Outline" to "Stream Lines" (apply a Tethrahedralize
+filter to try it with Unstructured data).
+Play with the "Stream Lines" properties in the Representation panel.
 Another cool demo is to load the disk_out_ref.ex2 dataset with the V vector
-point data array and apply the "Resample to Image" filter.
+point data array.
 
 Todo
 ----
 
-* Support Structured grids
-* Support Unstructured grids
+* Kill out-of-frustum particles
 
 Potential extension features
 ----------------------------
@@ -49,6 +50,7 @@ Potential extension features
   cell-sampling using cumsum of cell-volume
 * Nice volume rendering of mag(speed data) (with correct depth/alpha)
 * Correct VolumeMapper to show mag if vector data
+* Take benefit of the SMP features (ie. update particles in parallel)
 
 Known bugs
 ----------

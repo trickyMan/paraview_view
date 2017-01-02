@@ -12,9 +12,10 @@
 
       <InputProperty name="Input"
                      command="SetInputConnection">
-        <DataTypeDomain composite_data_supported="0"
+        <DataTypeDomain composite_data_supported="1"
                         name="input_type">
-          <DataType value="vtkImageData" />
+          <DataType value="vtkDataSet" />
+          <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
         <InputArrayDomain name="input_vectors"
                           number_of_components="3">
@@ -121,7 +122,7 @@
     <!--======================================================================-->
     <Extension name="UniformGridRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
-                          text="StreamLines" />
+                          text="Stream Lines" />
       <SubProxy>
         <Proxy name="StreamLinesRepresentation"
                proxygroup="representations"
@@ -133,7 +134,7 @@
         </ShareProperties>
 
         <ExposedProperties>
-          <PropertyGroup label="StreamLines">
+          <PropertyGroup label="Stream Lines">
             <Property name="InputVectors"/>
             <Property name="Alpha"/>
             <Property name="StepLength"/>
@@ -143,7 +144,7 @@
               <PropertyWidgetDecorator type="GenericDecorator"
                                        mode="visibility"
                                        property="Representation"
-                                       value="StreamLines" />
+                                       value="Stream Lines" />
            </Hints>
           </PropertyGroup>
         </ExposedProperties>
@@ -152,13 +153,13 @@
     </Extension>
 
     <!--======================================================================-->
-    <!--Extension name="GeometryRepresentation">
+    <Extension name="GeometryRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
-        subtype="Surface" text="StreamLines" />
-
+                          text="Stream Lines" />
       <SubProxy>
         <Proxy name="StreamLinesRepresentation"
-          proxygroup="representations" proxyname="StreamLinesRepresentation" />
+               proxygroup="representations"
+               proxyname="StreamLinesRepresentation" />
 
         <ShareProperties subproxy="SurfaceRepresentation">
           <Exception name="Input" />
@@ -166,7 +167,7 @@
         </ShareProperties>
 
         <ExposedProperties>
-          <PropertyGroup label="StreamLines">
+          <PropertyGroup label="Stream Lines">
             <Property name="InputVectors"/>
             <Property name="Alpha"/>
             <Property name="StepLength"/>
@@ -176,21 +177,22 @@
               <PropertyWidgetDecorator type="GenericDecorator"
                                        mode="visibility"
                                        property="Representation"
-                                       value="StreamLines" />
+                                       value="Stream Lines" />
            </Hints>
           </PropertyGroup>
         </ExposedProperties>
 
       </SubProxy>
-    </Extension-->
+    </Extension>
 
     <!--======================================================================-->
-    <!--Extension name="StructuredGridRepresentation">
+    <Extension name="UnstructuredGridRepresentation">
       <RepresentationType subproxy="StreamLinesRepresentation"
-        subtype="Surface" text="StreamLines" />
+                          text="Stream Lines" />
       <SubProxy>
         <Proxy name="StreamLinesRepresentation"
-          proxygroup="representations" proxyname="StreamLinesRepresentation" />
+               proxygroup="representations"
+               proxyname="StreamLinesRepresentation" />
 
         <ShareProperties subproxy="SurfaceRepresentation">
           <Exception name="Input" />
@@ -198,7 +200,7 @@
         </ShareProperties>
 
         <ExposedProperties>
-          <PropertyGroup label="StreamLines">
+          <PropertyGroup label="Stream Lines">
             <Property name="InputVectors"/>
             <Property name="Alpha"/>
             <Property name="StepLength"/>
@@ -208,13 +210,46 @@
               <PropertyWidgetDecorator type="GenericDecorator"
                                        mode="visibility"
                                        property="Representation"
-                                       value="StreamLines" />
+                                       value="Stream Lines" />
            </Hints>
           </PropertyGroup>
         </ExposedProperties>
 
       </SubProxy>
-    </Extension-->
+    </Extension>
+
+    <!--======================================================================-->
+    <Extension name="StructuredGridRepresentation">
+      <RepresentationType subproxy="StreamLinesRepresentation"
+                          text="Stream Lines" />
+      <SubProxy>
+        <Proxy name="StreamLinesRepresentation"
+               proxygroup="representations"
+               proxyname="StreamLinesRepresentation" />
+
+        <ShareProperties subproxy="SurfaceRepresentation">
+          <Exception name="Input" />
+          <Exception name="Visibility" />
+        </ShareProperties>
+
+        <ExposedProperties>
+          <PropertyGroup label="Stream Lines">
+            <Property name="InputVectors"/>
+            <Property name="Alpha"/>
+            <Property name="StepLength"/>
+            <Property name="NumberOfParticles" />
+            <Property name="MaxTimeToLive" />
+            <Hints>
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="Representation"
+                                       value="Stream Lines" />
+           </Hints>
+          </PropertyGroup>
+        </ExposedProperties>
+
+      </SubProxy>
+    </Extension>
 
   </ProxyGroup>
 </ServerManagerConfiguration>

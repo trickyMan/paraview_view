@@ -18,24 +18,26 @@
 #include "vtkCellData.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkCommand.h"
+#include "vtkCompositeDataToUnstructuredGridFilter.h"
 #include "vtkExtentTranslator.h"
 #include "vtkImageData.h"
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkMath.h"
+#include "vtkMultiBlockDataSet.h"
 #include "vtkNew.h"
 #include "vtkObjectFactory.h"
 #include "vtkOutlineSource.h"
 #include "vtkPExtentTranslator.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkProperty.h"
 #include "vtkPVCacheKeeper.h"
 #include "vtkPVLODActor.h"
 #include "vtkPVRenderView.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkProperty.h"
 #include "vtkRenderer.h"
 #include "vtkSmartPointer.h"
-#include "vtkStreamLinesMapper.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkStreamLinesMapper.h"
 #include "vtkStructuredData.h"
 
 #include <algorithm>
@@ -103,10 +105,11 @@ void vtkGetNonGhostExtent(int* resultExtent, vtkImageData* dataSet)
 }
 
 vtkStandardNewMacro(vtkStreamLinesRepresentation);
+
 //----------------------------------------------------------------------------
 vtkStreamLinesRepresentation::vtkStreamLinesRepresentation()
 {
-  this->VolumeMapper = vtkStreamLinesMapper::New();
+  this->StreamLinesMapper = vtkStreamLinesMapper::New();
   this->Property = vtkProperty::New();
 
   this->Actor = vtkPVLODActor::New();
@@ -118,6 +121,8 @@ vtkStreamLinesRepresentation::vtkStreamLinesRepresentation()
   this->OutlineMapper = vtkPolyDataMapper::New();
 
   this->Cache = vtkImageData::New();
+
+  this->MBMerger = vtkCompositeDataToUnstructuredGridFilter::New();
 
   this->CacheKeeper->SetInputData(this->Cache);
   this->Actor->SetLODMapper(this->OutlineMapper);
@@ -134,7 +139,7 @@ vtkStreamLinesRepresentation::vtkStreamLinesRepresentation()
 //----------------------------------------------------------------------------
 vtkStreamLinesRepresentation::~vtkStreamLinesRepresentation()
 {
-  this->VolumeMapper->Delete();
+  this->StreamLinesMapper->Delete();
   this->Property->Delete();
   this->Actor->Delete();
   this->OutlineSource->Delete();
@@ -147,7 +152,8 @@ vtkStreamLinesRepresentation::~vtkStreamLinesRepresentation()
 //----------------------------------------------------------------------------
 int vtkStreamLinesRepresentation::FillInputPortInformation(int, vtkInformation* info)
 {
-  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
   info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
   return 1;
 }
@@ -163,8 +169,9 @@ int vtkStreamLinesRepresentation::ProcessViewRequest(
   }
   if (request_type == vtkPVView::REQUEST_UPDATE())
   {
-    vtkPVRenderView::SetPiece(
-      inInfo, this, this->OutlineSource->GetOutputDataObject(0), this->DataSize);
+    //vtkPVRenderView::SetPiece(
+      //inInfo, this, this->OutlineSource->GetOutputDataObject(0), this->DataSize);
+    vtkPVRenderView::SetPiece(inInfo, this, this->CacheKeeper->GetOutputDataObject(0));
     // BUG #14792.
     // We report this->DataSize explicitly since the data being "delivered" is
     // not the data that should be used to make rendering decisions based on
@@ -216,47 +223,67 @@ int vtkStreamLinesRepresentation::RequestData(
 
   if (inputVector[0]->GetNumberOfInformationObjects() == 1)
   {
-    vtkImageData* input = vtkImageData::GetData(inputVector[0], 0);
-    if (!this->GetUsingCacheForUpdate())
+    vtkDataObject* inputDO = vtkDataObject::GetData(inputVector[0], 0);
+    vtkDataSet* inputDS = vtkDataSet::SafeDownCast(inputDO);
+    vtkImageData* inputImage = vtkImageData::SafeDownCast(inputDS);
+    vtkMultiBlockDataSet* inputMB = vtkMultiBlockDataSet::SafeDownCast(inputDO);
+    if (inputImage)
     {
-      this->Cache->ShallowCopy(input);
-      if (input->HasAnyGhostCells())
+      if (!this->GetUsingCacheForUpdate())
       {
-        int ext[6];
-        vtkGetNonGhostExtent(ext, this->Cache);
-        // Yup, this will modify the "input", but that okay for now. Ultimately,
-        // we will teach the volume mapper to handle ghost cells and this won't
-        // be needed. Once that's done, we'll need to teach the KdTree
-        // generation code to handle overlap in extents, however.
-        this->Cache->Crop(ext);
+        this->Cache->ShallowCopy(inputImage);
+        if (inputImage->HasAnyGhostCells())
+        {
+          int ext[6];
+          vtkGetNonGhostExtent(ext, this->Cache);
+          // Yup, this will modify the "input", but that okay for now. Ultimately,
+          // we will teach the volume mapper to handle ghost cells and this won't
+          // be needed. Once that's done, we'll need to teach the KdTree
+          // generation code to handle overlap in extents, however.
+          this->Cache->Crop(ext);
+        }
+      }
+      // Collect information about volume that is needed for data redistribution
+      // later.
+      this->PExtentTranslator->GatherExtents(inputImage);
+      inputImage->GetOrigin(this->Origin);
+      inputImage->GetSpacing(this->Spacing);
+      vtkStreamingDemandDrivenPipeline::GetWholeExtent(
+      inputVector[0]->GetInformationObject(0), this->WholeExtent);
+    }
+    else if (inputDS)
+    {
+      if (!this->GetUsingCacheForUpdate())
+      {
+        this->CacheKeeper->SetInputData(inputDS);
       }
     }
+    else if (inputMB)
+    {
+      vtkCompositeDataToUnstructuredGridFilter::SafeDownCast(this->MBMerger)->SetInputData(inputMB);
+      if (!this->GetUsingCacheForUpdate())
+      {
+        this->CacheKeeper->SetInputConnection(this->MBMerger->GetOutputPort());
+      }
+    }
+
     this->CacheKeeper->Update();
-
     this->Actor->SetEnableLOD(0);
-    this->VolumeMapper->SetInputConnection(this->CacheKeeper->GetOutputPort());
+    this->StreamLinesMapper->SetInputConnection(this->CacheKeeper->GetOutputPort());
 
-    vtkImageData* output = vtkImageData::SafeDownCast(this->CacheKeeper->GetOutputDataObject(0));
+    vtkDataSet* output = vtkDataSet::SafeDownCast(this->CacheKeeper->GetOutputDataObject(0));
     this->OutlineSource->SetBounds(output->GetBounds());
     this->OutlineSource->GetBounds(this->DataBounds);
     this->OutlineSource->Update();
 
     this->DataSize = output->GetActualMemorySize();
-
-    // Collect information about volume that is needed for data redistribution
-    // later.
-    this->PExtentTranslator->GatherExtents(output);
-    output->GetOrigin(this->Origin);
-    output->GetSpacing(this->Spacing);
-    vtkStreamingDemandDrivenPipeline::GetWholeExtent(
-      inputVector[0]->GetInformationObject(0), this->WholeExtent);
   }
   else
   {
     // when no input is present, it implies that this processes is on a node
     // without the data input i.e. either client or render-server, in which case
     // we show only the outline.
-    this->VolumeMapper->RemoveAllInputs();
+    this->StreamLinesMapper->RemoveAllInputs();
     this->Actor->SetEnableLOD(1);
   }
 
@@ -310,26 +337,8 @@ bool vtkStreamLinesRepresentation::RemoveFromView(vtkView* view)
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::UpdateMapperParameters()
 {
-  /*
-  const char* colorArrayName = NULL;
-  int fieldAssociation = vtkDataObject::FIELD_ASSOCIATION_POINTS;
-
-  vtkInformation* info = this->GetInputArrayInformation(0);
-  if (info && info->Has(vtkDataObject::FIELD_ASSOCIATION()) &&
-    info->Has(vtkDataObject::FIELD_NAME()))
-  {
-    colorArrayName = info->Get(vtkDataObject::FIELD_NAME());
-    fieldAssociation = info->Get(vtkDataObject::FIELD_ASSOCIATION());
-  }
-
-  //this->VolumeMapper->SelectScalarArray(colorArrayName);
-  this->VolumeMapper->SetInputArrayToProcess(0, 0, 0,
-    vtkDataObject::FIELD_ASSOCIATION_POINTS, colorArrayName);
-*/
-  this->Actor->SetMapper(this->VolumeMapper);
-
-  // this is necessary since volume mappers don't like empty arrays.
-  this->Actor->SetVisibility(1); //colorArrayName != NULL && colorArrayName[0] != 0);
+  this->Actor->SetMapper(this->StreamLinesMapper);
+  this->Actor->SetVisibility(1);
 }
 
 //----------------------------------------------------------------------------
@@ -412,30 +421,30 @@ void vtkStreamLinesRepresentation::SetVisibility(bool val)
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetAlpha(double val)
 {
-  this->VolumeMapper->SetAlpha(val);
+  this->StreamLinesMapper->SetAlpha(val);
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetStepLength(double val)
 {
-  this->VolumeMapper->SetStepLength(val);
+  this->StreamLinesMapper->SetStepLength(val);
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetNumberOfParticles(int val)
 {
-  this->VolumeMapper->SetNumberOfParticles(val);
+  this->StreamLinesMapper->SetNumberOfParticles(val);
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetMaxTimeToLive(int val)
 {
-  this->VolumeMapper->SetMaxTimeToLive(val);
+  this->StreamLinesMapper->SetMaxTimeToLive(val);
 }
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesRepresentation::SetInputVectors(int a, int b, int c,
   int attributeMode, const char* name)
 {
-  this->VolumeMapper->SetInputArrayToProcess(a, b, c, attributeMode, name);
+  this->StreamLinesMapper->SetInputArrayToProcess(a, b, c, attributeMode, name);
 }

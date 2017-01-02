@@ -20,8 +20,8 @@
 #include "vtkCellData.h"
 #include "vtkDataArray.h"
 #include "vtkDataSet.h"
+#include "vtkDoubleArray.h"
 #include "vtkExecutive.h"
-#include "vtkImageData.h"
 #include "vtkInformation.h"
 #include "vtkMath.h"
 #include "vtkMatrix4x4.h"
@@ -114,16 +114,20 @@ public:
 
   //std::vector<Particle> Particles;
   vtkNew<vtkPoints> Particles;
+  vtkNew<vtkDoubleArray> InterpolationArray;
+  vtkNew<vtkIdList> IdList;
   std::vector<int> ParticlesTTL;
   std::vector<int> Indices;
 
   bool RebuildBufferObjects;
 
-  void SetNumberOfParticles(int nbParticles);
-  void InitParticle(vtkImageData*, vtkDataArray*, int);
-  void UpdateParticles(vtkImageData*, vtkDataArray*, vtkRenderer* ren);
-  void DrawParticles(vtkRenderer* ren, vtkActor *actor);
-  void InitializeBuffers(vtkRenderer* ren);
+  void SetNumberOfParticles(int);
+  void InitParticle(vtkDataSet*, vtkDataArray*, int);
+  void UpdateParticles(vtkDataSet*, vtkDataArray*, vtkRenderer*);
+  void DrawParticles(vtkRenderer*, vtkActor*);
+  void InitializeBuffers(vtkRenderer*);
+  bool InterpolateVector(vtkDataSet*, vtkDataArray*, double[3], double[3]);
+
   double Rand(double vmin = 0., double vmax = 1.)
   {
     this->RandomNumberSequence->Next();
@@ -148,6 +152,8 @@ protected:
     this->IndexBufferObject = 0;
     this->Particles->SetDataTypeToFloat();
     this->RebuildBufferObjects = true;
+    this->InterpolationArray->SetNumberOfComponents(3);
+    this->InterpolationArray->SetNumberOfTuples(1);
   }
 
   ~Private()
@@ -178,8 +184,28 @@ void vtkStreamLinesMapper::Private::SetNumberOfParticles(int nbParticles)
 }
 
 //-----------------------------------------------------------------------------
+bool vtkStreamLinesMapper::Private::InterpolateVector(
+  vtkDataSet* inData, vtkDataArray* speedField, double pos[3],
+  double outSpeed[3])
+{
+  int subId;
+  double pcoords[3];
+  static double weights[1024];
+  vtkIdType cellId =
+    inData->FindCell(pos, 0, -1, 1e-10, subId, pcoords, weights);
+  if (cellId < 0)
+  {
+    return false;
+  }
+  inData->GetCellPoints(cellId, this->IdList.Get());
+  this->InterpolationArray->InterpolateTuple(0, this->IdList.Get(), speedField, weights);
+  this->InterpolationArray->GetTuple(0, outSpeed);
+  return true;
+}
+
+//-----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::InitParticle(
-  vtkImageData *inData, vtkDataArray* speedField, int pid)
+  vtkDataSet *inData, vtkDataArray* speedField, int pid)
 {
   //Particle& p = this->Particles[pid];
   double bounds[6];
@@ -198,11 +224,12 @@ void vtkStreamLinesMapper::Private::InitParticle(
 
     // Check speed at this location
     double speedVec[3];
-    vtkIdType pid = inData->FindPoint(pos);
     double speed = 0.;
-    if (pid >= 0)
+    //vtkIdType pid = inData->FindPoint(pos);
+    //speedField->GetTuple(pid, speedVec);
+    if (this->InterpolateVector(inData, speedField, pos, speedVec))
+    //if (pid >= 0)
     {
-      speedField->GetTuple(pid, speedVec);
       speed = vtkMath::Norm(speedVec);
       added = true;
     }
@@ -224,7 +251,7 @@ void vtkStreamLinesMapper::Private::InitParticle(
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::UpdateParticles(
-  vtkImageData *inData, vtkDataArray* speedField, vtkRenderer* ren)
+  vtkDataSet *inData, vtkDataArray* speedField, vtkRenderer* ren)
 {
   double dt = this->Mapper->StepLength;
   vtkCamera* cam = ren->GetActiveCamera();
@@ -241,21 +268,27 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
       // Update prevpos with last pos
       this->Particles->SetPoint(i * 2 + 0, pos);
       // Move the particle
-      vtkIdType pid = inData->FindPoint(pos);
-      if (pid > 0)
+
+      double speedVec[3];
+      if (this->InterpolateVector(inData, speedField, pos, speedVec))
+//      vtkIdType pid = inData->FindPoint(pos);
+//      if (pid > 0)
       {
-        double localSpeed[3];
-        speedField->GetTuple(pid, localSpeed);
+  //      speedField->GetTuple(pid, localSpeed);
         this->Particles->SetPoint(2 * i + 1,
-          pos[0] + dt * localSpeed[0],
-          pos[1] + dt * localSpeed[1],
-          pos[2] + dt * localSpeed[2]);
+          pos[0] + dt * speedVec[0],
+          pos[1] + dt * speedVec[1],
+          pos[2] + dt * speedVec[2]);
       }
-      // Kill if out-of-volume or out-of-frustum
-      if (pid < 0 || !bbox.ContainsPoint(pos))// || !cam->IsInFrustrum(pos))
+      else
       {
         this->ParticlesTTL[i] = 0;
       }
+      // Kill if particle is out-of-frustum
+      /*if !cam->IsInFrustrum(pos))
+      {
+        this->ParticlesTTL[i] = 0;
+      }*/
     }
     if (this->ParticlesTTL[i] <= 0)
     {
@@ -431,6 +464,7 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
     this->CurrentTexture->GetHeight() != size[1])
   {
     this->CurrentTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
+    this->CameraMTime = 0;
   }
 
   if (!this->FrameTexture)
@@ -443,6 +477,7 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
     this->FrameTexture->GetHeight() != size[1])
   {
     this->FrameTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
+    this->CameraMTime = 0;
   }
 
   if (!this->ShaderCache)
@@ -517,8 +552,12 @@ void vtkStreamLinesMapper::SetNumberOfParticles(int nbParticles)
 //----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
 {
-  vtkImageData* inData =
-    vtkImageData::SafeDownCast(this->GetInput());
+  vtkDataSet* inData =
+    vtkDataSet::SafeDownCast(this->GetInput());
+  if (!inData || inData->GetNumberOfCells() == 0)
+  {
+    return;
+  }
 
   vtkDataArray* inVectors =
     this->GetInputArrayToProcess(0, 0, this->GetExecutive()->GetInputInformation());
@@ -546,7 +585,7 @@ void vtkStreamLinesMapper::ReleaseGraphicsResources(vtkWindow *renWin)
 int vtkStreamLinesMapper::FillInputPortInformation(
   int vtkNotUsed(port), vtkInformation* info)
 {
-  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
   return 1;
 }
 
