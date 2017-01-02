@@ -79,42 +79,26 @@ extern const char* vtkStreamLines_vs;
 class vtkStreamLinesMapper::Private : public vtkObject
 {
 public:
-  Private(vtkStreamLinesMapper* parent)
-  {
-    this->Parent = parent;
-    this->RandomNumberSequence = vtkSmartPointer<vtkMinimalStandardRandomSequence>::New();
-    // initialize the RandomNumberSequence
-    this->RandomNumberSequence->SetSeed(1);
-    this->ShaderCache = 0;
-    this->CurrentBuffer = 0;
-    this->FrameBuffer = 0;
-    this->CurrentTexture = 0;
-    this->FrameTexture = 0;
-    this->Program = 0;
-    this->BlendingProgram = 0;
-    this->TextureProgram = 0;
-    this->IndexBufferObject = 0;
-    this->Particles->SetDataTypeToFloat();
-    this->RebuildBufferObjects = true;
-  }
-
-  ~Private()
-  {
-  }
+  static Private* New();
 
   void ReleaseGraphicsResources(vtkWindow *renWin)
   {
-    RELEASE_VTKGL_OBJECT2(this->IndexBufferObject);
+    RELEASE_VTKGL_OBJECT(this->BlendingProgram);
     RELEASE_VTKGL_OBJECT(this->CurrentBuffer);
-    RELEASE_VTKGL_OBJECT(this->FrameBuffer);
     RELEASE_VTKGL_OBJECT(this->CurrentTexture);
+    RELEASE_VTKGL_OBJECT(this->FrameBuffer);
     RELEASE_VTKGL_OBJECT(this->FrameTexture);
     RELEASE_VTKGL_OBJECT(this->Program);
-    RELEASE_VTKGL_OBJECT(this->BlendingProgram);
     RELEASE_VTKGL_OBJECT(this->TextureProgram);
+    RELEASE_VTKGL_OBJECT2(this->IndexBufferObject);
   }
 
-  vtkStreamLinesMapper* Parent;
+  void SetMapper(vtkStreamLinesMapper* mapper)
+  {
+    this->Mapper = mapper;
+  }
+
+  vtkStreamLinesMapper* Mapper;
   vtkSmartPointer<vtkMinimalStandardRandomSequence> RandomNumberSequence;
   vtkOpenGLShaderCache* ShaderCache;
   vtkShaderProgram* Program;
@@ -145,7 +129,37 @@ public:
     this->RandomNumberSequence->Next();
     return this->RandomNumberSequence->GetRangeValue(vmin, vmax);
   }
+
+protected:
+  Private()
+  {
+    this->Mapper = 0;
+    this->RandomNumberSequence = vtkSmartPointer<vtkMinimalStandardRandomSequence>::New();
+    // initialize the RandomNumberSequence
+    this->RandomNumberSequence->SetSeed(1);
+    this->ShaderCache = 0;
+    this->CurrentBuffer = 0;
+    this->FrameBuffer = 0;
+    this->CurrentTexture = 0;
+    this->FrameTexture = 0;
+    this->Program = 0;
+    this->BlendingProgram = 0;
+    this->TextureProgram = 0;
+    this->IndexBufferObject = 0;
+    this->Particles->SetDataTypeToFloat();
+    this->RebuildBufferObjects = true;
+  }
+
+  ~Private()
+  {
+  }
+
+private:
+  Private(const Private&) VTK_DELETE_FUNCTION;
+  void operator=(const Private&) VTK_DELETE_FUNCTION;
 };
+
+vtkStandardNewMacro(vtkStreamLinesMapper::Private)
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::SetNumberOfParticles(int nbParticles)
@@ -180,7 +194,7 @@ void vtkStreamLinesMapper::Private::InitParticle(
     pos[2] = this->Rand(bounds[4], bounds[5]);
     this->Particles->SetPoint(pid * 2 + 0, pos);
     this->Particles->SetPoint(pid * 2 + 1, pos);
-    this->ParticlesTTL[pid] = this->Rand(1, this->Parent->MaxTimeToDeath);
+    this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToDeath);
 
     // Check speed at this location
     double speedVec[3];
@@ -212,7 +226,7 @@ void vtkStreamLinesMapper::Private::InitParticle(
 void vtkStreamLinesMapper::Private::UpdateParticles(
   vtkImageData *inData, vtkDataArray* speedField, vtkRenderer* ren)
 {
-  double dt = this->Parent->StepLength;
+  double dt = this->Mapper->StepLength;
   vtkCamera* cam = ren->GetActiveCamera();
   vtkBoundingBox bbox(inData->GetBounds());
 
@@ -360,7 +374,7 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   vaotb->Bind();
   this->FrameTexture->Activate();
   this->CurrentTexture->Activate();
-  this->BlendingProgram->SetUniformf("alpha", this->Parent->Alpha);
+  this->BlendingProgram->SetUniformf("alpha", this->Mapper->Alpha);
   this->BlendingProgram->SetUniformi("prev",
     this->FrameTexture->GetTextureUnit());
   this->BlendingProgram->SetUniformi("current",
@@ -466,7 +480,8 @@ vtkStandardNewMacro(vtkStreamLinesMapper)
 //-----------------------------------------------------------------------------
 vtkStreamLinesMapper::vtkStreamLinesMapper()
 {
-  this->Internal = new Private(this);
+  this->Internal = Private::New();
+  this->Internal->SetMapper(this);
   this->Alpha = 0.95;
   this->StepLength = 0.01;
   this->MaxTimeToDeath = 600;
@@ -480,7 +495,7 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
 //-----------------------------------------------------------------------------
 vtkStreamLinesMapper::~vtkStreamLinesMapper()
 {
-  delete this->Internal;
+  this->Internal->Delete();
 }
 
 //----------------------------------------------------------------------------
