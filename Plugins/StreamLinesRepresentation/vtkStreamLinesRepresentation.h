@@ -12,9 +12,11 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkStreamLinesRepresentation
-// .SECTION Description
-// vtkStreamLinesRepresentation extends vtkGeometryRepresentation.
+/**
+ * @class   vtkStreamLinesRepresentation
+ * @brief   Representation for showing ImageData using live streamlines.
+ *
+ */
 
 #ifndef vtkStreamLinesRepresentation_h
 #define vtkStreamLinesRepresentation_h

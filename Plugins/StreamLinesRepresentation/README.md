@@ -36,8 +36,8 @@ Todo
 * Support Structured grids
 * Support Unstructured grids
 
-Extended features
------------------
+Potential extension features
+----------------------------
 
 * For non-AABB (based on vol(domain)/vol(AABB)< 0.2): better point sampling via
   cell-sampling using cumsum of cell-volume

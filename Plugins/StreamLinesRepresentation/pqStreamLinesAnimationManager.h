@@ -1,7 +1,7 @@
 /*=========================================================================
 
    Program: ParaView
-   Module:    pqStreamLinesUpdaterManager.h
+   Module:    pqStreamLinesAnimationManager.h
 
    Copyright (c) 2005,2006 Sandia Corporation, Kitware Inc.
    All rights reserved.
@@ -29,8 +29,17 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#ifndef pqStreamLinesUpdaterManager_h
-#define pqStreamLinesUpdaterManager_h
+/**
+ * @class   pqStreamLinesAnimationManager
+ * @brief   Autoload class that enable representation streamlines animation
+ *
+ * This class observes every representation of pqRenderView instances when
+ * a rendering pass ends. If a representation of type StreamLines if found
+ * then render() is triggered to ensure the next update of the simulation.
+ */
+
+#ifndef pqStreamLinesAnimationManager_h
+#define pqStreamLinesAnimationManager_h
 
 #include <QObject>
 
@@ -38,19 +47,16 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class pqView;
 
-class pqStreamLinesUpdaterManager : public QObject
+class pqStreamLinesAnimationManager : public QObject
 {
   Q_OBJECT
   typedef QObject Superclass;
 
 public:
-  pqStreamLinesUpdaterManager(QObject* p = 0);
-  ~pqStreamLinesUpdaterManager();
+  pqStreamLinesAnimationManager(QObject* p = 0);
+  ~pqStreamLinesAnimationManager();
 
-  // Callback for shutdown.
   void onShutdown();
-
-  // Callback for startup.
   void onStartup();
 
 public slots:
@@ -64,7 +70,7 @@ protected:
   std::set<pqView*> Views;
 
 private:
-  Q_DISABLE_COPY(pqStreamLinesUpdaterManager)
+  Q_DISABLE_COPY(pqStreamLinesAnimationManager)
 };
 
 #endif

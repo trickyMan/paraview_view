@@ -1,7 +1,7 @@
-IF(NOT ParaView_BINARY_DIR)
-  FIND_PACKAGE(ParaView REQUIRED)
-  INCLUDE(${PARAVIEW_USE_FILE})
-ENDIF()
+if (NOT ParaView_BINARY_DIR)
+  find_package(ParaView REQUIRED)
+  include(${PARAVIEW_USE_FILE})
+endif()
 
 include_directories(
   ${VTK_INCLUDE_DIRS}
@@ -24,22 +24,22 @@ endif()
 
 set(sources)
 
-if (PARAVIEW_BUILD_QT_GUI)
+if(PARAVIEW_BUILD_QT_GUI)
   pv_find_package_qt(qt_targets REQUIRED QUIET
     QT4_COMPONENTS QtGui
     QT5_COMPONENTS Widgets)
 
   pv_qt_wrap_cpp(MOC_SRCS
-    pqStreamLinesUpdaterManager.h
+    pqStreamLinesAnimationManager.h
     )
 
   add_paraview_auto_start(
     IFACES IFACE_SRCS
-    CLASS_NAME pqStreamLinesUpdaterManager
+    CLASS_NAME pqStreamLinesAnimationManager
     STARTUP onStartup
     SHUTDOWN onShutdown
     )
- list(APPEND sources "pqStreamLinesUpdaterManager.cxx")
+ list(APPEND sources "pqStreamLinesAnimationManager.cxx")
 endif()
 
 encode_files_as_strings(ENCODED_STRING_FILES
@@ -65,6 +65,6 @@ add_paraview_plugin(
 include(vtkOpenGL)
 vtk_opengl_link(StreamLinesRepresentation)
 
-if (PARAVIEW_BUILD_QT_GUI)
+if(PARAVIEW_BUILD_QT_GUI)
   target_link_libraries(StreamLinesRepresentation LINK_PRIVATE pqApplicationComponents)
 endif()

@@ -1,7 +1,7 @@
 /*=========================================================================
 
    Program: ParaView
-   Module:    pqStreamLinesUpdaterManager.cxx
+   Module:    pqStreamLinesAnimationManager.cxx
 
    Copyright (c) 2005,2006 Sandia Corporation, Kitware Inc.
    All rights reserved.
@@ -29,7 +29,7 @@ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================*/
-#include "pqStreamLinesUpdaterManager.h"
+#include "pqStreamLinesAnimationManager.h"
 
 #include "pqApplicationCore.h"
 #include "pqServerManagerModel.h"
@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //-----------------------------------------------------------------------------
-pqStreamLinesUpdaterManager::pqStreamLinesUpdaterManager(QObject* p /*=0*/)
+pqStreamLinesAnimationManager::pqStreamLinesAnimationManager(QObject* p /*=0*/)
   : QObject(p)
 {
   pqServerManagerModel* smmodel = pqApplicationCore::instance()->getServerManagerModel();
@@ -54,12 +54,12 @@ pqStreamLinesUpdaterManager::pqStreamLinesUpdaterManager(QObject* p /*=0*/)
 }
 
 //-----------------------------------------------------------------------------
-pqStreamLinesUpdaterManager::~pqStreamLinesUpdaterManager()
+pqStreamLinesAnimationManager::~pqStreamLinesAnimationManager()
 {
 }
 
 //-----------------------------------------------------------------------------
-void pqStreamLinesUpdaterManager::onRenderEnded()
+void pqStreamLinesAnimationManager::onRenderEnded()
 {
   pqView* view = dynamic_cast<pqView*>(sender());
   QList<pqRepresentation*> reprs = view->getRepresentations();
@@ -83,7 +83,7 @@ void pqStreamLinesUpdaterManager::onRenderEnded()
 }
 
 //-----------------------------------------------------------------------------
-void pqStreamLinesUpdaterManager::onViewAdded(pqView* view)
+void pqStreamLinesAnimationManager::onViewAdded(pqView* view)
 {
   if (dynamic_cast<pqRenderView*>(view))
   {
@@ -93,7 +93,7 @@ void pqStreamLinesUpdaterManager::onViewAdded(pqView* view)
 }
 
 //-----------------------------------------------------------------------------
-void pqStreamLinesUpdaterManager::onViewRemoved(pqView* view)
+void pqStreamLinesAnimationManager::onViewRemoved(pqView* view)
 {
   if (dynamic_cast<pqRenderView*>(view))
   {
@@ -103,11 +103,11 @@ void pqStreamLinesUpdaterManager::onViewRemoved(pqView* view)
 }
 
 //-----------------------------------------------------------------------------
-void pqStreamLinesUpdaterManager::onStartup()
+void pqStreamLinesAnimationManager::onStartup()
 {
 }
 
 //-----------------------------------------------------------------------------
-void pqStreamLinesUpdaterManager::onShutdown()
+void pqStreamLinesAnimationManager::onShutdown()
 {
 }
