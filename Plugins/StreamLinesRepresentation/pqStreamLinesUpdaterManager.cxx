@@ -33,8 +33,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "pqApplicationCore.h"
 #include "pqServerManagerModel.h"
-#include "pqRepresentation.h"
 #include "pqView.h"
+#include "pqRenderView.h"
+#include "pqRepresentation.h"
 
 #include "vtkSMPropertyHelper.h"
 #include "vtkSMRepresentationProxy.h"
@@ -64,14 +65,13 @@ void pqStreamLinesUpdaterManager::onRenderEnded()
   QList<pqRepresentation*> reprs = view->getRepresentations();
   for (int i = 0; i < reprs.count(); ++i)
   {
-    pqRepresentation* repr = reprs[i];
-    vtkSMRepresentationProxy* rp =
-      vtkSMRepresentationProxy::SafeDownCast(repr->getProxy());
-    if (rp && rp->GetProperty("Representation"))
+    vtkSMRepresentationProxy* repr =
+      vtkSMRepresentationProxy::SafeDownCast(reprs[i]->getProxy());
+    if (repr && repr->GetProperty("Representation"))
     {
-      const char* rs = vtkSMPropertyHelper(rp, "Representation").GetAsString();
-      const int visible = vtkSMPropertyHelper(rp, "Visibility").GetAsInt();
-      if (!strcmp(rs, "StreamLines") && visible)
+      const char* rs = vtkSMPropertyHelper(repr, "Representation").GetAsString();
+      const int visible = vtkSMPropertyHelper(repr, "Visibility").GetAsInt();
+      if (rs && !strcmp(rs, "StreamLines") && visible)
       {
         // This view as a visible StreamLines representation.
         // Let's ask for a new render!
@@ -85,15 +85,21 @@ void pqStreamLinesUpdaterManager::onRenderEnded()
 //-----------------------------------------------------------------------------
 void pqStreamLinesUpdaterManager::onViewAdded(pqView* view)
 {
-  this->Views.insert(view);
-  QObject::connect(view, SIGNAL(endRender()), this, SLOT(onRenderEnded()));
+  if (dynamic_cast<pqRenderView*>(view))
+  {
+    this->Views.insert(view);
+    QObject::connect(view, SIGNAL(endRender()), this, SLOT(onRenderEnded()));
+  }
 }
 
 //-----------------------------------------------------------------------------
 void pqStreamLinesUpdaterManager::onViewRemoved(pqView* view)
 {
-  QObject::disconnect(view, SIGNAL(endRender()), this, SLOT(onRenderEnded()));
-  this->Views.erase(view);
+  if (dynamic_cast<pqRenderView*>(view))
+  {
+    QObject::disconnect(view, SIGNAL(endRender()), this, SLOT(onRenderEnded()));
+    this->Views.erase(view);
+  }
 }
 
 //-----------------------------------------------------------------------------

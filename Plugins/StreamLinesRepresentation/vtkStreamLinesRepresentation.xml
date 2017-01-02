@@ -80,7 +80,7 @@
       <DoubleVectorProperty name="Alpha"
                             command="SetAlpha"
                             number_of_elements="1"
-                            default_values="0.99">
+                            default_values="0.98">
         <DoubleRangeDomain name="range" min="0.0" max="1.0" />
         <Documentation>
         </Documentation>
