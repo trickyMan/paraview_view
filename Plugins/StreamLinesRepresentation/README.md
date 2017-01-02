@@ -27,8 +27,6 @@ How to test
 Load the plugin "StreamLinesRepresentation".
 Create a "Wavelet" source. Apply a "Gradient" filter on it.
 Switch representation from "Outline" to "StreamLines".
-Enable the Loop mode in the Animation toolbar and press Play button.
-Play with the StreamLines options in the Representation panel.
 Another cool demo is to load the disk_out_ref.ex2 dataset with the V vector
 point data array and apply the "Resample to Image" filter.
 
@@ -37,7 +35,6 @@ Todo
 
 * Support Structured grids
 * Support Unstructured grids
-* Auto re-render without needing loop animation
 
 Extended features
 -----------------

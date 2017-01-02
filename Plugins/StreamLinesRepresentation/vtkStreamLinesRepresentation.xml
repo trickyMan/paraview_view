@@ -80,7 +80,7 @@
       <DoubleVectorProperty name="Alpha"
                             command="SetAlpha"
                             number_of_elements="1"
-                            default_values="0.95">
+                            default_values="0.99">
         <DoubleRangeDomain name="range" min="0.0" max="1.0" />
         <Documentation>
         </Documentation>
@@ -89,7 +89,7 @@
       <DoubleVectorProperty name="StepLength"
                             command="SetStepLength"
                             number_of_elements="1"
-                            default_values="0.01">
+                            default_values="0.005">
         <DoubleRangeDomain name="range" min="0.0" />
         <Documentation>Normalized integration step - allow to adjust particle
           speed.
