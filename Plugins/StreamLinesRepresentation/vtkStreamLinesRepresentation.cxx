@@ -428,13 +428,13 @@ void vtkStreamLinesRepresentation::SetNumberOfParticles(int val)
 }
 
 //----------------------------------------------------------------------------
-void vtkStreamLinesRepresentation::SetMaxTimeToDeath(int val)
+void vtkStreamLinesRepresentation::SetMaxTimeToLive(int val)
 {
-  this->VolumeMapper->SetMaxTimeToDeath(val);
+  this->VolumeMapper->SetMaxTimeToLive(val);
 }
 
 //----------------------------------------------------------------------------
-void vtkStreamLinesRepresentation::SelectInputVectors(int a, int b, int c,
+void vtkStreamLinesRepresentation::SetInputVectors(int a, int b, int c,
   int attributeMode, const char* name)
 {
   this->VolumeMapper->SetInputArrayToProcess(a, b, c, attributeMode, name);

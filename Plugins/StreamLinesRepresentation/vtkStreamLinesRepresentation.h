@@ -87,9 +87,9 @@ public:
   void SetAlpha(double val);
   void SetStepLength(double val);
   void SetNumberOfParticles(int val);
-  void SetMaxTimeToDeath(int val);
+  void SetMaxTimeToLive(int val);
 
-  void SelectInputVectors(int, int, int, int attributeMode, const char* name);
+  void SetInputVectors(int, int, int, int attributeMode, const char* name);
 
   /**
    * Fill input port information.

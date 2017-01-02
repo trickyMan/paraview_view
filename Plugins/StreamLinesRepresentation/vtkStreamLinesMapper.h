@@ -48,7 +48,7 @@ public:
 
   //@{
   /**
-   * Get/Set the StepLength.
+   * Get/Set the integration step factor.
    */
   vtkSetMacro(StepLength, double);
   vtkGetMacro(StepLength, double);
@@ -56,7 +56,7 @@ public:
 
   //@{
   /**
-   * Get/Set the NumberOfParticles.
+   * Get/Set the number of particles.
    */
   void SetNumberOfParticles(int);
   vtkGetMacro(NumberOfParticles, int);
@@ -64,10 +64,10 @@ public:
 
   //@{
   /**
-   * Get/Set the MaxTimeToDeath (number of iteration before killing a particle).
+   * Get/Set the maximum number of iteration before particles die.
    */
-  vtkSetMacro(MaxTimeToDeath, int);
-  vtkGetMacro(MaxTimeToDeath, int);
+  vtkSetMacro(MaxTimeToLive, int);
+  vtkGetMacro(MaxTimeToLive, int);
   //@}
 
   /**
@@ -101,7 +101,7 @@ protected:
 
   double Alpha;
   double StepLength;
-  int MaxTimeToDeath;
+  int MaxTimeToLive;
   int NumberOfParticles;
   class Private;
   Private *Internal;

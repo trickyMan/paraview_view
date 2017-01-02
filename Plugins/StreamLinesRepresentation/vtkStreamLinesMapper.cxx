@@ -134,8 +134,8 @@ protected:
   Private()
   {
     this->Mapper = 0;
-    this->RandomNumberSequence = vtkSmartPointer<vtkMinimalStandardRandomSequence>::New();
-    // initialize the RandomNumberSequence
+    this->RandomNumberSequence =
+      vtkSmartPointer<vtkMinimalStandardRandomSequence>::New();
     this->RandomNumberSequence->SetSeed(1);
     this->ShaderCache = 0;
     this->CurrentBuffer = 0;
@@ -194,7 +194,7 @@ void vtkStreamLinesMapper::Private::InitParticle(
     pos[2] = this->Rand(bounds[4], bounds[5]);
     this->Particles->SetPoint(pid * 2 + 0, pos);
     this->Particles->SetPoint(pid * 2 + 1, pos);
-    this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToDeath);
+    this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToLive);
 
     // Check speed at this location
     double speedVec[3];
@@ -276,8 +276,6 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
 
   const int* size = renWin->GetSize();
   vtkOpenGLCamera* cam = vtkOpenGLCamera::SafeDownCast(ren->GetActiveCamera());
-  // [WMVD]C == {world, model, view, display} coordinates
-  // E.g., WCDC == world to display coordinate transformation
   vtkMatrix4x4* wcdc;
   vtkMatrix4x4* wcvc;
   vtkMatrix3x3* norms;
@@ -299,6 +297,7 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   this->ShaderCache->ReadyShaderProgram(this->Program);
   if (this->Program->IsUniformUsed("MCDCMatrix") > 0)
     this->Program->SetUniformMatrix("MCDCMatrix", wcdc);
+
   double* col = actor->GetProperty()->GetDiffuseColor();
   float color[3];
   color[0] = static_cast<double>(col[0]);
@@ -426,6 +425,7 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
     this->CurrentTexture = vtkTextureObject::New();
     this->CurrentTexture->SetContext(renWin);
   }
+
   if (this->CurrentTexture->GetWidth() != size[0] ||
     this->CurrentTexture->GetHeight() != size[1])
   {
@@ -451,20 +451,23 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
 
   if (!this->Program)
   {
-    this->Program =
-      this->ShaderCache->ReadyShaderProgram(vtkStreamLines_vs, vtkStreamLines_fs, "");
+    this->Program = this->ShaderCache->ReadyShaderProgram(
+      vtkStreamLines_vs, vtkStreamLines_fs, "");
+    this->Program->Register(this);
   }
 
   if (!this->BlendingProgram)
   {
-    this->BlendingProgram =
-      this->ShaderCache->ReadyShaderProgram(vtkTextureObjectVS, vtkStreamLinesBlending_fs, "");
+    this->BlendingProgram = this->ShaderCache->ReadyShaderProgram(
+      vtkTextureObjectVS, vtkStreamLinesBlending_fs, "");
+    this->BlendingProgram->Register(this);
   }
 
   if (!this->TextureProgram)
   {
-    this->TextureProgram =
-      this->ShaderCache->ReadyShaderProgram(vtkTextureObjectVS, vtkStreamLinesCopy_fs, "");
+    this->TextureProgram = this->ShaderCache->ReadyShaderProgram(
+      vtkTextureObjectVS, vtkStreamLinesCopy_fs, "");
+    this->TextureProgram->Register(this);
   }
 
   if (!this->IndexBufferObject)
@@ -484,7 +487,7 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
   this->Internal->SetMapper(this);
   this->Alpha = 0.95;
   this->StepLength = 0.01;
-  this->MaxTimeToDeath = 600;
+  this->MaxTimeToLive = 600;
   this->NumberOfParticles = 0;
   this->SetNumberOfParticles(1000);
 
@@ -519,7 +522,7 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
   vtkDataArray* inVectors =
     this->GetInputArrayToProcess(0, 0, this->GetExecutive()->GetInputInformation());
 
-  if (!inVectors ||inVectors->GetNumberOfComponents() != 3)
+  if (!inVectors || inVectors->GetNumberOfComponents() != 3)
   {
     vtkDebugMacro(<<"No speed field vector to process!");
     return;

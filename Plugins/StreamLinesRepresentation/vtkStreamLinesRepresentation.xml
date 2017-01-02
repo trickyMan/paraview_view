@@ -22,8 +22,8 @@
         <Documentation>Set the input to the representation.</Documentation>
       </InputProperty>
 
-      <StringVectorProperty name="SelectInputVectors"
-                            command="SelectInputVectors"
+      <StringVectorProperty name="InputVectors"
+                            command="SetInputVectors"
                             number_of_elements="5"
                             element_types="0 0 0 0 2"
                             label="Vectors">
@@ -52,15 +52,12 @@
                          name="Visibility"
                          number_of_elements="1">
         <BooleanDomain name="bool" />
-        <Documentation>Set the visibility for this
-        representation.</Documentation>
+        <Documentation>Set the visibility for this representation.
+        </Documentation>
       </IntVectorProperty>
 
-      <!--
-      Integrator controls
-      -->
       <DoubleVectorProperty command="SetDiffuseColor"
-                            default_values="1.0 0.0 0.0"
+                            default_values="0.0 1.0 0.0"
                             name="DiffuseColor"
                             number_of_elements="3"
                             panel_widget="color_selector_with_palette">
@@ -71,6 +68,7 @@
           <GlobalPropertyLink type="ColorPalette" property="SurfaceColor" />
         </Hints>
       </DoubleVectorProperty>
+
       <DoubleVectorProperty command="SetLineWidth"
                             default_values="1.0"
                             name="LineWidth"
@@ -78,17 +76,24 @@
         <DoubleRangeDomain min="1"
                            name="range" />
       </DoubleVectorProperty>
+
       <DoubleVectorProperty name="Alpha"
                             command="SetAlpha"
                             number_of_elements="1"
                             default_values="0.95">
-        <DoubleRangeDomain name="range" min="0.0" max="1.0"/>
+        <DoubleRangeDomain name="range" min="0.0" max="1.0" />
+        <Documentation>
+        </Documentation>
       </DoubleVectorProperty>
+
       <DoubleVectorProperty name="StepLength"
                             command="SetStepLength"
                             number_of_elements="1"
                             default_values="0.01">
-        <DoubleRangeDomain name="range" min="0.0"/>
+        <DoubleRangeDomain name="range" min="0.0" />
+        <Documentation>Normalized integration step - allow to adjust particle
+          speed.
+        </Documentation>
       </DoubleVectorProperty>
 
       <IntVectorProperty name="NumberOfParticles"
@@ -96,42 +101,21 @@
                          number_of_elements="1"
                          default_values="1000">
         <IntRangeDomain name="range" min="1" />
+        <Documentation>Number of simulated particles in the flow.
+        </Documentation>
       </IntVectorProperty>
-      <IntVectorProperty name="MaxTimeToDeath"
-                         command="SetMaxTimeToDeath"
+
+      <IntVectorProperty name="MaxTimeToLive"
+                         command="SetMaxTimeToLive"
                          number_of_elements="1"
                          default_values="600">
         <IntRangeDomain name="range" min="1" />
+        <Documentation>Maximum number of iteration a particle is followed before
+        it dies.
+        </Documentation>
       </IntVectorProperty>
 
     </RepresentationProxy>
-
-    <!--======================================================================-->
-    <!--Extension name="GeometryRepresentation">
-      <RepresentationType subproxy="StreamLinesRepresentation"
-        subtype="Surface" text="StreamLines" />
-
-      <SubProxy>
-        <Proxy name="StreamLinesRepresentation"
-          proxygroup="representations" proxyname="StreamLinesRepresentation" />
-
-        <ShareProperties subproxy="SurfaceRepresentation">
-          <Exception name="Input" />
-          <Exception name="Visibility" />
-        </ShareProperties>
-
-        <ExposedProperties>
-         <PropertyGroup label="StreamLines: Integrator">
-           <Property name="SelectInputVectors"/>
-           <Property name="Alpha"/>
-           <Property name="StepLength"/>
-           <Property name="NumberOfParticles" />
-           <Property name="MaxTimeToDeath" />
-         </PropertyGroup>
-        </ExposedProperties>
-
-      </SubProxy>
-    </Extension-->
 
     <!--======================================================================-->
     <Extension name="UniformGridRepresentation">
@@ -148,23 +132,56 @@
         </ShareProperties>
 
         <ExposedProperties>
-         <PropertyGroup label="StreamLines: Integrator">
-           <Property name="SelectInputVectors"/>
-           <Property name="Alpha"/>
-           <Property name="StepLength"/>
-           <Property name="NumberOfParticles" />
-           <Property name="MaxTimeToDeath" />
-          <Hints>
-            <PropertyWidgetDecorator type="GenericDecorator"
-                                     mode="visibility"
-                                     property="Representation"
-                                     value="StreamLines" />
-          </Hints>
-         </PropertyGroup>
+          <PropertyGroup label="StreamLines">
+            <Property name="InputVectors"/>
+            <Property name="Alpha"/>
+            <Property name="StepLength"/>
+            <Property name="NumberOfParticles" />
+            <Property name="MaxTimeToLive" />
+            <Hints>
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="Representation"
+                                       value="StreamLines" />
+           </Hints>
+          </PropertyGroup>
         </ExposedProperties>
 
       </SubProxy>
     </Extension>
+
+    <!--======================================================================-->
+    <!--Extension name="GeometryRepresentation">
+      <RepresentationType subproxy="StreamLinesRepresentation"
+        subtype="Surface" text="StreamLines" />
+
+      <SubProxy>
+        <Proxy name="StreamLinesRepresentation"
+          proxygroup="representations" proxyname="StreamLinesRepresentation" />
+
+        <ShareProperties subproxy="SurfaceRepresentation">
+          <Exception name="Input" />
+          <Exception name="Visibility" />
+        </ShareProperties>
+
+        <ExposedProperties>
+          <PropertyGroup label="StreamLines">
+            <Property name="InputVectors"/>
+            <Property name="Alpha"/>
+            <Property name="StepLength"/>
+            <Property name="NumberOfParticles" />
+            <Property name="MaxTimeToLive" />
+            <Hints>
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="Representation"
+                                       value="StreamLines" />
+           </Hints>
+          </PropertyGroup>
+        </ExposedProperties>
+
+      </SubProxy>
+    </Extension-->
 
     <!--======================================================================-->
     <!--Extension name="StructuredGridRepresentation">
@@ -180,13 +197,19 @@
         </ShareProperties>
 
         <ExposedProperties>
-         <PropertyGroup label="StreamLines: Integrator">
-           <Property name="SelectInputVectors"/>
-           <Property name="Alpha"/>
-           <Property name="StepLength"/>
-           <Property name="NumberOfParticles" />
-           <Property name="MaxTimeToDeath" />
-         </PropertyGroup>
+          <PropertyGroup label="StreamLines">
+            <Property name="InputVectors"/>
+            <Property name="Alpha"/>
+            <Property name="StepLength"/>
+            <Property name="NumberOfParticles" />
+            <Property name="MaxTimeToLive" />
+            <Hints>
+              <PropertyWidgetDecorator type="GenericDecorator"
+                                       mode="visibility"
+                                       property="Representation"
+                                       value="StreamLines" />
+           </Hints>
+          </PropertyGroup>
         </ExposedProperties>
 
       </SubProxy>
