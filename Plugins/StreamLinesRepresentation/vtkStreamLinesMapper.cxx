@@ -373,7 +373,8 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   vaotb->Bind();
   this->FrameTexture->Activate();
   this->CurrentTexture->Activate();
-  this->BlendingProgram->SetUniformf("alpha", this->Mapper->Alpha);
+  double alpha = 1. - 1./(this->Mapper->MaxTimeToLive * this->Mapper->Alpha);
+  this->BlendingProgram->SetUniformf("alpha", alpha);
   this->BlendingProgram->SetUniformi("prev",
     this->FrameTexture->GetTextureUnit());
   this->BlendingProgram->SetUniformi("current",
@@ -429,7 +430,7 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
   if (this->CurrentTexture->GetWidth() != size[0] ||
     this->CurrentTexture->GetHeight() != size[1])
   {
-    this->CurrentTexture->Create2D(size[0], size[1], 4, VTK_UNSIGNED_CHAR, false);
+    this->CurrentTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
   }
 
   if (!this->FrameTexture)
@@ -441,7 +442,7 @@ void vtkStreamLinesMapper::Private::InitializeBuffers(vtkRenderer* ren)
   if (this->FrameTexture->GetWidth() != size[0] ||
     this->FrameTexture->GetHeight() != size[1])
   {
-    this->FrameTexture->Create2D(size[0], size[1], 4, VTK_UNSIGNED_CHAR, false);
+    this->FrameTexture->Create2D(size[0], size[1], 4, VTK_FLOAT, false);
   }
 
   if (!this->ShaderCache)

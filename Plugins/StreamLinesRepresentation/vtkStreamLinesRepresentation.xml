@@ -80,9 +80,10 @@
       <DoubleVectorProperty name="Alpha"
                             command="SetAlpha"
                             number_of_elements="1"
-                            default_values="0.98">
+                            default_values="0.1">
         <DoubleRangeDomain name="range" min="0.0" max="1.0" />
-        <Documentation>
+        <Documentation>Blending factor applied each frame is done with the
+          formula: 1 - 1 / (Alpha * MaxTimeToLive).
         </Documentation>
       </DoubleVectorProperty>
 

@@ -14,12 +14,18 @@ of the domain and created each time one particle dies (time to live - ie, max
 number of iterations - is reached, out-of-domain or zero velocity).
 The UI panel allows to specify:
 * Vectors: the vector field (mandatory).
-* Alpha: the rate of blending (not clear yet, try 0.95 or 0.98).
+* Alpha: the rate of blending (depends on MaxTimeToLive, 0: no trace, 1: trace
+  will face as long as TimeToLive).
 * Step legth: Normalized integration step - allow to adjust particle speed.
 * Number Of Particles: Number of simulated particles in the flow.
 * Max Time To Live: Maximum number of iteration a particle is followed before
   it dies.
 The solid color and line width can be changed using default ParaView UI widgets.
+
+Note that pqStreamLinesAnimationManager class observes all pqRenderView. When a
+rendering on such a view is finished, it checks all existing representations
+and search for an enabled StreamLines one. If found, a new still render pass is
+requested. This mechanism allow to refresh the view and animate the particles.
 
 How to test
 -----------
