@@ -443,10 +443,11 @@ void vtkStreamLinesRepresentation::SetMaxTimeToLive(int val)
 }
 
 //----------------------------------------------------------------------------
-void vtkStreamLinesRepresentation::SetInputVectors(int a, int b, int c,
-  int attributeMode, const char* name)
+void vtkStreamLinesRepresentation::SetInputVectors(int idx, int port,
+  int connection, int fieldAssociation, const char* name)
 {
-  this->StreamLinesMapper->SetInputArrayToProcess(1, b, c, attributeMode, name);
+  this->StreamLinesMapper->SetInputArrayToProcess(
+    1, port, connection, fieldAssociation, name);
 }
 
 //----------------------------------------------------------------------------
@@ -495,7 +496,12 @@ void vtkStreamLinesRepresentation::SetInputArrayToProcess(
 {
   this->Superclass::SetInputArrayToProcess(idx, port, connection, fieldAssociation, name);
 
-  if (idx == 1) return;
+  if (idx == 1)
+  {
+    return;
+  }
+
+  this->StreamLinesMapper->SetInputArrayToProcess(idx, port, connection, fieldAssociation, name);
 
   if (name && name[0])
   {

@@ -116,6 +116,8 @@ public:
   //std::vector<Particle> Particles;
   vtkNew<vtkPoints> Particles;
   vtkNew<vtkDoubleArray> InterpolationArray;
+  vtkSmartPointer<vtkDataArray> InterpolationScalarArray;
+  vtkDataArray* PrevScalars;
   vtkNew<vtkIdList> IdList;
   std::vector<unsigned char> ParticleColors;
   std::vector<int> ParticlesTTL;
@@ -124,11 +126,12 @@ public:
   bool RebuildBufferObjects;
 
   void SetNumberOfParticles(int);
-  void InitParticle(vtkDataSet*, vtkDataArray*, int);
-  void UpdateParticles(vtkDataSet*, vtkDataArray*, vtkRenderer*);
+  void InitParticle(vtkDataSet*, vtkDataArray*, vtkDataArray*, int);
+  void UpdateParticles(vtkDataSet*, vtkDataArray*, vtkDataArray*, vtkRenderer*);
   void DrawParticles(vtkRenderer*, vtkActor*);
   void InitializeBuffers(vtkRenderer*);
-  bool InterpolateVector(vtkDataSet*, vtkDataArray*, double[3], double[3]);
+  bool InterpolateSpeedAndColor(
+    vtkDataSet*, vtkDataArray*, vtkDataArray*, double[3], double[3], vtkIdType);
 
   double Rand(double vmin = 0., double vmax = 1.)
   {
@@ -156,6 +159,7 @@ protected:
     this->RebuildBufferObjects = true;
     this->InterpolationArray->SetNumberOfComponents(3);
     this->InterpolationArray->SetNumberOfTuples(1);
+    this->PrevScalars = reinterpret_cast<vtkDataArray*>(0x01);
   }
 
   ~Private()
@@ -187,9 +191,9 @@ void vtkStreamLinesMapper::Private::SetNumberOfParticles(int nbParticles)
 }
 
 //-----------------------------------------------------------------------------
-bool vtkStreamLinesMapper::Private::InterpolateVector(
-  vtkDataSet* inData, vtkDataArray* speedField, double pos[3],
-  double outSpeed[3])
+bool vtkStreamLinesMapper::Private::InterpolateSpeedAndColor(
+  vtkDataSet* inData, vtkDataArray* speedField, vtkDataArray* scalars, double pos[3],
+  double outSpeed[3], vtkIdType pid)
 {
   int subId;
   double pcoords[3];
@@ -200,15 +204,29 @@ bool vtkStreamLinesMapper::Private::InterpolateVector(
   {
     return false;
   }
+
+  if (!speedField && !scalars)
+  {
+    return true;
+  }
+
   inData->GetCellPoints(cellId, this->IdList.Get());
-  this->InterpolationArray->InterpolateTuple(0, this->IdList.Get(), speedField, weights);
-  this->InterpolationArray->GetTuple(0, outSpeed);
+  if (speedField)
+  {
+    this->InterpolationArray->InterpolateTuple(0, this->IdList.Get(), speedField, weights);
+    this->InterpolationArray->GetTuple(0, outSpeed);
+  }
+
+  if (scalars)
+  {
+    this->InterpolationScalarArray->InterpolateTuple(pid, this->IdList.Get(), scalars, weights);
+  }
   return true;
 }
 
 //-----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::InitParticle(
-  vtkDataSet *inData, vtkDataArray* speedField, int pid)
+  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars, int pid)
 {
   //Particle& p = this->Particles[pid];
   double bounds[6];
@@ -225,26 +243,15 @@ void vtkStreamLinesMapper::Private::InitParticle(
     this->Particles->SetPoint(pid * 2 + 1, pos);
     this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToLive);
 
-    this->ParticleColors[pid * 8 + 0] = 255;
-    this->ParticleColors[pid * 8 + 1] = 0;
-    this->ParticleColors[pid * 8 + 2] = 0;
-    this->ParticleColors[pid * 8 + 3] = 255;
-
     // Check speed at this location
-    double speedVec[3];
+    double speedVec[9];
     double speed = 0.;
-    if (this->InterpolateVector(inData, speedField, pos, speedVec))
+    if (this->InterpolateSpeedAndColor(inData, speedField, scalars, pos, speedVec, pid * 2))
     {
-      double c[4];
+      this->InterpolationScalarArray->SetTuple(pid * 2 + 1, this->InterpolationScalarArray->GetTuple(pid * 2));
       speed = vtkMath::Norm(speedVec);
-      this->Mapper->GetLookupTable()->GetColor(speed, c);
-      this->ParticleColors[pid * 8 + 0] = c[0] * 255.;
-      this->ParticleColors[pid * 8 + 1] = c[1] * 255.;
-      this->ParticleColors[pid * 8 + 2] = c[2] * 255.;
-      this->ParticleColors[pid * 8 + 3] = 255;
       added = true;
     }
-    memcpy(&this->ParticleColors[pid * 8 + 4], &this->ParticleColors[pid * 8], 4);
 
     // TODO(bjacquet)
     // if (volume->maxSpeedOverAllVolume==0) break;
@@ -263,13 +270,32 @@ void vtkStreamLinesMapper::Private::InitParticle(
 
 //----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::UpdateParticles(
-  vtkDataSet *inData, vtkDataArray* speedField, vtkRenderer* ren)
+  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars, vtkRenderer* ren)
 {
+  std::size_t nbParticles = this->ParticlesTTL.size();
+
+  if (this->PrevScalars != scalars)
+  {
+    if (scalars)
+    {
+      this->InterpolationScalarArray =
+        vtkDataArray::CreateDataArray(scalars->GetDataType());
+    }
+    else
+    {
+      this->InterpolationScalarArray =
+        vtkUnsignedCharArray::New();
+    }
+    this->InterpolationScalarArray->SetNumberOfComponents(
+      scalars ? scalars->GetNumberOfComponents() : 1);
+    this->InterpolationScalarArray->SetNumberOfTuples(nbParticles * 2);
+    this->PrevScalars = scalars;
+  }
+
   double dt = this->Mapper->StepLength;
   vtkCamera* cam = ren->GetActiveCamera();
   vtkBoundingBox bbox(inData->GetBounds());
 
-  std::size_t nbParticles = this->ParticlesTTL.size();
   for (size_t i = 0; i < nbParticles; ++i)
   {
     this->ParticlesTTL[i]--;
@@ -280,24 +306,18 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
 
       // Update prevpos with last pos
       this->Particles->SetPoint(i * 2 + 0, pos);
-      memcpy(&this->ParticleColors[i * 8], &this->ParticleColors[i * 8 + 4], 4);
+      this->InterpolationScalarArray->SetTuple(
+        i * 2 + 0, this->InterpolationScalarArray->GetTuple(i * 2 + 1));
 
-      // Move the particle
+      // Move the particle and fetch its color
       double speedVec[3];
-      if (this->InterpolateVector(inData, speedField, pos, speedVec))
+      if (this->InterpolateSpeedAndColor(
+        inData, speedField, scalars, pos, speedVec, i * 2 + 1))
       {
         this->Particles->SetPoint(2 * i + 1,
           pos[0] + dt * speedVec[0],
           pos[1] + dt * speedVec[1],
           pos[2] + dt * speedVec[2]);
-
-        double speed = speed = vtkMath::Norm(speedVec);
-        double c[4];
-        this->Mapper->GetLookupTable()->GetColor(speed, c);
-        this->ParticleColors[i * 8 + 4] = c[0] * 255.;
-        this->ParticleColors[i * 8 + 5] = c[1] * 255.;
-        this->ParticleColors[i * 8 + 6] = c[2] * 255.;
-        this->ParticleColors[i * 8 + 7] = 255;
       }
       else
       {
@@ -312,7 +332,7 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
     if (this->ParticlesTTL[i] <= 0)
     {
       // Resample dead or out-of-bounds particle
-      this->InitParticle(inData, speedField, i);
+      this->InitParticle(inData, speedField, scalars, i);
     }
   }
 }
@@ -368,11 +388,15 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
     this->RebuildBufferObjects = false;
   }
 
+  vtkUnsignedCharArray* colors = this->Mapper->GetLookupTable()->MapScalars(
+    this->InterpolationScalarArray, VTK_COLOR_MODE_DEFAULT, -1);
+
   // Create the VBO
   vtkNew<vtkOpenGLVertexBufferObject> vbo;
   vbo->CreateVBO(this->Particles.Get(), nbParticles * 2, 0, 0,
-    &this->ParticleColors[0], 4);
+    colors->GetPointer(0), 4);
   vbo->Bind();
+  colors->Delete();
 
   // Setup the VAO
   vtkNew<vtkOpenGLVertexArrayObject> vao;
@@ -551,6 +575,8 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
   this->NumberOfParticles = 0;
   this->SetNumberOfParticles(1000);
 
+  this->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
+    vtkDataSetAttributes::SCALARS);
   this->SetInputArrayToProcess(1, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
     vtkDataSetAttributes::VECTORS);
 }
@@ -583,6 +609,9 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
     return;
   }
 
+  vtkDataArray* inScalars =
+    this->GetInputArrayToProcess(0, 0, this->GetExecutive()->GetInputInformation());
+
   vtkDataArray* inVectors =
     this->GetInputArrayToProcess(1, 0, this->GetExecutive()->GetInputInformation());
 
@@ -593,7 +622,7 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
   }
 
   // Move particles
-  this->Internal->UpdateParticles(inData, inVectors, ren);
+  this->Internal->UpdateParticles(inData, inVectors, inScalars, ren);
 
   // Draw updated particles in a buffer
   this->Internal->DrawParticles(ren, actor);
