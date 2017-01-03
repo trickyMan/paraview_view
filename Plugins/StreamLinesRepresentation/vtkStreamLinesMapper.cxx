@@ -443,6 +443,7 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   // Perform rendering
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT);
+  glDisable(GL_DEPTH_TEST);
   glLineWidth(actor->GetProperty()->GetLineWidth());
   glDrawArrays(GL_LINES, 0, nbParticles * 2);
   vtkOpenGLCheckErrorMacro("Failed after rendering");
@@ -510,11 +511,23 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   this->FrameTexture->Activate();
   this->TextureProgram->SetUniformi("source",
     this->FrameTexture->GetTextureUnit());
+  // Setup blending equation
+  int prevBlendParams[4];
+  glGetIntegerv(GL_BLEND_SRC_RGB, &prevBlendParams[0]);
+  glGetIntegerv(GL_BLEND_DST_RGB, &prevBlendParams[1]);
+  glGetIntegerv(GL_BLEND_SRC_ALPHA, &prevBlendParams[2]);
+  glGetIntegerv(GL_BLEND_DST_ALPHA, &prevBlendParams[3]);
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE);
+
   vtkOpenGLRenderUtilities::RenderQuad(
     s_quadVerts, s_quadTCoords, this->TextureProgram, vaot.Get());
-  glDisable(GL_BLEND);
+
+  // Restore blending equation state
+  glBlendFuncSeparate(
+    prevBlendParams[0], prevBlendParams[1],
+    prevBlendParams[2], prevBlendParams[3]);
+
   this->FrameTexture->Deactivate();
 
   vaot->Release();
