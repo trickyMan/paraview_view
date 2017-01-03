@@ -225,10 +225,10 @@ void vtkStreamLinesMapper::Private::InitParticle(
     this->Particles->SetPoint(pid * 2 + 1, pos);
     this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToLive);
 
-    this->ParticleColors[pid * 4 + 0] = 255;
-    this->ParticleColors[pid * 4 + 1] = 0;
-    this->ParticleColors[pid * 4 + 2] = 0;
-    this->ParticleColors[pid * 4 + 3] = 255;
+    this->ParticleColors[pid * 8 + 0] = 255;
+    this->ParticleColors[pid * 8 + 1] = 0;
+    this->ParticleColors[pid * 8 + 2] = 0;
+    this->ParticleColors[pid * 8 + 3] = 255;
 
     // Check speed at this location
     double speedVec[3];
@@ -238,12 +238,13 @@ void vtkStreamLinesMapper::Private::InitParticle(
       double c[4];
       speed = vtkMath::Norm(speedVec);
       this->Mapper->GetLookupTable()->GetColor(speed, c);
-      this->ParticleColors[pid * 4 + 0] = c[0] * 255.;
-      this->ParticleColors[pid * 4 + 1] = c[1] * 255.;
-      this->ParticleColors[pid * 4 + 2] = c[2] * 255.;
-      this->ParticleColors[pid * 4 + 3] = 255;
+      this->ParticleColors[pid * 8 + 0] = c[0] * 255.;
+      this->ParticleColors[pid * 8 + 1] = c[1] * 255.;
+      this->ParticleColors[pid * 8 + 2] = c[2] * 255.;
+      this->ParticleColors[pid * 8 + 3] = 255;
       added = true;
     }
+    memcpy(&this->ParticleColors[pid * 8 + 4], &this->ParticleColors[pid * 8], 4);
 
     // TODO(bjacquet)
     // if (volume->maxSpeedOverAllVolume==0) break;
@@ -279,7 +280,7 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
 
       // Update prevpos with last pos
       this->Particles->SetPoint(i * 2 + 0, pos);
-      memcpy(&this->ParticleColors[i * 8], &this->ParticleColors[i * 8 + 4], 3);
+      memcpy(&this->ParticleColors[i * 8], &this->ParticleColors[i * 8 + 4], 4);
 
       // Move the particle
       double speedVec[3];
@@ -296,6 +297,7 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
         this->ParticleColors[i * 8 + 4] = c[0] * 255.;
         this->ParticleColors[i * 8 + 5] = c[1] * 255.;
         this->ParticleColors[i * 8 + 6] = c[2] * 255.;
+        this->ParticleColors[i * 8 + 7] = 255;
       }
       else
       {
