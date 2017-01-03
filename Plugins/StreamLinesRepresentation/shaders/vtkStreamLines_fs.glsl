@@ -2,8 +2,14 @@
 //VTK::Output::Dec
 
 uniform vec3 color;
+uniform int scalarVisibility;
+
+varying vec3 vertexColorVSOutput;
 
 void main(void)
 {
-  gl_FragData[0] = vec4(color.rgb, 1.);
+  if (scalarVisibility != 0)
+    gl_FragData[0] = vec4(vertexColorVSOutput, 1.);
+  else
+    gl_FragData[0] = vec4(color, 1.);
 }

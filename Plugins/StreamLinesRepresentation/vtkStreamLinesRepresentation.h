@@ -36,6 +36,7 @@ class vtkPiecewiseFunction;
 class vtkPolyDataMapper;
 class vtkPVCacheKeeper;
 class vtkPVLODActor;
+class vtkScalarsToColors;
 class vtkStreamLinesMapper;
 class vtkProperty;
 
@@ -93,6 +94,21 @@ public:
 
   void SetInputVectors(int, int, int, int attributeMode, const char* name);
 
+  //***************************************************************************
+  // Forwarded to Mapper and LODMapper.
+  virtual void SetInterpolateScalarsBeforeMapping(int val);
+  virtual void SetLookupTable(vtkScalarsToColors* val);
+
+  //@{
+  /**
+   * Sets if scalars are mapped through a color-map or are used
+   * directly as colors.
+   * 0 maps to VTK_COLOR_MODE_DIRECT_SCALARS
+   * 1 maps to VTK_COLOR_MODE_MAP_SCALARS
+   * @see vtkScalarsToColors::MapScalars
+   */
+  virtual void SetMapScalars(int val);
+
   /**
    * Fill input port information.
    */
@@ -102,6 +118,33 @@ public:
    * Provides access to the actor used by this representation.
    */
   vtkPVLODActor* GetActor() { return this->Actor; }
+
+  /**
+   * Convenience method to get the array name used to scalar color with.
+   */
+  const char* GetColorArrayName();
+
+  // Description:
+  // Set the input data arrays that this algorithm will process. Overridden to
+  // pass the array selection to the mapper.
+  virtual void SetInputArrayToProcess(
+    int idx, int port, int connection, int fieldAssociation, const char* name);
+  virtual void SetInputArrayToProcess(
+    int idx, int port, int connection, int fieldAssociation, int fieldAttributeType)
+  {
+    this->Superclass::SetInputArrayToProcess(
+      idx, port, connection, fieldAssociation, fieldAttributeType);
+  }
+  virtual void SetInputArrayToProcess(int idx, vtkInformation* info)
+  {
+    this->Superclass::SetInputArrayToProcess(idx, info);
+  }
+  virtual void SetInputArrayToProcess(int idx, int port, int connection,
+    const char* fieldAssociation, const char* attributeTypeorName)
+  {
+    this->Superclass::SetInputArrayToProcess(
+      idx, port, connection, fieldAssociation, attributeTypeorName);
+  }
 
 protected:
   vtkStreamLinesRepresentation();

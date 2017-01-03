@@ -46,6 +46,7 @@
 #include "vtkRenderWindow.h"
 #include "vtkShader.h"
 #include "vtkShaderProgram.h"
+#include "vtkScalarsToColors.h"
 #include "vtkSmartPointer.h"
 #include "vtkTextureObject.h"
 #include "vtkTextureObjectVS.h"  // a pass through shader
@@ -116,6 +117,7 @@ public:
   vtkNew<vtkPoints> Particles;
   vtkNew<vtkDoubleArray> InterpolationArray;
   vtkNew<vtkIdList> IdList;
+  std::vector<unsigned char> ParticleColors;
   std::vector<int> ParticlesTTL;
   std::vector<int> Indices;
 
@@ -172,6 +174,7 @@ void vtkStreamLinesMapper::Private::SetNumberOfParticles(int nbParticles)
 {
   this->Particles->Resize(nbParticles * 2);
   this->ParticlesTTL.resize(nbParticles, 0);
+  this->ParticleColors.resize(nbParticles * 2 * 4);
   this->Indices.resize(nbParticles * 2);
 
   // Build indices array
@@ -222,15 +225,23 @@ void vtkStreamLinesMapper::Private::InitParticle(
     this->Particles->SetPoint(pid * 2 + 1, pos);
     this->ParticlesTTL[pid] = this->Rand(1, this->Mapper->MaxTimeToLive);
 
+    this->ParticleColors[pid * 4 + 0] = 255;
+    this->ParticleColors[pid * 4 + 1] = 0;
+    this->ParticleColors[pid * 4 + 2] = 0;
+    this->ParticleColors[pid * 4 + 3] = 255;
+
     // Check speed at this location
     double speedVec[3];
     double speed = 0.;
-    //vtkIdType pid = inData->FindPoint(pos);
-    //speedField->GetTuple(pid, speedVec);
     if (this->InterpolateVector(inData, speedField, pos, speedVec))
-    //if (pid >= 0)
     {
+      double c[4];
       speed = vtkMath::Norm(speedVec);
+      this->Mapper->GetLookupTable()->GetColor(speed, c);
+      this->ParticleColors[pid * 4 + 0] = c[0] * 255.;
+      this->ParticleColors[pid * 4 + 1] = c[1] * 255.;
+      this->ParticleColors[pid * 4 + 2] = c[2] * 255.;
+      this->ParticleColors[pid * 4 + 3] = 255;
       added = true;
     }
 
@@ -265,20 +276,26 @@ void vtkStreamLinesMapper::Private::UpdateParticles(
     {
       double pos[3];
       this->Particles->GetPoint(i * 2 + 1, pos);
+
       // Update prevpos with last pos
       this->Particles->SetPoint(i * 2 + 0, pos);
-      // Move the particle
+      memcpy(&this->ParticleColors[i * 8], &this->ParticleColors[i * 8 + 4], 3);
 
+      // Move the particle
       double speedVec[3];
       if (this->InterpolateVector(inData, speedField, pos, speedVec))
-//      vtkIdType pid = inData->FindPoint(pos);
-//      if (pid > 0)
       {
-  //      speedField->GetTuple(pid, localSpeed);
         this->Particles->SetPoint(2 * i + 1,
           pos[0] + dt * speedVec[0],
           pos[1] + dt * speedVec[1],
           pos[2] + dt * speedVec[2]);
+
+        double speed = speed = vtkMath::Norm(speedVec);
+        double c[4];
+        this->Mapper->GetLookupTable()->GetColor(speed, c);
+        this->ParticleColors[i * 8 + 4] = c[0] * 255.;
+        this->ParticleColors[i * 8 + 5] = c[1] * 255.;
+        this->ParticleColors[i * 8 + 6] = c[2] * 255.;
       }
       else
       {
@@ -337,6 +354,7 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   color[1] = static_cast<double>(col[1]);
   color[2] = static_cast<double>(col[2]);
   this->Program->SetUniform3f("color", color);
+  this->Program->SetUniformi("scalarVisibility", this->Mapper->GetScalarVisibility());
 
   // Setup the IBO
   this->IndexBufferObject->Bind();
@@ -350,7 +368,8 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
 
   // Create the VBO
   vtkNew<vtkOpenGLVertexBufferObject> vbo;
-  vbo->CreateVBO(this->Particles.Get(), nbParticles * 2, 0, 0, 0, 0);
+  vbo->CreateVBO(this->Particles.Get(), nbParticles * 2, 0, 0,
+    &this->ParticleColors[0], 4);
   vbo->Bind();
 
   // Setup the VAO
@@ -358,6 +377,9 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   vao->Bind();
   vao->AddAttributeArray(this->Program, vbo.Get(),
     "vertexMC", vbo->VertexOffset, vbo->Stride, VTK_FLOAT, 3, false);
+  vao->AddAttributeArray(this->Program, vbo.Get(),
+    "scalarColor", vbo->ColorOffset, vbo->Stride, VTK_UNSIGNED_CHAR,
+    vbo->ColorComponents, true);
 
   // Perform rendering
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -527,7 +549,7 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
   this->NumberOfParticles = 0;
   this->SetNumberOfParticles(1000);
 
-  this->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
+  this->SetInputArrayToProcess(1, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
     vtkDataSetAttributes::VECTORS);
 }
 
@@ -560,7 +582,7 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
   }
 
   vtkDataArray* inVectors =
-    this->GetInputArrayToProcess(0, 0, this->GetExecutive()->GetInputInformation());
+    this->GetInputArrayToProcess(1, 0, this->GetExecutive()->GetInputInformation());
 
   if (!inVectors || inVectors->GetNumberOfComponents() != 3)
   {

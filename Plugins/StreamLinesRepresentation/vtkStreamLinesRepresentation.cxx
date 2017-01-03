@@ -153,7 +153,7 @@ vtkStreamLinesRepresentation::~vtkStreamLinesRepresentation()
 int vtkStreamLinesRepresentation::FillInputPortInformation(int, vtkInformation* info)
 {
   info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
-  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
+  info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
   info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
   return 1;
 }
@@ -446,5 +446,116 @@ void vtkStreamLinesRepresentation::SetMaxTimeToLive(int val)
 void vtkStreamLinesRepresentation::SetInputVectors(int a, int b, int c,
   int attributeMode, const char* name)
 {
-  this->StreamLinesMapper->SetInputArrayToProcess(a, b, c, attributeMode, name);
+  this->StreamLinesMapper->SetInputArrayToProcess(1, b, c, attributeMode, name);
+}
+
+//----------------------------------------------------------------------------
+const char* vtkStreamLinesRepresentation::GetColorArrayName()
+{
+  vtkInformation* info = this->GetInputArrayInformation(0);
+  if (info && info->Has(vtkDataObject::FIELD_ASSOCIATION()) &&
+    info->Has(vtkDataObject::FIELD_NAME()))
+  {
+    return info->Get(vtkDataObject::FIELD_NAME());
+  }
+  return NULL;
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::UpdateColoringParameters()
+{
+  bool using_scalar_coloring = false;
+
+  vtkInformation* info = this->GetInputArrayInformation(0);
+  if (info && info->Has(vtkDataObject::FIELD_ASSOCIATION()) &&
+    info->Has(vtkDataObject::FIELD_NAME()))
+  {
+    const char* colorArrayName = info->Get(vtkDataObject::FIELD_NAME());
+    int fieldAssociation = info->Get(vtkDataObject::FIELD_ASSOCIATION());
+    if (colorArrayName && colorArrayName[0])
+    {
+      this->StreamLinesMapper->SetScalarVisibility(1);
+      this->StreamLinesMapper->SelectColorArray(colorArrayName);
+      this->StreamLinesMapper->SetUseLookupTableScalarRange(1);
+      switch (fieldAssociation)
+      {
+        case vtkDataObject::FIELD_ASSOCIATION_CELLS:
+          this->StreamLinesMapper->SetScalarMode(VTK_SCALAR_MODE_USE_CELL_FIELD_DATA);
+          break;
+
+        case vtkDataObject::FIELD_ASSOCIATION_POINTS:
+        default:
+          this->StreamLinesMapper->SetScalarMode(VTK_SCALAR_MODE_USE_POINT_FIELD_DATA);
+          break;
+      }
+      using_scalar_coloring = true;
+    }
+  }
+    if (!using_scalar_coloring)
+  {
+    this->StreamLinesMapper->SetScalarVisibility(0);
+    const char* null = NULL;
+    this->StreamLinesMapper->SelectColorArray(null);
+  }
+}
+
+//****************************************************************************
+// Methods merely forwarding parameters to internal objects.
+//****************************************************************************
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetLookupTable(vtkScalarsToColors* val)
+{
+  this->StreamLinesMapper->SetLookupTable(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetMapScalars(int val)
+{
+  if (val < 0 || val > 1)
+  {
+    vtkWarningMacro(<< "Invalid parameter for vtkStreamLinesRepresentation::SetMapScalars: " << val);
+    val = 0;
+  }
+  int mapToColorMode[] = { VTK_COLOR_MODE_DIRECT_SCALARS, VTK_COLOR_MODE_MAP_SCALARS };
+  this->StreamLinesMapper->SetColorMode(mapToColorMode[val]);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetInterpolateScalarsBeforeMapping(int val)
+{
+  this->StreamLinesMapper->SetInterpolateScalarsBeforeMapping(val);
+}
+
+//----------------------------------------------------------------------------
+void vtkStreamLinesRepresentation::SetInputArrayToProcess(
+  int idx, int port, int connection, int fieldAssociation, const char* name)
+{
+  this->Superclass::SetInputArrayToProcess(idx, port, connection, fieldAssociation, name);
+
+  if (idx == 1) return;
+
+  if (name && name[0])
+  {
+    this->StreamLinesMapper->SetScalarVisibility(1);
+    this->StreamLinesMapper->SelectColorArray(name);
+    this->StreamLinesMapper->SetUseLookupTableScalarRange(1);
+  }
+  else
+  {
+    this->StreamLinesMapper->SetScalarVisibility(0);
+    this->StreamLinesMapper->SelectColorArray(static_cast<const char*>(NULL));
+  }
+
+  switch (fieldAssociation)
+  {
+    case vtkDataObject::FIELD_ASSOCIATION_CELLS:
+      this->StreamLinesMapper->SetScalarMode(VTK_SCALAR_MODE_USE_CELL_FIELD_DATA);
+      break;
+
+    case vtkDataObject::FIELD_ASSOCIATION_POINTS:
+    default:
+      this->StreamLinesMapper->SetScalarMode(VTK_SCALAR_MODE_USE_POINT_FIELD_DATA);
+      break;
+  }
 }
