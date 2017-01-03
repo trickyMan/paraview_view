@@ -176,11 +176,6 @@ protected:
    */
   virtual void UpdateMapperParameters();
 
-  /** Description:
-   * Overridden method to set parameters on vtkProperty and vtkMapper.
-   */
-  void UpdateColoringParameters();
-
   /**
    * Used in ConvertSelection to locate the rendered prop.
    */
