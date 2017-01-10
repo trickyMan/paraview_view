@@ -20,7 +20,6 @@
 #include "vtkCellData.h"
 #include "vtkDataArray.h"
 #include "vtkDataSet.h"
-#include "vtkDoubleArray.h"
 #include "vtkExecutive.h"
 #include "vtkInformation.h"
 #include "vtkMath.h"
@@ -107,10 +106,9 @@ public:
 
   void UpdateParticles(vtkRenderer*);
 
-
 protected:
   Private();
-  ~Private() {}
+  ~Private();
 
   void InitParticle(int);
   void PrepareGLBuffers(vtkRenderer*);
@@ -138,7 +136,7 @@ protected:
 
   //std::vector<Particle> Particles;
   vtkNew<vtkPoints> Particles;
-  vtkNew<vtkDoubleArray> InterpolationArray;
+  vtkDataArray* InterpolationArray;
   vtkSmartPointer<vtkDataArray> InterpolationScalarArray;
   vtkNew<vtkIdList> IdList;
   std::vector<int> ParticlesTTL;
@@ -176,13 +174,22 @@ vtkStreamLinesMapper::Private::Private()
   this->IndexBufferObject = 0;
   this->Particles->SetDataTypeToFloat();
   this->RebuildBufferObjects = true;
-  this->InterpolationArray->SetNumberOfComponents(3);
-  this->InterpolationArray->SetNumberOfTuples(1);
+  this->InterpolationArray = 0;
   this->Vectors = 0;
   this->Scalars = reinterpret_cast<vtkDataArray*>(0x01);
   this->DataSet = 0;
   this->ClearFlag = true;
   this->RebuildBufferObjects = true;
+}
+
+//----------------------------------------------------------------------------
+vtkStreamLinesMapper::Private::~Private()
+{
+  if (this->InterpolationArray)
+  {
+    this->InterpolationArray->Delete();
+    this->InterpolationArray = 0;
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -310,6 +317,19 @@ void vtkStreamLinesMapper::Private::SetData(
     this->InterpolationScalarArray->SetNumberOfTuples(nbParticles * 2);
     this->Scalars = scalars;
     this->ClearFlag = true;
+  }
+
+  if (!this->InterpolationArray || (this->InterpolationArray &&
+    this->InterpolationArray->GetDataType() != speedField->GetDataType()))
+  {
+    if (this->InterpolationArray)
+    {
+      this->InterpolationArray->Delete();
+    }
+    this->InterpolationArray =
+      vtkDataArray::CreateDataArray(speedField->GetDataType());
+    this->InterpolationArray->SetNumberOfComponents(3);
+    this->InterpolationArray->SetNumberOfTuples(1);
   }
 }
 
