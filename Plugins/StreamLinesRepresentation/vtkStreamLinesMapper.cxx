@@ -102,7 +102,7 @@ public:
 
   void SetNumberOfParticles(int);
 
-  void SetData(vtkDataSet*, vtkDataArray*, vtkDataArray*, bool, bool);
+  void SetData(vtkDataSet*, vtkDataArray*, vtkDataArray*);
 
   void DrawParticles(vtkRenderer*, vtkActor*);
 
@@ -627,17 +627,32 @@ void vtkStreamLinesMapper::Private::PrepareGLBuffers(vtkRenderer* ren)
   }
 }
 
+namespace
+{
+bool HaveArray(vtkFieldData* fd, vtkDataArray* inArray)
+{
+  for (int i = 0; i < fd->GetNumberOfArrays(); i++)
+  {
+    vtkDataArray* arr = fd->GetArray(i);
+    if (arr && arr == inArray)
+    {
+      return true;
+    }
+  }
+  return false;
+}
+}
+
 //----------------------------------------------------------------------------
 void vtkStreamLinesMapper::Private::SetData(
-  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars,
-  bool vectorForCells, bool AreCellScalars)
+  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars)
 {
   std::size_t nbParticles = this->ParticlesTTL.size();
-  this->AreCellVectors = vectorForCells;
-  this->AreCellScalars = AreCellScalars;
 
   if (this->DataSet != inData)
   {
+    this->AreCellVectors = false;
+    this->AreCellScalars = false;
     inData->GetBounds(this->Bounds);
     this->DataSet = inData;
     this->ClearFlag = true;
@@ -660,6 +675,7 @@ void vtkStreamLinesMapper::Private::SetData(
   {
     this->Vectors = speedField;
     this->ClearFlag = true;
+    this->AreCellVectors = ::HaveArray(inData->GetCellData(), speedField);
   }
 
   if (this->Scalars != scalars)
@@ -673,6 +689,7 @@ void vtkStreamLinesMapper::Private::SetData(
     {
       this->InterpolationScalarArray =
         vtkDataArray::CreateDataArray(scalars->GetDataType());
+      this->AreCellScalars = ::HaveArray(inData->GetCellData(), scalars);
     }
     else
     {
@@ -762,26 +779,8 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
     return;
   }
 
-  bool areCellScalars = false;
-  bool areCellVectors = false;
-  for (int i = 0; i < inData->GetCellData()->GetNumberOfArrays(); i++)
-  {
-    vtkDataArray* arr = inData->GetCellData()->GetArray(i);
-    if (arr && arr == inScalars)
-    {
-      areCellScalars = true;
-    }
-    if (arr && arr == inVectors)
-    {
-      areCellVectors = true;
-    }
-  }
-
-  //cout << areCellScalars << " " << areCellVectors << " " << endl;
-  //cout << (inScalars ? inScalars->GetName() : "") << " : " << (inVectors ? inVectors->GetName() : "") << endl;
   // Set processing dataset and arrays
-  this->Internal->SetData(inData, inVectors, inScalars,
-    areCellVectors, areCellScalars);
+  this->Internal->SetData(inData, inVectors, inScalars);
 
   // Move particles
   this->Internal->UpdateParticles(ren);
