@@ -1,4 +1,5 @@
 if (NOT ParaView_BINARY_DIR)
+  cmake_minimum_required(VERSION 3.3)
   find_package(ParaView REQUIRED)
   include(${PARAVIEW_USE_FILE})
 endif()

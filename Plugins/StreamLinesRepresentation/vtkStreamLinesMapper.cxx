@@ -152,8 +152,8 @@ protected:
 
   bool ClearFlag;
   bool RebuildBufferObjects;
-  bool VectorsForCells;
-  bool ScalarsForCells;
+  bool AreCellVectors;
+  bool AreCellScalars;
 
 private:
   Private(const Private&) VTK_DELETE_FUNCTION;
@@ -181,14 +181,15 @@ vtkStreamLinesMapper::Private::Private()
   this->Particles->SetDataTypeToFloat();
   this->RebuildBufferObjects = true;
   this->InterpolationArray = 0;
+  this->InterpolationScalarArray = 0;
   this->Vectors = 0;
   this->Scalars = reinterpret_cast<vtkDataArray*>(0x01);
   this->DataSet = 0;
   this->ClearFlag = true;
   this->RebuildBufferObjects = true;
   this->Locator = 0;
-  this->VectorsForCells = false;
-  this->ScalarsForCells = false;
+  this->AreCellVectors = false;
+  this->AreCellScalars = false;
 }
 
 //----------------------------------------------------------------------------
@@ -198,6 +199,11 @@ vtkStreamLinesMapper::Private::~Private()
   {
     this->InterpolationArray->Delete();
     this->InterpolationArray = 0;
+  }
+  if (this->InterpolationScalarArray)
+  {
+    this->InterpolationScalarArray->Delete();
+    this->InterpolationScalarArray = 0;
   }
   if (this->Locator)
   {
@@ -258,15 +264,15 @@ bool vtkStreamLinesMapper::Private::InterpolateSpeedAndColor(
   this->DataSet->GetCellPoints(cellId, this->IdList.Get());
   if (this->Vectors)
   {
-    if (this->VectorsForCells)
+    if (this->AreCellVectors)
     {
-      this->InterpolationArray->SetTuple(0, this->Vectors->GetTuple(cellId));
+      this->Vectors->GetTuple(cellId, outSpeed);
     }
     else
     {
       this->InterpolationArray->InterpolateTuple(0, this->IdList.Get(), this->Vectors, weights);
+      this->InterpolationArray->GetTuple(0, outSpeed);
     }
-    this->InterpolationArray->GetTuple(0, outSpeed);
     double speed = vtkMath::Norm(outSpeed);
     if (speed == 0. || vtkMath::IsInf(speed) || vtkMath::IsNan(speed))
     {
@@ -277,13 +283,13 @@ bool vtkStreamLinesMapper::Private::InterpolateSpeedAndColor(
 
   if (this->Scalars)
   {
-    if (this->ScalarsForCells)
+    if (this->AreCellScalars)
     {
-      this->InterpolationScalarArray->InterpolateTuple(pid, this->IdList.Get(), this->Scalars, weights);
+      this->InterpolationScalarArray->SetTuple(pid, this->Scalars->GetTuple(cellId));
     }
     else
     {
-      this->InterpolationScalarArray->SetTuple(0, this->Scalars->GetTuple(cellId));
+      this->InterpolationScalarArray->InterpolateTuple(pid, this->IdList.Get(), this->Scalars, weights);
     }
   }
   return true;
@@ -309,7 +315,8 @@ void vtkStreamLinesMapper::Private::InitParticle(int pid)
     double speed = 0.;
     if (this->InterpolateSpeedAndColor(pos, speedVec, pid * 2))
     {
-      this->InterpolationScalarArray->SetTuple(pid * 2 + 1, this->InterpolationScalarArray->GetTuple(pid * 2));
+      this->InterpolationScalarArray->SetTuple(pid * 2 + 1,
+        this->InterpolationScalarArray->GetTuple(pid * 2));
       double speed = vtkMath::Norm(speedVec);
      // Do not sample in no-speed areas
       added = speed != 0.;
@@ -321,74 +328,6 @@ void vtkStreamLinesMapper::Private::InitParticle(int pid)
     //  by rejecting a high percentage of sampled particles in high speed area
   }
   while (!added);
-}
-
-//----------------------------------------------------------------------------
-void vtkStreamLinesMapper::Private::SetData(
-  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars,
-  bool vectorForCells, bool scalarsForCells)
-{
-  std::size_t nbParticles = this->ParticlesTTL.size();
-  this->VectorsForCells = vectorForCells;
-  this->ScalarsForCells = scalarsForCells;
-
-  if (this->DataSet != inData)
-  {
-    inData->GetBounds(this->Bounds);
-    this->DataSet = inData;
-    this->ClearFlag = true;
-    if (this->Locator)
-    {
-      this->Locator->Delete();
-      this->Locator = 0;
-    }
-    if (inData->GetDataObjectType() != VTK_IMAGE_DATA)
-    {
-      // We need a fast cell locator for any type except imagedata where
-      // the FindCell() function is fast enough.
-      this->Locator = vtkCellLocator::New();
-      this->Locator->SetDataSet(inData);
-      this->Locator->BuildLocator();
-    }
-  }
-
-  if (this->Vectors != speedField)
-  {
-    this->Vectors = speedField;
-    this->ClearFlag = true;
-  }
-
-  if (this->Scalars != scalars)
-  {
-    if (scalars)
-    {
-      this->InterpolationScalarArray =
-        vtkDataArray::CreateDataArray(scalars->GetDataType());
-    }
-    else
-    {
-      this->InterpolationScalarArray =
-        vtkUnsignedCharArray::New();
-    }
-    this->InterpolationScalarArray->SetNumberOfComponents(
-      scalars ? scalars->GetNumberOfComponents() : 1);
-    this->InterpolationScalarArray->SetNumberOfTuples(nbParticles * 2);
-    this->Scalars = scalars;
-    this->ClearFlag = true;
-  }
-
-  if (!this->InterpolationArray || (this->InterpolationArray &&
-    this->InterpolationArray->GetDataType() != speedField->GetDataType()))
-  {
-    if (this->InterpolationArray)
-    {
-      this->InterpolationArray->Delete();
-    }
-    this->InterpolationArray =
-      vtkDataArray::CreateDataArray(speedField->GetDataType());
-    this->InterpolationArray->SetNumberOfComponents(3);
-    this->InterpolationArray->SetNumberOfTuples(1);
-  }
 }
 
 //----------------------------------------------------------------------------
@@ -472,13 +411,14 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   if (this->Program->IsUniformUsed("MCDCMatrix") > 0)
     this->Program->SetUniformMatrix("MCDCMatrix", wcdc);
 
+  bool useScalars = this->Scalars && this->Mapper->GetScalarVisibility();
   double* col = actor->GetProperty()->GetDiffuseColor();
   float color[3];
   color[0] = static_cast<double>(col[0]);
   color[1] = static_cast<double>(col[1]);
   color[2] = static_cast<double>(col[2]);
   this->Program->SetUniform3f("color", color);
-  this->Program->SetUniformi("scalarVisibility", this->Mapper->GetScalarVisibility());
+  this->Program->SetUniformi("scalarVisibility", useScalars);
 
   // Setup the IBO
   this->IndexBufferObject->Bind();
@@ -491,10 +431,11 @@ void vtkStreamLinesMapper::Private::DrawParticles(vtkRenderer *ren, vtkActor *ac
   }
 
   vtkUnsignedCharArray* colors = 0;
-  if (this->Mapper->GetScalarVisibility())
+  if (useScalars)
   {
     colors = this->Mapper->GetLookupTable()->MapScalars(
-      this->InterpolationScalarArray, VTK_COLOR_MODE_DEFAULT, -1);
+      this->InterpolationScalarArray, this->Mapper->GetColorMode(),
+      this->Mapper->GetArrayComponent());
   }
 
   // Create the VBO
@@ -686,6 +627,80 @@ void vtkStreamLinesMapper::Private::PrepareGLBuffers(vtkRenderer* ren)
   }
 }
 
+//----------------------------------------------------------------------------
+void vtkStreamLinesMapper::Private::SetData(
+  vtkDataSet *inData, vtkDataArray* speedField, vtkDataArray* scalars,
+  bool vectorForCells, bool AreCellScalars)
+{
+  std::size_t nbParticles = this->ParticlesTTL.size();
+  this->AreCellVectors = vectorForCells;
+  this->AreCellScalars = AreCellScalars;
+
+  if (this->DataSet != inData)
+  {
+    inData->GetBounds(this->Bounds);
+    this->DataSet = inData;
+    this->ClearFlag = true;
+    if (this->Locator)
+    {
+      this->Locator->Delete();
+      this->Locator = 0;
+    }
+    if (inData->GetDataObjectType() != VTK_IMAGE_DATA)
+    {
+      // We need a fast cell locator for any type except imagedata where
+      // the FindCell() function is fast enough.
+      this->Locator = vtkCellLocator::New();
+      this->Locator->SetDataSet(inData);
+      this->Locator->BuildLocator();
+    }
+  }
+
+  if (this->Vectors != speedField)
+  {
+    this->Vectors = speedField;
+    this->ClearFlag = true;
+  }
+
+  if (this->Scalars != scalars)
+  {
+    if (this->InterpolationScalarArray)
+    {
+      this->InterpolationScalarArray->Delete();
+      this->InterpolationScalarArray = 0;
+    }
+    if (scalars)
+    {
+      this->InterpolationScalarArray =
+        vtkDataArray::CreateDataArray(scalars->GetDataType());
+    }
+    else
+    {
+      this->InterpolationScalarArray =
+        vtkUnsignedCharArray::New();
+    }
+    this->InterpolationScalarArray->SetNumberOfComponents(
+      scalars ? scalars->GetNumberOfComponents() : 1);
+    this->InterpolationScalarArray->SetNumberOfTuples(nbParticles * 2);
+    this->Scalars = scalars;
+    this->ClearFlag = true;
+  }
+
+  if (!this->InterpolationArray || (this->InterpolationArray &&
+    this->InterpolationArray->GetDataType() != speedField->GetDataType()))
+  {
+    if (this->InterpolationArray)
+    {
+      this->InterpolationArray->Delete();
+      this->InterpolationArray = 0;
+    }
+    this->InterpolationArray =
+      vtkDataArray::CreateDataArray(speedField->GetDataType());
+    this->InterpolationArray->SetNumberOfComponents(3);
+    this->InterpolationArray->SetNumberOfTuples(1);
+  }
+}
+
 //-----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkStreamLinesMapper)
 
@@ -700,10 +715,10 @@ vtkStreamLinesMapper::vtkStreamLinesMapper()
   this->NumberOfParticles = 0;
   this->SetNumberOfParticles(1000);
 
-  this->SetInputArrayToProcess(0, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
-    vtkDataSetAttributes::SCALARS);
-  this->SetInputArrayToProcess(1, 0, 0, vtkDataObject::FIELD_ASSOCIATION_POINTS,
-    vtkDataSetAttributes::VECTORS);
+  this->SetInputArrayToProcess(0, 0, 0,
+    vtkDataObject::FIELD_ASSOCIATION_POINTS_THEN_CELLS, vtkDataSetAttributes::SCALARS);
+  this->SetInputArrayToProcess(1, 0, 0,
+    vtkDataObject::FIELD_ASSOCIATION_POINTS_THEN_CELLS, vtkDataSetAttributes::VECTORS);
 }
 
 //-----------------------------------------------------------------------------
@@ -747,14 +762,26 @@ void vtkStreamLinesMapper::Render(vtkRenderer *ren, vtkActor *actor)
     return;
   }
 
-  int asso = this->GetInputArrayAssociation(0, inData);
-  bool vectorsForCells = (asso == vtkDataObject::FIELD_ASSOCIATION_CELLS);
-  asso = this->GetInputArrayAssociation(1, inData);
-  bool scalarsForCells = (asso == vtkDataObject::FIELD_ASSOCIATION_CELLS);
+  bool areCellScalars = false;
+  bool areCellVectors = false;
+  for (int i = 0; i < inData->GetCellData()->GetNumberOfArrays(); i++)
+  {
+    vtkDataArray* arr = inData->GetCellData()->GetArray(i);
+    if (arr && arr == inScalars)
+    {
+      areCellScalars = true;
+    }
+    if (arr && arr == inVectors)
+    {
+      areCellVectors = true;
+    }
+  }
 
+  //cout << areCellScalars << " " << areCellVectors << " " << endl;
+  //cout << (inScalars ? inScalars->GetName() : "") << " : " << (inVectors ? inVectors->GetName() : "") << endl;
   // Set processing dataset and arrays
   this->Internal->SetData(inData, inVectors, inScalars,
-    vectorsForCells, scalarsForCells);
+    areCellVectors, areCellScalars);
 
   // Move particles
   this->Internal->UpdateParticles(ren);
