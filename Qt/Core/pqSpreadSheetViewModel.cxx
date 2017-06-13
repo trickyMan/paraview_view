@@ -197,6 +197,7 @@ public:
     this->Dirty = true;
     this->VTKConnect = vtkSmartPointer<vtkEventQtSlotConnect>::New();
     this->DecimalPrecision = 6;
+    this->FixedRepresentation = false;
     this->ActiveRegion[0] = this->ActiveRegion[1] = -1;
     this->VTKView = NULL;
 
@@ -208,6 +209,7 @@ public:
   pqTimer Timer;
   pqTimer SelectionTimer;
   int DecimalPrecision;
+  bool FixedRepresentation;
   vtkIdType LastRowCount;
   vtkIdType LastColumnCount;
 
@@ -452,7 +454,8 @@ QVariant pqSpreadSheetViewModel::data(const QModelIndex& idx, int role /*=Qt::Di
   }
   else if (value.IsFloat() || value.IsDouble())
   {
-    str = QString::number(value.ToDouble(), 'g', this->Internal->DecimalPrecision);
+    str = QString::number(value.ToDouble(), this->Internal->FixedRepresentation ? 'f' : 'g',
+      this->Internal->DecimalPrecision);
   }
   else if (value.IsArray())
   {
@@ -489,8 +492,10 @@ QVariant pqSpreadSheetViewModel::data(const QModelIndex& idx, int role /*=Qt::Di
             for (vtkIdType kk = 0; kk < array->GetNumberOfComponents(); kk++)
             {
               str += QString::number(
-                       static_cast<double>(tuple[kk]), 'g', this->Internal->DecimalPrecision) +
-                " ";
+                       static_cast<double>(tuple[kk]),
+                       this->Internal->FixedRepresentation ? 'f' : 'g',
+                       this->Internal->DecimalPrecision)
+                     + " ";
             }
             str = str.trimmed();
           }
@@ -776,6 +781,22 @@ int pqSpreadSheetViewModel::getDecimalPrecision()
 {
   return this->Internal->DecimalPrecision;
 }
+//-----------------------------------------------------------------------------
+void pqSpreadSheetViewModel::setFixedRepresentation(bool fixed)
+{
+  if(this->Internal->FixedRepresentation != fixed)
+  {
+    this->Internal->FixedRepresentation = fixed;
+    this->forceUpdate();
+  }
+}
+
+//-----------------------------------------------------------------------------
+bool pqSpreadSheetViewModel::getFixedRepresentation()
+{
+  return this->Internal->FixedRepresentation;
+}
+
 //-----------------------------------------------------------------------------
 Qt::ItemFlags pqSpreadSheetViewModel::flags(const QModelIndex& idx) const
 {
