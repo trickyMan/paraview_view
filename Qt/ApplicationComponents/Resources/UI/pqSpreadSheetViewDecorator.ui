@@ -113,7 +113,11 @@
       <string>Toggle fixed-point representation (always show #Precision digits)</string>
      </property>
      <property name="text">
-      <string>F</string>
+      <string>FixedRep</string>
+     </property>
+     <property name="icon">
+      <iconset>
+      <normaloff>:/pqWidgets/Icons/pqFixedRepr32.png</normaloff>:/pqWidgets/Icons/pqFixedRepr32.png</iconset>
      </property>
      <property name="checkable">
       <bool>true</bool>
