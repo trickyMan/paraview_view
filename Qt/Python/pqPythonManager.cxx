@@ -92,7 +92,11 @@ class pqPythonManager::pqInternal
       }
       else
       {
-        qCritical() << message;
+        pqOutputWindowAdapter* window = pqApplicationCore::instance()->outputWindowAdapter();
+        if (window)
+        {
+          window->DisplayErrorTextInWindow(message);
+        }
       }
     }
     else if (eventid == vtkCommand::SetOutputEvent)
@@ -107,7 +111,11 @@ class pqPythonManager::pqInternal
 #if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
         vtkOutputWindow::GetInstance()->DisplayText(message);
 #else
-        qInfo() << message;
+        pqOutputWindowAdapter* window = pqApplicationCore::instance()->outputWindowAdapter();
+        if (window)
+        {
+          window->DisplayTextInWindow(message);
+        }
 #endif
       }
     }

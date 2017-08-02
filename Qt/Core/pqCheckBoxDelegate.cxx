@@ -95,10 +95,15 @@ void pqCheckBoxDelegate::paint(
     {
       painter->setBrush(palette.brush(QPalette::Active, QPalette::ButtonText));
     }
-    double PaintingScaleFactor = ((double)rect.bottomLeft().y() - rect.topLeft().y()) * 0.5;
+    double PaintingScaleFactor = ((double)rect.bottomLeft().y() - rect.topLeft().y()) * 0.30;
     painter->save();
     painter->translate(rect.center());
     painter->scale(PaintingScaleFactor, PaintingScaleFactor);
+    QPen pen = painter->pen();
+    pen.setWidth(1);
+    pen.setStyle(Qt::SolidLine);
+    pen.setJoinStyle(Qt::MiterJoin);
+    painter->setPen(pen);
 
     switch (checked)
     {

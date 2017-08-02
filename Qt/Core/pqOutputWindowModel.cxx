@@ -58,6 +58,7 @@ enum ColumnLocation
 //-----------------------------------------------------------------------------
 struct pqOutputWindowModel::pqInternals
 {
+  QList<QIcon> Icons;
 };
 
 //-----------------------------------------------------------------------------
@@ -67,6 +68,9 @@ pqOutputWindowModel::pqOutputWindowModel(QObject* _parent, const QList<MessageT>
   , Internals(new pqInternals())
 {
   Q_ASSERT(EXPANDED_ROW_EXTRA == 1);
+  this->Internals->Icons.push_back(QApplication::style()->standardIcon(QStyle::SP_MessageBoxCritical));
+  this->Internals->Icons.push_back(QIcon(":/pqWidgets/Icons/warning.png"));
+  this->Internals->Icons.push_back(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation));
 }
 
 //-----------------------------------------------------------------------------
@@ -146,6 +150,13 @@ QVariant pqOutputWindowModel::data(const QModelIndex& index_, int role) const
     }
     case Qt::DecorationRole:
     {
+      if ((r - EXPANDED_ROW_EXTRA < 0 ||
+          this->Rows[r] != this->Rows[r - EXPANDED_ROW_EXTRA]) &&
+          (index_.column() == COLUMN_TYPE))
+      {
+        //return this->Internals->Icons[this->Messages[this->Rows[r]].Type];
+        return this->Internals->Icons.at(this->Messages[this->Rows[r]].Type);
+      }
       break;
     }
   }
