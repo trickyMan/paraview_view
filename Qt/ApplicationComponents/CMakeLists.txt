@@ -176,6 +176,8 @@ set (Module_SRCS
   pqLinkSelectionReaction.h
   pqListPropertyWidget.cxx
   pqListPropertyWidget.h
+  pqLiveSourceBehavior.cxx
+  pqLiveSourceBehavior.h
   pqLoadDataReaction.cxx
   pqLoadDataReaction.h
   pqLoadPaletteReaction.cxx
@@ -392,6 +394,7 @@ set (Module_MOC_HDRS
   pqLinePropertyWidget.h
   pqLinkSelectionReaction.h
   pqListPropertyWidget.h
+  pqLiveSourceBehavior.h
   pqLoadDataReaction.h
   pqLoadPaletteReaction.h
   pqLoadRestoreWindowLayoutReaction.h

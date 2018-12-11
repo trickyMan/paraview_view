@@ -55,9 +55,11 @@ vtkPythonProgrammableFilter::vtkPythonProgrammableFilter() :
   this->Script = NULL;
   this->InformationScript = NULL;
   this->UpdateExtentScript = NULL;
+  this->CheckNeedsUpdateScript = NULL;
   this->PythonPath = 0;
   this->SetExecuteMethod(vtkPythonProgrammableFilter::ExecuteScript, this);
   this->OutputDataSetType = VTK_POLY_DATA;
+  this->NeedsUpdate = false;
   this->Request = NULL;
 }
 
@@ -286,9 +288,10 @@ void vtkPythonProgrammableFilter::ExecuteScript(void *arg)
   vtkPythonProgrammableFilter *self =
     static_cast<vtkPythonProgrammableFilter*>(arg);
   if (self)
-    {
+  {
+    self->NeedsUpdate = false;
     self->Exec(self->GetScript(), "RequestData");
-    }
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -398,7 +401,7 @@ void vtkPythonProgrammableFilter::Exec(const char* script,
   std::string runscript;
 
   runscript += "from paraview import vtk\n";
-  runscript += "from paraview import vtk\n";
+  runscript += "from paraview.vtk.vtkPVClientServerCoreCore import vtkPythonProgrammableFilter\n";
   runscript += "hasnumpy = True\n";
   runscript += "try:\n";
   runscript += "  from numpy import *\n";
@@ -420,7 +423,7 @@ void vtkPythonProgrammableFilter::Exec(const char* script,
 
   // Call the function
   runscript += "myarg = ";
-  runscript += "vtk.vtkProgrammableFilter('";
+  runscript += "vtkPythonProgrammableFilter('";
   runscript += aplusthis;
   runscript += "')\n";
 
@@ -501,6 +504,16 @@ int vtkPythonProgrammableFilter::FillInputPortInformation(
 }
 
 //----------------------------------------------------------------------------
+bool vtkPythonProgrammableFilter::GetNeedsUpdate()
+{
+  if (this->CheckNeedsUpdateScript && this->CheckNeedsUpdateScript[0] != '\0')
+  {
+    this->Exec(this->CheckNeedsUpdateScript, "CheckNeedsUpdate");
+  }
+  return this->NeedsUpdate;
+}
+
+//----------------------------------------------------------------------------
 void vtkPythonProgrammableFilter::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
@@ -514,5 +527,6 @@ void vtkPythonProgrammableFilter::PrintSelf(ostream& os, vtkIndent indent)
   else
     {
     os << indent << "Request: (None)" << endl;
-    }
+  }
+  os << indent << "NeedsUpdate: " << this->NeedsUpdate << endl;
 }

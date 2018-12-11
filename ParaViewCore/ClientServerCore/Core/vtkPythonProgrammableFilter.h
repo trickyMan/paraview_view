@@ -45,37 +45,60 @@ class vtkPythonProgrammableFilterImplementation;
 class VTKPVCLIENTSERVERCORECORE_EXPORT vtkPythonProgrammableFilter : public vtkProgrammableFilter
 {
 public:
-  vtkTypeMacro(vtkPythonProgrammableFilter,vtkProgrammableFilter);
-  void PrintSelf(ostream& os, vtkIndent indent);
-  static vtkPythonProgrammableFilter *New();
+  vtkTypeMacro(vtkPythonProgrammableFilter, vtkProgrammableFilter);
+  void PrintSelf(ostream& os, vtkIndent indent) VTK_OVERRIDE;
+  static vtkPythonProgrammableFilter* New();
 
-  // Description:
-  // Set the text of the python script to execute.
-  vtkSetStringMacro(Script)
-  vtkGetStringMacro(Script)
+  //@{
+  /**
+   * Set the text of the python script to execute.
+   */
+  vtkSetStringMacro(Script);
+  vtkGetStringMacro(Script);
+  //@}
 
-  // Description:
-  // Set the text of the python script to execute in RequestInformation().
-  vtkSetStringMacro(InformationScript)
-  vtkGetStringMacro(InformationScript)
+  //@{
+  /**
+   * Set the text of the python script to execute in RequestInformation().
+   */
+  vtkSetStringMacro(InformationScript);
+  vtkGetStringMacro(InformationScript);
+  //@}
 
-  // Description:
-  // Set the text of the python script to execute in RequestUpdateExtent().
-  vtkSetStringMacro(UpdateExtentScript)
-  vtkGetStringMacro(UpdateExtentScript)
+  //@{
+  /**
+   * Set the text of the python script to execute in RequestUpdateExtent().
+   */
+  vtkSetStringMacro(UpdateExtentScript);
+  vtkGetStringMacro(UpdateExtentScript);
+  //@}
 
-  // Description:
-  // Set a name-value parameter that will be available to the script
-  // when it is run
-  void SetParameterInternal(const char *name, const char *value);
-  void SetParameter(const char *name, const char *value);
-  void SetParameter(const char *name, int value);
-  void SetParameter(const char *name, double value);
-  void SetParameter(const char *name, double value1, double value2);
-  void SetParameter(const char *name, double value1, double value2, double value3);
+  //@{
+  /**
+   * For "live" sources, this script, if provided, if used to determine
+   * if the source needs an update.
+   */
+  vtkSetStringMacro(CheckNeedsUpdateScript);
+  vtkGetStringMacro(CheckNeedsUpdateScript);
+  //@}
 
-  // Description:
-  // To support repeatable-parameters.
+  //@{
+  /**
+   * Set a name-value parameter that will be available to the script
+   * when it is run
+   */
+  void SetParameterInternal(const char* name, const char* value);
+  void SetParameter(const char* name, const char* value);
+  void SetParameter(const char* name, int value);
+  void SetParameter(const char* name, double value);
+  void SetParameter(const char* name, double value1, double value2);
+  void SetParameter(const char* name, double value1, double value2, double value3);
+  //@}
+
+  //@{
+  /**
+   * To support repeatable-parameters.
+   */
   void AddParameter(const char* name, const char* value);
   void ClearParameter(const char* name);
 
@@ -99,6 +122,18 @@ public:
   vtkSetStringMacro(PythonPath);
   vtkGetStringMacro(PythonPath);
 
+  /**
+   * Application code can call `GetNeedsUpdate` to check if the algorithm can use
+   * an update to show updated information.
+   */
+  bool GetNeedsUpdate();
+
+  /**
+   * CheckNeedsUpdateScript should call `SetNeedsUpdate(true)` to indicate that
+   * the algorithm has new data and hence may be updated.
+   */
+  vtkSetMacro(NeedsUpdate, bool);
+
 protected:
   vtkPythonProgrammableFilter();
   ~vtkPythonProgrammableFilter();
@@ -107,38 +142,38 @@ protected:
   // For internal use only.
   void Exec(const char*, const char*);
 
-  virtual int FillOutputPortInformation(int port, vtkInformation* info);
+  int FillOutputPortInformation(int port, vtkInformation* info) VTK_OVERRIDE;
 
-  //overridden to allow multiple inputs to port 0
-  virtual int FillInputPortInformation(int port, vtkInformation *info);
+  // overridden to allow multiple inputs to port 0
+  int FillInputPortInformation(int port, vtkInformation* info) VTK_OVERRIDE;
 
-  // Description:
-  // Creates whatever output data set type is selected.
-  virtual int RequestDataObject(vtkInformation* request,
-                                vtkInformationVector** inputVector,
-                                vtkInformationVector* outputVector);
+  /**
+   * Creates whatever output data set type is selected.
+   */
+  int RequestDataObject(vtkInformation* request, vtkInformationVector** inputVector,
+    vtkInformationVector* outputVector) VTK_OVERRIDE;
 
-  virtual int RequestInformation(vtkInformation* request,
-                                 vtkInformationVector** inputVector,
-                                 vtkInformationVector* outputVector);
+  int RequestInformation(vtkInformation* request, vtkInformationVector** inputVector,
+    vtkInformationVector* outputVector) VTK_OVERRIDE;
 
-  virtual int RequestUpdateExtent(vtkInformation* request,
-                                 vtkInformationVector** inputVector,
-                                 vtkInformationVector* outputVector);
+  int RequestUpdateExtent(vtkInformation* request, vtkInformationVector** inputVector,
+    vtkInformationVector* outputVector) VTK_OVERRIDE;
 
-  // Description:
-  // We want to temporarilly cache request to be used in the Python
-  // code so we override this method to store request for later use
-  // since otherwise we won't have access to it.
-  virtual int ProcessRequest(vtkInformation* request,
-                             vtkInformationVector** inInfo,
-                             vtkInformationVector* outInfo);
+  /**
+   * We want to temporarilly cache request to be used in the Python
+   * code so we override this method to store request for later use
+   * since otherwise we won't have access to it.
+   */
+  int ProcessRequest(vtkInformation* request, vtkInformationVector** inInfo,
+    vtkInformationVector* outInfo) VTK_OVERRIDE;
 
-  char *Script;
-  char *InformationScript;
-  char *UpdateExtentScript;
-  char *PythonPath;
+  char* Script;
+  char* InformationScript;
+  char* UpdateExtentScript;
+  char* CheckNeedsUpdateScript;
+  char* PythonPath;
   int OutputDataSetType;
+  bool NeedsUpdate;
 
 private:
   vtkPythonProgrammableFilter(const vtkPythonProgrammableFilter&);  // Not implemented.
