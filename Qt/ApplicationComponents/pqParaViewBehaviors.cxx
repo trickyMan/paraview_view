@@ -44,18 +44,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pqDataTimeStepBehavior.h"
 #include "pqDefaultViewBehavior.h"
 #include "pqInterfaceTracker.h"
-#include "pqLockPanelsBehavior.h"
+#include "pqLiveSourceBehavior.h"
+// #include "pqLockPanelsBehavior.h"
 #include "pqObjectPickingBehavior.h"
 #include "pqPersistentMainWindowStateBehavior.h"
 #include "pqPipelineContextMenuBehavior.h"
 #include "pqPluginActionGroupBehavior.h"
 #include "pqPluginDockWidgetsBehavior.h"
 #include "pqPluginSettingsBehavior.h"
+// #include "pqPluginToolBarBehavior.h"
 #include "pqPropertiesPanel.h"
 #include "pqServerManagerModel.h"
 #include "pqSpreadSheetVisibilityBehavior.h"
 #include "pqStandardPropertyWidgetInterface.h"
-#include "pqStandardRecentlyUsedResourceLoaderImplementation.h"
+// #include "pqStandardRecentlyUsedResourceLoaderImplementation.h"
 #include "pqStandardViewFrameActionsImplementation.h"
 #include "pqStreamingTestingEventPlayer.h"
 #include "pqUndoRedoBehavior.h"
@@ -67,8 +69,61 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pqPythonShell.h"
 #endif
 
+#include <QAbstractSpinBox>
+#include <QApplication>
+#include <QComboBox>
 #include <QMainWindow>
 #include <QShortcut>
+#include <QSlider>
+
+namespace
+{
+class WheelFilter : public QObject
+{
+public:
+  WheelFilter(QObject* obj)
+    : QObject(obj)
+  {
+  }
+  ~WheelFilter() {}
+  bool eventFilter(QObject* obj, QEvent* evt) override
+  {
+    Q_ASSERT(obj && evt);
+    if (obj->isWidgetType()) // shortcut to avoid doing work when not a widget.
+    {
+      QWidget* wdg = reinterpret_cast<QWidget*>(obj);
+      if (evt->type() == QEvent::Wheel)
+      {
+        if (qobject_cast<QComboBox*>(obj) != nullptr || qobject_cast<QSlider*>(obj) != nullptr ||
+          qobject_cast<QAbstractSpinBox*>(obj) != nullptr)
+        {
+          if (!wdg->hasFocus())
+          {
+            return true;
+          }
+        }
+      }
+      else if (evt->type() == QEvent::Show)
+      {
+        // we need to change focus policy to StrongFocus so that these widgets
+        // don't get focus and subsequently, wheel events on mouse-wheel
+        // unless the widget has focus. To avoid having to go through all
+        // instances of combo-box & slider creations to change focus policy,
+        // we use an event filter to do that.
+        if (wdg->focusPolicy() == Qt::WheelFocus)
+        {
+          if (qobject_cast<QComboBox*>(obj) != nullptr || qobject_cast<QSlider*>(obj) != nullptr ||
+            qobject_cast<QAbstractSpinBox*>(obj) != nullptr)
+          {
+            wdg->setFocusPolicy(Qt::StrongFocus);
+          }
+        }
+      }
+    }
+    return QObject::eventFilter(obj, evt);
+  }
+};
+}
 
 #define PQ_BEHAVIOR_DEFINE_FLAG(_name, _default) bool pqParaViewBehaviors::_name = _default;
 PQ_BEHAVIOR_DEFINE_FLAG(StandardPropertyWidgets, true);
@@ -86,6 +141,7 @@ PQ_BEHAVIOR_DEFINE_FLAG(AutoLoadPluginXMLBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(PluginDockWidgetsBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(VerifyRequiredPluginBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(PluginActionGroupBehavior, true);
+PQ_BEHAVIOR_DEFINE_FLAG(PluginToolBarBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(CommandLineOptionsBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(PersistentMainWindowStateBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(CollaborationBehavior, true);
@@ -95,7 +151,8 @@ PQ_BEHAVIOR_DEFINE_FLAG(ApplyBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(QuickLaunchShortcuts, true);
 PQ_BEHAVIOR_DEFINE_FLAG(LockPanelsBehavior, true);
 PQ_BEHAVIOR_DEFINE_FLAG(PythonShellResetBehavior, true);
-
+PQ_BEHAVIOR_DEFINE_FLAG(WheelNeedsFocusBehavior, true);
+PQ_BEHAVIOR_DEFINE_FLAG(LiveSourceBehavior, true);
 #undef PQ_BEHAVIOR_DEFINE_FLAG
 
 #define PQ_IS_BEHAVIOR_ENABLED(_name) enable##_name()
@@ -119,11 +176,11 @@ pqParaViewBehaviors::pqParaViewBehaviors(QMainWindow* mainWindow, QObject* paren
     pgm->addInterface(new pqStandardViewFrameActionsImplementation(pgm));
   }
 
-  if (PQ_IS_BEHAVIOR_ENABLED(StandardRecentlyUsedResourceLoader))
-  {
-    // Register standard recent file menu handlers.
-    pgm->addInterface(new pqStandardRecentlyUsedResourceLoaderImplementation(pgm));
-  }
+  // if (PQ_IS_BEHAVIOR_ENABLED(StandardRecentlyUsedResourceLoader))
+  // {
+  //   // Register standard recent file menu handlers.
+  //   pgm->addInterface(new pqStandardRecentlyUsedResourceLoaderImplementation(pgm));
+  // }
 
   // Load plugins distributed with application.
   pqApplicationCore::instance()->loadDistributedPlugins();
@@ -132,6 +189,10 @@ pqParaViewBehaviors::pqParaViewBehaviors(QMainWindow* mainWindow, QObject* paren
   if (PQ_IS_BEHAVIOR_ENABLED(DataTimeStepBehavior))
   {
     new pqDataTimeStepBehavior(this);
+  }
+  if (PQ_IS_BEHAVIOR_ENABLED(LiveSourceBehavior))
+  {
+    new pqLiveSourceBehavior(this);
   }
   if (PQ_IS_BEHAVIOR_ENABLED(SpreadSheetVisibilityBehavior))
   {
@@ -177,6 +238,10 @@ pqParaViewBehaviors::pqParaViewBehaviors(QMainWindow* mainWindow, QObject* paren
   {
     new pqPluginActionGroupBehavior(mainWindow);
   }
+  // if (PQ_IS_BEHAVIOR_ENABLED(PluginToolBarBehavior))
+  // {
+  //   new pqPluginToolBarBehavior(mainWindow);
+  // }
   if (PQ_IS_BEHAVIOR_ENABLED(CommandLineOptionsBehavior))
   {
     new pqCommandLineOptionsBehavior(this);
@@ -242,10 +307,10 @@ pqParaViewBehaviors::pqParaViewBehaviors(QMainWindow* mainWindow, QObject* paren
       ctrlF, SIGNAL(activated()), pqApplicationCore::instance(), SLOT(startSearch()));
   }
 
-  if (PQ_IS_BEHAVIOR_ENABLED(LockPanelsBehavior))
-  {
-    new pqLockPanelsBehavior(mainWindow);
-  }
+  // if (PQ_IS_BEHAVIOR_ENABLED(LockPanelsBehavior))
+  // {
+  //   new pqLockPanelsBehavior(mainWindow);
+  // }
 
 #if defined(PARAVIEW_ENABLE_PYTHON)
   if (PQ_IS_BEHAVIOR_ENABLED(PythonShellResetBehavior))
@@ -258,6 +323,11 @@ pqParaViewBehaviors::pqParaViewBehaviors(QMainWindow* mainWindow, QObject* paren
   }
 #endif
 
+  if (PQ_IS_BEHAVIOR_ENABLED(WheelNeedsFocusBehavior))
+  {
+    auto afilter = new WheelFilter(mainWindow);
+    qApp->installEventFilter(afilter);
+  }
   CLEAR_UNDO_STACK();
 }
 
