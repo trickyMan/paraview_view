@@ -27,6 +27,8 @@ vtkRealtimeAnimationPlayer::vtkRealtimeAnimationPlayer()
   this->Factor = 1.0;
   this->Duration = 1;
   this->Timer = vtkTimerLog::New();
+  this->FirstIteration = true;
+  this->TimeAtFirstIteration = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -41,7 +43,7 @@ void vtkRealtimeAnimationPlayer::StartLoop(double start, double end, double* pla
   this->StartTime = start;
   this->Factor = (end - start)/this->Duration;
   double curtime = playbackWindow[0];
-  
+
   // set a time shift to resume an interrupted animation (fix to bug #0008280)
   if ( start < curtime && curtime < end )
     {
@@ -51,16 +53,22 @@ void vtkRealtimeAnimationPlayer::StartLoop(double start, double end, double* pla
     {
     this->ShiftTime = 0.0;
     }
-  
+
   // obtain the end time to be used in GetNextTime(...)
   this->EndTime = playbackWindow[1];
-  
+
   this->Timer->StartTimer();
+  this->FirstIteration = true;
 }
 
 //----------------------------------------------------------------------------
 double vtkRealtimeAnimationPlayer::GetNextTime(double curtime)
 {
+  if (this->FirstIteration)
+  {
+    this->TimeAtFirstIteration = curtime;
+    this->FirstIteration = false;
+  }
   // The following line, in support of resuming an interrupted animation, forces
   // the animation to terminate by just breaking the while-loop,
   // while (!this->StopPlay && this->CurrentTime <= endtime) in
@@ -68,15 +76,17 @@ double vtkRealtimeAnimationPlayer::GetNextTime(double curtime)
   // This line MUST !!NOT!! be removed, otherwise a crash problem would occur.
   if ( curtime == this->EndTime )
     {
+    this->TimeAtFirstIteration = 0;
     return  this->EndTime * 1.1;
     }
 
   this->Timer->StopTimer();
   double elapsed = this->Timer->GetElapsedTime();
-  
+
+
   // in support of resuming an interrupted animation
-  double nextTime = this->StartTime + this->ShiftTime + this->Factor * elapsed;
-  
+  double nextTime = this->StartTime + this->ShiftTime + this->TimeAtFirstIteration + this->Factor * elapsed;
+
   // The if-statement below, in support of resuming an interrupted animation,
   // forces the LAST animation step to reach exactly 'this->EndTime', which enables
   // the while-loop, 'while (!this->StopPlay && this->CurrentTime <= endtime)' in

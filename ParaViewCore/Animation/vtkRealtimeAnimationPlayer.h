@@ -56,6 +56,8 @@ protected:
   double ShiftTime;
   double Factor;
   vtkTimerLog* Timer;
+  bool FirstIteration;
+  double TimeAtFirstIteration;
 private:
   vtkRealtimeAnimationPlayer(const vtkRealtimeAnimationPlayer&); // Not implemented
   void operator=(const vtkRealtimeAnimationPlayer&); // Not implemented
