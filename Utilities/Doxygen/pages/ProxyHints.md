@@ -20,6 +20,26 @@ representation from the UI.
       </Hints>
     </RepresentationProxy>
 
+
+WarnOnCreate
+------------
+Warn the user when creating the filter or source in the UI.
+
+The motivation behind this hint is to warn the user when executing filters
+like **Temporal Statistics** filter since they can potentially take a long time
+for large file series.
+
+
+    <SourceProxy ...>
+      ...
+      <Hints>
+        <WarnOnCreate title="Potentially slow operations">
+          **Temporal Statistics** filter needs to process all timesteps
+          available in your dataset and can potentially take a long time to complete.
+          Do you want to continue?
+        </WarnOnCreate>
+    </SourceProxy>
+
 ReaderFactory
 -------------
 Mark a proxy as reader proxy so that it's used to open files from the **File |
@@ -208,3 +228,21 @@ Views support the following annotations:
 layout from grabbing the view, enabling custom application developers to assign or
 position the view themselves. Use `pqObjectBuilder::createView(viewType, server, true)`
 to create a new view with this annotation added.
+
+Live Source
+------------
+Certain algorithms can generate new data autonomously, e.g. a source that reads
+data from the network. The **LiveSource** hint allows ParaView to periodically
+check with the algorithm if it has new data and update the application, if so.
+
+For that, one simply adds a hint to the proxy as follows:
+
+    <SourceProxy ...>
+      ...
+      <Hints>
+        <LiveSource />
+      </Hints>
+    </SourceProxy>
+
+The algorithm subclass must have `bool GetNeedsUpdate()` method that returns
+true if the algorithm needs update.
