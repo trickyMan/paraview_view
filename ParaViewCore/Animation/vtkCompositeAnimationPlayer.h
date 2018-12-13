@@ -79,9 +79,9 @@ protected:
   /**
    * Delegated to the active animation player.
    */
-  virtual void StartLoop(double starttime, double endtime, double* playbackWindow) VTK_OVERRIDE;
-  virtual void EndLoop() VTK_OVERRIDE;
-  virtual double GetNextTime(double currentime) VTK_OVERRIDE;
+  void StartLoop(double starttime, double endtime, double curtime, double* playbackWindow) override;
+  void EndLoop() override;
+  double GetNextTime(double currentime) override;
   //@}
 
   virtual double GoToNext(double start, double end, double currenttime) VTK_OVERRIDE;

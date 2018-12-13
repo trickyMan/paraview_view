@@ -80,8 +80,8 @@ protected:
   ~vtkTimestepsAnimationPlayer();
   //@}
 
-  virtual void StartLoop(double, double, double*) VTK_OVERRIDE;
-  virtual void EndLoop() VTK_OVERRIDE{};
+  void StartLoop(double, double, double, double*) override;
+  void EndLoop() override{};
 
   /**
    * Return the next time given the current time.
