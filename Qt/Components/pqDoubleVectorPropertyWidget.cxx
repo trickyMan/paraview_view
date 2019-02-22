@@ -108,7 +108,7 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
   if (this->property()->GetRepeatable())
   {
     pqScalarValueListPropertyWidget* widget =
-      new pqScalarValueListPropertyWidget(smProperty, this->proxy(), this);
+      new pqScalarValueListPropertyWidget(smProperty, this->proxy());
     widget->setObjectName("ScalarValueList");
     widget->setRangeDomain(range);
     this->addPropertyLink(widget, "scalars", SIGNAL(scalarsChanged()), smProperty);
@@ -137,15 +137,15 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
             dvp->FindDomain("vtkSMBoundsDomain") != NULL)))
     {
       // bounded ranges are represented with a slider and a spin box
-      pqDoubleRangeWidget* widget = new pqDoubleRangeWidget(this);
+      pqDoubleRangeWidget* widget = new pqDoubleRangeWidget();
       widget->setObjectName("DoubleRangeWidget");
       widget->setMinimum(range->GetMinimum(0));
       widget->setMaximum(range->GetMaximum(0));
 
       // ensures that the widget's range is updated whenever the domain changes.
-      new pqWidgetRangeDomain(widget, "minimum", "maximum", dvp, 0);
+      //new pqWidgetRangeDomain(widget, "minimum", "maximum", dvp, 0);
 
-      this->addPropertyLink(widget, "value", SIGNAL(valueChanged(double)), smProperty);
+      //this->addPropertyLink(widget, "value", SIGNAL(valueChanged(double)), smProperty);
       this->connect(widget, SIGNAL(valueEdited(double)), this, SIGNAL(changeFinished()));
 
       layoutLocal->addWidget(widget, 1);
@@ -191,14 +191,14 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
 
         for (int i = 0; i < 3; i++)
         {
-          pqLineEdit* lineEdit = new pqLineEdit(this);
+          pqLineEdit* lineEdit = new pqLineEdit();
           lineEdit->setValidator(new QDoubleValidator(lineEdit));
           lineEdit->setObjectName(QString("LineEdit%1").arg(2 * i));
           lineEdit->setTextAndResetCursor(
             QVariant(vtkSMPropertyHelper(smProperty).GetAsDouble(2 * i)).toString());
           if (showLabels)
           {
-            pqLabel* label = new pqLabel(componentLabels[2 * i], this);
+            pqLabel* label = new pqLabel(componentLabels[2 * i]);
             label->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
             gridLayout->addWidget(label, (i * 2), 0);
             gridLayout->addWidget(lineEdit, (i * 2) + 1, 0);
@@ -211,14 +211,14 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
           this->connect(
             lineEdit, SIGNAL(textChangedAndEditingFinished()), this, SIGNAL(changeFinished()));
 
-          lineEdit = new pqLineEdit(this);
+          lineEdit = new pqLineEdit();
           lineEdit->setValidator(new QDoubleValidator(lineEdit));
           lineEdit->setObjectName(QString("LineEdit%1").arg(2 * i + 1));
           lineEdit->setTextAndResetCursor(
             QVariant(vtkSMPropertyHelper(smProperty).GetAsDouble(2 * i + 1)).toString());
           if (showLabels)
           {
-            pqLabel* label = new pqLabel(componentLabels[2 * i + 1], this);
+            pqLabel* label = new pqLabel(componentLabels[2 * i + 1]);
             label->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
             gridLayout->addWidget(label, (i * 2), 1);
             gridLayout->addWidget(lineEdit, (i * 2) + 1, 1);
@@ -250,7 +250,7 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
             label->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
             layoutLocal->addWidget(label);
           }
-          pqLineEdit* lineEdit = new pqLineEdit(this);
+          pqLineEdit* lineEdit = new pqLineEdit();
           lineEdit->setValidator(new QDoubleValidator(lineEdit));
           lineEdit->setObjectName(QString("LineEdit%1").arg(i));
           lineEdit->setTextAndResetCursor(
@@ -273,7 +273,7 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
     dvp->FindDomain("vtkSMBoundsDomain") != NULL)
   {
     PV_DEBUG_PANELS() << "Adding \"Scale\" button since the domain is dynamically";
-    pqScaleByButton* scaleButton = new pqScaleByButton(this);
+    pqScaleByButton* scaleButton = new pqScaleByButton();
     scaleButton->setObjectName("ScaleBy");
     this->connect(scaleButton, SIGNAL(scale(double)), SLOT(scale(double)));
     layoutLocal->addWidget(scaleButton, 0, Qt::AlignBottom);
@@ -281,7 +281,7 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
     PV_DEBUG_PANELS() << "Adding \"Reset\" button since the domain is dynamically";
 
     // if this has an vtkSMArrayRangeDomain, add a "reset" button.
-    pqHighlightableToolButton* resetButton = new pqHighlightableToolButton(this);
+    pqHighlightableToolButton* resetButton = new pqHighlightableToolButton();
     resetButton->setObjectName("Reset");
     QAction* resetActn = new QAction(resetButton);
     resetActn->setToolTip("Reset using current data values");
@@ -289,11 +289,11 @@ pqDoubleVectorPropertyWidget::pqDoubleVectorPropertyWidget(
     resetButton->addAction(resetActn);
     resetButton->setDefaultAction(resetActn);
 
-    pqCoreUtilities::connect(
+    /*pqCoreUtilities::connect(
       dvp, vtkCommand::DomainModifiedEvent, this, SIGNAL(highlightResetButton()));
     pqCoreUtilities::connect(
       dvp, vtkCommand::UncheckedPropertyModifiedEvent, this, SIGNAL(highlightResetButton()));
-
+*/
     this->connect(resetButton, SIGNAL(clicked()), SLOT(resetButtonClicked()));
     resetButton->connect(this, SIGNAL(highlightResetButton()), SLOT(highlight()));
     resetButton->connect(this, SIGNAL(clearHighlight()), SLOT(clear()));
